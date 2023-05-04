@@ -1,10 +1,3 @@
-/*========================================================================
- * TwsApiC++ - Demonstration program
- * Retrieving historical data from Interactive Brokers
- * See the ///blocks for some explanation
- *========================================================================
- */
-
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
