@@ -9,6 +9,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 ///Easier: Just one include statement for all functionality
 #include "TwsApiL0.h"
@@ -24,6 +25,15 @@ class tWrapper : public EWrapperL0 {
 public:
     bool m_Done, m_ErrorForRequest;
     bool notDone(void) { return !(m_Done || m_ErrorForRequest); }
+
+    // Req will be used to track the request to the client, and used to return the correct information once received
+    int Req = 0;
+
+    //========================================
+    // Containers to be used for received data
+    //========================================
+    std::vector<float> closePrices;
+
 
     ///Easier: The EReader calls all methods automatically(optional)
     tWrapper(bool runEReader = true) : EWrapperL0(runEReader) {
@@ -44,7 +54,7 @@ public:
     }
 
     virtual void connectionClosed() {
-
+        std::cout << "Connection has been closed" << std::endl;
     }
 
     ///Safer: uncatched exceptions are catched before they reach the IB library code.
@@ -62,7 +72,14 @@ public:
         ///Easier: EWrapperL0 provides an extra method to check all data was retrieved
         if (IsEndOfHistoricalData(date)) {
             m_Done = true;
+            // Set Req to the same value as reqId so we can retrieve the data once finished
+            Req = reqId;
             return;
+        }
+
+        // Upon receiving the price request, insert close prices into the vector
+        if (reqId == 101) {
+            closePrices.push_back(close);
         }
 
         fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
