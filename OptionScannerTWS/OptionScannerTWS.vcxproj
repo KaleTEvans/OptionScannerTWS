@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="App.cpp" />
     <ClCompile Include="OptionScannerTWS.cpp" />
   </ItemGroup>
   <ItemGroup>

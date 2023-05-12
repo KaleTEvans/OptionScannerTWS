@@ -32,7 +32,7 @@ public:
     //========================================
     // Containers to be used for received data
     //========================================
-    std::vector<float> closePrices;
+    std::vector<double> closePrices;
 
 
     ///Easier: The EReader calls all methods automatically(optional)
