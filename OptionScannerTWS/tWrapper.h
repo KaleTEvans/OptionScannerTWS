@@ -63,6 +63,10 @@ public:
         fprintf(stderr, "*** Catch in EWrapper::%s( Id=%ld, ...) \n", MethodName, Id);
     }
 
+    virtual void currentTime(long time) {
+        std::cout << "Current UTC time received from TWS: " << time << std::endl;
+    }
+
     ///Faster: Implement only the method for the task.
     /// => TwsApiC++  provides an empty implementation for each EWrapper method.
     virtual void historicalData(TickerId reqId, const IBString& date

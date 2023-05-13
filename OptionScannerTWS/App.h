@@ -22,7 +22,7 @@ using std::endl;
 class OptionScanner {
 
 public:
-	OptionScanner(tWrapper& YW, const char* host);
+	OptionScanner(const char* host);
 	~OptionScanner();
 
 	void getDateTime();
@@ -30,8 +30,6 @@ public:
 
 
 private:
-	tWrapper YW;
-	const char* host;
 
 	// One contract for price, one variable contract for option strikes
 	Contract SPXunderlying;
@@ -46,4 +44,7 @@ private:
 // Variables for public use
 public:
 	EClientL0* EC;
+	tWrapper YW;
+
+	const char* host;
 };

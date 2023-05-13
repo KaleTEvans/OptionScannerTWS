@@ -1,14 +1,17 @@
 #include "App.h"
 
-OptionScanner::OptionScanner(tWrapper& YW, const char* host) : YW(YW), host(host) {
+OptionScanner::OptionScanner(const char* host) : host(host), YW(false) {
 
     cout << "Scanner Initialized" << endl;
 
     // Initialize connection
     EC = EClientL0::New(&YW);
+    // Connect to TWS
+    EC->eConnect(host, 7496, 0);
 
-    //EC->eConnect(host, 7496, 0);
-
+    // NOTE : Some API functions will encounter issues if called immediately after connection
+    //          Here we will start with a simple request for the TWS current time and wait
+    EC->reqCurrentTime();
     Sleep(10);
 
     getDateTime();
@@ -33,6 +36,7 @@ OptionScanner::OptionScanner(tWrapper& YW, const char* host) : YW(YW), host(host
 OptionScanner::~OptionScanner() {
     EC->eDisconnect();
     delete EC;
+
 }
 
 void OptionScanner::getDateTime() {

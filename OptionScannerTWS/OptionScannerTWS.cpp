@@ -35,10 +35,10 @@ void getSPXPrices(EClientL0 * client) {
 //========================================================================
 int main(void) {
     ///Easier: just allocate your wrapper and instantiate the EClientL0 with it.
-    tWrapper  YW(false);                      // false: not using the EReader
+    // tWrapper  YW(false);                      // false: not using the EReader
     const char* host = "127.0.0.1";
 
-    OptionScanner* opt = new OptionScanner(YW, host);
+    OptionScanner* opt = new OptionScanner(host);
 
     //opt->retreiveSPXPrice();
 
@@ -58,7 +58,7 @@ int main(void) {
 
     /////Easier: Use of TwsApiDefs.h makes code self explanatory,
     /////        i.e. UseRTH::OnlyRegularTradingData instead of true or 1.
-    if (opt->EC->eConnect("127.0.0.1", 7496, 0)) {
+    //if (opt->EC->eConnect(opt->host, 7496, 0)) {
     //    std::cout << "Connected to TWS Server" << std::endl;
     //    //EC->reqHistoricalData
     //    //(101
@@ -74,17 +74,17 @@ int main(void) {
         opt->retreiveSPXPrice();
 
     //    ///Easier: Call checkMessages() in a loop. No need to wait between two calls.
-        while (YW.notDone()) {
+        while (opt->YW.notDone()) {
             opt->EC->checkMessages();
 
-            if (YW.Req == 101) {
-                for (auto i : YW.closePrices) std::cout << i << std::endl;
+            if (opt->YW.Req == 101) {
+                for (auto i : opt->YW.closePrices) std::cout << i << std::endl;
             }
         }
 
-    }
+    //}
 
-    //EC->eDisconnect();
+    // opt->EC->eDisconnect();
     //delete EC;
     delete opt;
 
