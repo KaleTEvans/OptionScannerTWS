@@ -62,11 +62,30 @@ void OptionScanner::retreiveSPXPrice() {
     EC->reqHistoricalData
     (101
         , SPXunderlying
-        , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
+        , EndDateTime(2023, 5, 10)
         , DurationStr(1, *DurationHorizon::Days)
         , *BarSizeSetting::_1_min
         , *WhatToShow::TRADES
         , UseRTH::OnlyRegularTradingData
         , FormatDate::AsDate
     );
+
+    // Wait for the request 101
+    while (YW.notDone()) {
+        EC->checkMessages();
+        if (YW.Req == 101) break;
+    }
+
+    cout << "req 101 received" << endl;
+
+    for (auto i : YW.closePrices) prices.push_back(i);
+}
+
+void OptionScanner::viewSPXPrice(bool mostRecent) {
+    if (mostRecent) {
+        cout << prices[prices.size() - 1] << endl;;
+    }
+    else {
+        for (auto i : prices) cout << i << endl;
+    }
 }

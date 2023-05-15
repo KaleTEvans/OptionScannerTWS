@@ -27,7 +27,7 @@ public:
 
 	void getDateTime();
 	void retreiveSPXPrice();
-
+	void viewSPXPrice(bool mostRecent = false);
 
 private:
 
@@ -37,7 +37,7 @@ private:
 
 	vector<int> todayDate;
 
-	vector<int> prices;
+	vector<double> prices;
 	vector<int> strikes;
 	int strike;
 

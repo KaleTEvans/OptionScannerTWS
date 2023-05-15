@@ -77,6 +77,7 @@ public:
         if (IsEndOfHistoricalData(date)) {
             m_Done = true;
             // Set Req to the same value as reqId so we can retrieve the data once finished
+            std::cout << reqId << std::endl;
             Req = reqId;
             return;
         }
