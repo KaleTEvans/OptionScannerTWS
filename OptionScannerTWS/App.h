@@ -22,17 +22,19 @@ using std::endl;
 class OptionScanner {
 
 public:
-	OptionScanner(const char* host);
+	OptionScanner(const char* host, IBString ticker);
 	~OptionScanner();
 
 	void getDateTime();
-	void retreiveSPXPrice();
-	void viewSPXPrice(bool mostRecent = false);
+	void retreiveUnderlyingPrice();
+	void populateStrikes(int multiple = 5);
+	void retrieveOptionData();
 
 private:
 
 	// One contract for price, one variable contract for option strikes
-	Contract SPXunderlying;
+	IBString ticker;
+	Contract underlying;
 	Contract SPXchain;
 
 	vector<int> todayDate;

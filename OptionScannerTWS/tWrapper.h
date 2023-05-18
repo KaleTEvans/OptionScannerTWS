@@ -18,6 +18,16 @@
 #include "TwsApiDefs.h"
 using namespace TwsApi; // for TwsApiDefs.h
 
+// **** Use this definition for candlesticks
+struct Candle {
+    IBString date;
+    double open;
+    double close;
+    double high;
+    double low;
+    int volume;
+};
+
 
 // We can define our own eWrapper to implement only the functionality that we need to use
 class tWrapper : public EWrapperL0 {
@@ -32,8 +42,7 @@ public:
     //========================================
     // Containers to be used for received data
     //========================================
-    std::vector<double> closePrices;
-
+    std::vector<Candle> candlesticks;
 
     ///Easier: The EReader calls all methods automatically(optional)
     tWrapper(bool runEReader = true) : EWrapperL0(runEReader) {
@@ -53,6 +62,10 @@ public:
         m_ErrorForRequest = (id > 0);    // id == -1 are 'system' messages, not for user requests
     }
 
+    virtual void connectionOpened() {
+        std::cout << "Connected to TWS" << std::endl;
+    }
+
     virtual void connectionClosed() {
         std::cout << "Connection has been closed" << std::endl;
     }
@@ -64,7 +77,7 @@ public:
     }
 
     virtual void currentTime(long time) {
-        std::cout << "Current UTC time received from TWS: " << time << std::endl;
+        std::cout << "Current Unix time received from TWS: " << time << std::endl;
     }
 
     ///Faster: Implement only the method for the task.
@@ -75,17 +88,22 @@ public:
 
         ///Easier: EWrapperL0 provides an extra method to check all data was retrieved
         if (IsEndOfHistoricalData(date)) {
-            m_Done = true;
+            // m_Done = true;
             // Set Req to the same value as reqId so we can retrieve the data once finished
-            std::cout << reqId << std::endl;
             Req = reqId;
+            std::cout << "Completed historical data request " << Req << std::endl;
             return;
         }
 
-        // Upon receiving the price request, insert close prices into the vector
-        if (reqId == 101) {
-            closePrices.push_back(close);
-        }
+        // Upon receiving the price request, populate candlestick data
+        Candle c;
+        c.date = date;
+        c.open = open;
+        c.close = close;
+        c.high = high;
+        c.low = low;
+        c.volume = volume;
+        candlesticks.push_back(c);
 
         fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
             , (const  char*)date, open, high, low, close, volume);

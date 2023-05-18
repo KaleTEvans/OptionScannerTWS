@@ -1,6 +1,6 @@
 #include "App.h"
 
-OptionScanner::OptionScanner(const char* host) : host(host), YW(false) {
+OptionScanner::OptionScanner(const char* host, IBString ticker) : host(host), ticker(ticker), YW(false) {
 
     cout << "Scanner Initialized" << endl;
 
@@ -11,26 +11,22 @@ OptionScanner::OptionScanner(const char* host) : host(host), YW(false) {
 
     // NOTE : Some API functions will encounter issues if called immediately after connection
     //          Here we will start with a simple request for the TWS current time and wait
+    // ** Also note that this will return time in Unix form for the current time zone of the server hosting tws
     EC->reqCurrentTime();
     Sleep(10);
 
     getDateTime();
 
 	// Initialize with contract specs
-	SPXunderlying.symbol = "SPX";
-	SPXunderlying.secType = *SecType::IND;
-	SPXunderlying.currency = "USD";
-	SPXunderlying.exchange = *Exchange::IB_SMART;
-	SPXunderlying.primaryExchange = *Exchange::CBOE;
+	underlying.symbol = this->ticker;
+	underlying.secType = *SecType::IND;
+	underlying.currency = "USD";
+	underlying.exchange = *Exchange::IB_SMART;
+	underlying.primaryExchange = *Exchange::CBOE;
 
-    SPXchain.symbol = "SPX";
-    SPXchain.secType = *SecType::OPT;             
-    SPXchain.currency = "USD";
-    SPXchain.exchange = *Exchange::IB_SMART;       
-    SPXchain.primaryExchange = *Exchange::CBOE;          
-    SPXchain.right = *ContractRight::CALL;
-    SPXchain.expiry = EndDateTime(todayDate[2], todayDate[1], todayDate[0]);
-    SPXchain.strike = strike;
+    // Populate underlying price array for the current day
+    // retreiveUnderlyingPrice();
+
 }
 
 OptionScanner::~OptionScanner() {
@@ -57,12 +53,12 @@ void OptionScanner::getDateTime() {
 }
 
 // This will cause the wrapper to return a vector full of today's SPX price range in minute intervals
-void OptionScanner::retreiveSPXPrice() {
+void OptionScanner::retreiveUnderlyingPrice() {
     // Use reqId 101 for SPX underlying price
     EC->reqHistoricalData
     (101
-        , SPXunderlying
-        , EndDateTime(2023, 5, 10)
+        , underlying
+        , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
         , DurationStr(1, *DurationHorizon::Days)
         , *BarSizeSetting::_1_min
         , *WhatToShow::TRADES
@@ -70,22 +66,87 @@ void OptionScanner::retreiveSPXPrice() {
         , FormatDate::AsDate
     );
 
-    // Wait for the request 101
+    // Wait for the response
     while (YW.notDone()) {
         EC->checkMessages();
         if (YW.Req == 101) break;
     }
 
-    cout << "req 101 received" << endl;
+    // Clear out the prices vector and repopulate
+    if (!prices.empty()) prices.clear();
 
-    for (auto i : YW.closePrices) prices.push_back(i);
+    for (auto i : YW.candlesticks) prices.push_back(i.close);
+
+    // Once completed, clear the wrapper vector for next callback
+    YW.candlesticks.clear();
 }
 
-void OptionScanner::viewSPXPrice(bool mostRecent) {
-    if (mostRecent) {
-        cout << prices[prices.size() - 1] << endl;;
+// The multiple variable is the increments of options strikes
+void OptionScanner::populateStrikes(int multiple) {
+    // Retrieve the latest SPX price
+    retreiveUnderlyingPrice();
+
+    // Clear the strikes vector
+    if (!strikes.empty()) strikes.clear();
+
+    // Round the price down to nearest increment
+    double currentPrice = prices[prices.size() - 1];
+    int roundedPrice = currentPrice + (multiple / 2);
+    roundedPrice -= roundedPrice % multiple;
+    int strikePrice = roundedPrice - (multiple * 5);
+
+    // This will give us 11 strikes in total
+    while (strikePrice <= roundedPrice + (multiple * 5)) {
+        strikes.push_back(strikePrice);
+        strikePrice += multiple;
     }
-    else {
-        for (auto i : prices) cout << i << endl;
+
+    for (auto i : strikes) cout << i << " ";
+    cout << endl;
+
+}
+
+void OptionScanner::retrieveOptionData() {
+    // To get this data, we will need to loop over each option strike and send a request
+    // The reqId will be the same as the contract strike value
+    for (auto i : strikes) {
+
+        // Ensure wrapper candlestick vector is empty
+        //YW.candlesticks.clear();
+
+       // vector<double> closePrice;
+
+        // Create the contract
+        SPXchain.symbol = "SPX";
+        SPXchain.secType = *SecType::OPT;
+        SPXchain.currency = "USD";
+        SPXchain.exchange = *Exchange::IB_SMART;
+        SPXchain.primaryExchange = *Exchange::CBOE;
+        SPXchain.right = *ContractRight::CALL;
+        SPXchain.expiry = EndDateTime(todayDate[2], todayDate[1], todayDate[0]+1);
+        SPXchain.strike = i;
+
+        // Create the request
+        EC->reqHistoricalData
+        (i
+            , SPXchain
+            , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
+            , DurationStr(1, *DurationHorizon::Days)
+            , *BarSizeSetting::_1_min
+            , *WhatToShow::TRADES
+            , UseRTH::OnlyRegularTradingData
+            , FormatDate::AsDate
+        );
+
+        // Wait for requst
+        while (YW.notDone()) {
+            EC->checkMessages();
+            if (YW.Req == i) break;
+        }
+
+        //for (auto i : YW.candlesticks) closePrice.push_back(i.close);
+        //cout << closePrice[closePrice.size() - 1] << endl;
+
+        // cout << "Receieved options data for strike: " << i << endl;
     }
 }
