@@ -18,7 +18,7 @@ int main(void) {
     OptionScanner* opt = new OptionScanner(host, ticker);
 
     opt->populateStrikes();
-    opt->retrieveOptionData();
+    // opt->retrieveOptionData();
 
     Contract SPXchain;
     SPXchain.symbol = "SPX";
@@ -27,25 +27,22 @@ int main(void) {
     SPXchain.exchange = *Exchange::IB_SMART;
     SPXchain.primaryExchange = *Exchange::CBOE;
     SPXchain.right = *ContractRight::CALL;
-    SPXchain.expiry = EndDateTime(2023, 05, 17);
-    SPXchain.strike = 4160;
+    SPXchain.expiry = EndDateTime(2023, 06, 07);
+    SPXchain.strike = 4275;
 
-   /* opt->EC->reqHistoricalData
-    (4150
+    opt->EC->reqRealTimeBars
+    (4145
         , SPXchain
-        , EndDateTime(2023, 05, 18)
-        , DurationStr(1, *DurationHorizon::Days)
-        , *BarSizeSetting::_1_min
+        , 5
         , *WhatToShow::TRADES
         , UseRTH::OnlyRegularTradingData
-        , FormatDate::AsDate
-    );*/
+    );
 
     //Easier: Call checkMessages() in a loop. No need to wait between two calls.
     while (opt->YW.notDone()) {
         opt->EC->checkMessages();
 
-        if (opt->YW.Req == 4150) break;
+        //if (opt->YW.Req == 4150) break;
         
         // Set m_Done to true when you no longer wish to receive messages from the wrapper
         //======================

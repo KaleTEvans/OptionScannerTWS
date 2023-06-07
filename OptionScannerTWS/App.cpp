@@ -64,6 +64,7 @@ void OptionScanner::retreiveUnderlyingPrice() {
         , *WhatToShow::TRADES
         , UseRTH::OnlyRegularTradingData
         , FormatDate::AsDate
+        , false
     );
 
     // Wait for the response
@@ -109,10 +110,21 @@ void OptionScanner::populateStrikes(int multiple) {
 void OptionScanner::retrieveOptionData() {
     // To get this data, we will need to loop over each option strike and send a request
     // The reqId will be the same as the contract strike value
+
+    // Use a set to store all the reqIds to know when the wrapper has received every request
+    unordered_set<int> requests;
+    for (auto i : strikes) {
+        requests.insert(i);
+        //requests.insert(i + 1);
+    }
+
+    for (auto i : requests) cout << i << " ";
+    cout << endl;
+
     for (auto i : strikes) {
 
         // Ensure wrapper candlestick vector is empty
-        //YW.candlesticks.clear();
+        YW.fiveSecCandles.clear();
 
        // vector<double> closePrice;
 
@@ -123,30 +135,57 @@ void OptionScanner::retrieveOptionData() {
         SPXchain.exchange = *Exchange::IB_SMART;
         SPXchain.primaryExchange = *Exchange::CBOE;
         SPXchain.right = *ContractRight::CALL;
-        SPXchain.expiry = EndDateTime(todayDate[2], todayDate[1], todayDate[0]+1);
+        SPXchain.expiry = EndDateTime(todayDate[2], todayDate[1], todayDate[0]);
         SPXchain.strike = i;
 
         // Create the request
-        EC->reqHistoricalData
+        EC->reqRealTimeBars
         (i
             , SPXchain
-            , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
-            , DurationStr(1, *DurationHorizon::Days)
-            , *BarSizeSetting::_1_min
+            , 5
             , *WhatToShow::TRADES
             , UseRTH::OnlyRegularTradingData
-            , FormatDate::AsDate
         );
-
-        // Wait for requst
-        while (YW.notDone()) {
-            EC->checkMessages();
-            if (YW.Req == i) break;
-        }
 
         //for (auto i : YW.candlesticks) closePrice.push_back(i.close);
         //cout << closePrice[closePrice.size() - 1] << endl;
 
         // cout << "Receieved options data for strike: " << i << endl;
     }
+
+    //for (auto i : strikes) {
+    //    // Create the contract
+    //    SPXchain.symbol = "SPX";
+    //    SPXchain.secType = *SecType::OPT;
+    //    SPXchain.currency = "USD";
+    //    SPXchain.exchange = *Exchange::IB_SMART;
+    //    SPXchain.primaryExchange = *Exchange::CBOE;
+    //    SPXchain.right = *ContractRight::PUT;
+    //    SPXchain.expiry = EndDateTime(todayDate[2], todayDate[1], todayDate[0]);
+    //    SPXchain.strike = i;
+
+    //    // Create the request
+    //    EC->reqHistoricalData
+    //    (i+1
+    //        , SPXchain
+    //        , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
+    //        , DurationStr(1, *DurationHorizon::Days)
+    //        , *BarSizeSetting::_1_min
+    //        , *WhatToShow::TRADES
+    //        , UseRTH::OnlyRegularTradingData
+    //        , FormatDate::AsDate
+    //        , false
+    //    );
+    //}
+
+    // Wait for requst
+    while (YW.notDone()) {
+        if (requests.empty()) break;
+        EC->checkMessages();
+        
+        // Remove reqId from set once received
+        if (requests.find(YW.Req) != requests.end()) requests.erase(YW.Req);
+    }
+
+    YW.m_Done = true;
 }

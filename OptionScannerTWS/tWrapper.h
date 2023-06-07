@@ -10,6 +10,8 @@
 
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <ctime>
 
 ///Easier: Just one include statement for all functionality
 #include "TwsApiL0.h"
@@ -20,7 +22,8 @@ using namespace TwsApi; // for TwsApiDefs.h
 
 // **** Use this definition for candlesticks
 struct Candle {
-    IBString date;
+    IBString date = "";
+    long time = 0;
     double open;
     double close;
     double high;
@@ -43,6 +46,7 @@ public:
     // Containers to be used for received data
     //========================================
     std::vector<Candle> candlesticks;
+    std::vector<Candle> fiveSecCandles;
 
     ///Easier: The EReader calls all methods automatically(optional)
     tWrapper(bool runEReader = true) : EWrapperL0(runEReader) {
@@ -105,7 +109,40 @@ public:
         c.volume = volume;
         candlesticks.push_back(c);
 
-        fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
-            , (const  char*)date, open, high, low, close, volume);
+      /*  fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
+            , (const  char*)date, open, high, low, close, volume);*/
     }
+
+    // Retrieve real time bars, TWS Api currently only returns 5 second candles
+    virtual void realtimeBar(TickerId reqId, long time, double open, double high,
+        double low, double close, long volume, double wap, int count) {
+
+        // Get the current time, and check with market close (3pm cst) to determine when to end the connection
+        std::time_t tmNow = std::time(NULL);
+        struct tm t = *localtime(&tmNow);
+
+        if (t.tm_hour == 15 && t.tm_min == 0) {
+            std::cout << "Market closed, ending realTimeBar connection" << std::endl;
+            m_Done = true;
+            return;
+        }
+
+        // Upon receiving the price request, populate candlestick data
+        Candle c;
+        c.time = time;
+        c.open = open;
+        c.close = close;
+        c.high = high;
+        c.low = low;
+        c.volume = volume;
+        fiveSecCandles.push_back(c);
+
+        std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
+    }
+
+    virtual void cancelRealTimeBars(TickerId tickerId) {
+        std::cout << "Cancelled real time bar data for " << tickerId << std::endl;
+    }
+
 };
+

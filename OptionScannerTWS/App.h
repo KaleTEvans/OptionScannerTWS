@@ -11,6 +11,7 @@
 #include <ctime>
 #include <windows.h>
 #include <cstdlib>
+#include <unordered_set>
 
 #include "tWrapper.h"
 
@@ -18,6 +19,7 @@ using std::string;
 using std::vector;
 using std::cout;
 using std::endl;
+using std::unordered_set;
 
 class OptionScanner {
 
