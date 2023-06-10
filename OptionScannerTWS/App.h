@@ -28,7 +28,7 @@ public:
 	~OptionScanner();
 
 	void getDateTime();
-	void retreiveUnderlyingPrice();
+	void retreiveUnderlyingPrice(string interval, string duration, TickerId reqId);
 	void populateStrikes(int multiple = 5);
 	void retrieveOptionData();
 
@@ -41,7 +41,6 @@ private:
 
 	vector<int> todayDate;
 
-	vector<double> prices;
 	vector<int> strikes;
 	int strike;
 
@@ -51,4 +50,5 @@ public:
 	tWrapper YW;
 
 	const char* host;
+	vector<Candle> prices;
 };

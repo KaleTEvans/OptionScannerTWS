@@ -19,13 +19,18 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : host(host), ti
 
 	// Initialize with contract specs
 	underlying.symbol = this->ticker;
-	underlying.secType = *SecType::IND;
-	underlying.currency = "USD";
-	underlying.exchange = *Exchange::IB_SMART;
-	underlying.primaryExchange = *Exchange::CBOE;
+	
+    // Check if the symbol is an index or a security
+    if (ticker == "SPX") {
+        underlying.secType = *SecType::IND;
+        underlying.primaryExchange = *Exchange::CBOE;
+    }
+    else {
+        underlying.secType = *SecType::STK;
+    }
 
-    // Populate underlying price array for the current day
-    // retreiveUnderlyingPrice();
+	underlying.currency = "USD";
+    underlying.exchange = *Exchange::IB_SMART;
 
 }
 
@@ -53,14 +58,14 @@ void OptionScanner::getDateTime() {
 }
 
 // This will cause the wrapper to return a vector full of today's SPX price range in minute intervals
-void OptionScanner::retreiveUnderlyingPrice() {
+void OptionScanner::retreiveUnderlyingPrice(string interval, string duration, TickerId reqId) {
     // Use reqId 101 for SPX underlying price
     EC->reqHistoricalData
-    (101
+    (reqId
         , underlying
         , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
-        , DurationStr(1, *DurationHorizon::Days)
-        , *BarSizeSetting::_1_min
+        , duration
+        , interval
         , *WhatToShow::TRADES
         , UseRTH::OnlyRegularTradingData
         , FormatDate::AsDate
@@ -70,13 +75,13 @@ void OptionScanner::retreiveUnderlyingPrice() {
     // Wait for the response
     while (YW.notDone()) {
         EC->checkMessages();
-        if (YW.Req == 101) break;
+        if (YW.Req == reqId) break;
     }
 
     // Clear out the prices vector and repopulate
     if (!prices.empty()) prices.clear();
 
-    for (auto i : YW.candlesticks) prices.push_back(i.close);
+    for (auto i : YW.candlesticks) prices.push_back(i);
 
     // Once completed, clear the wrapper vector for next callback
     YW.candlesticks.clear();
@@ -85,13 +90,13 @@ void OptionScanner::retreiveUnderlyingPrice() {
 // The multiple variable is the increments of options strikes
 void OptionScanner::populateStrikes(int multiple) {
     // Retrieve the latest SPX price
-    retreiveUnderlyingPrice();
+    retreiveUnderlyingPrice("1 min", "1 D", 101);
 
     // Clear the strikes vector
     if (!strikes.empty()) strikes.clear();
 
     // Round the price down to nearest increment
-    double currentPrice = prices[prices.size() - 1];
+    double currentPrice = prices[prices.size() - 1].close;
     int roundedPrice = currentPrice + (multiple / 2);
     roundedPrice -= roundedPrice % multiple;
     int strikePrice = roundedPrice - (multiple * 5);
@@ -115,7 +120,7 @@ void OptionScanner::retrieveOptionData() {
     unordered_set<int> requests;
     for (auto i : strikes) {
         requests.insert(i);
-        //requests.insert(i + 1);
+        requests.insert(i + 1);
     }
 
     for (auto i : requests) cout << i << " ";

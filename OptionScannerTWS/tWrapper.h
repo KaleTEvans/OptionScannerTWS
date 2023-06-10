@@ -21,7 +21,28 @@
 using namespace TwsApi; // for TwsApiDefs.h
 
 // **** Use this definition for candlesticks
-struct Candle {
+class Candle {
+public:
+    // Constructor for historical data
+    Candle(TickerId reqId, const IBString& date
+        , double open, double high, double low, double close
+        , int volume, int barCount, double WAP, int hasGaps) :
+        reqId(reqId), date(date), open(open), high(high), low(low),
+        close(close), volume(volume), barCount(barCount), WAP(WAP), hasGaps(hasGaps) {}
+
+    // Constructor for 5 Second data
+    Candle(TickerId reqId, long time, double open, double high,
+        double low, double close, long volume, double wap, int count) :
+        reqId(reqId), time(time), open(open), high(high), low(low),
+        close(close), volume(volume), WAP(wap), count(count) {}
+
+    // Constructor for other candles created from 5 sec
+    Candle(TickerId reqId, long time, double open, double high,
+        double low, double close, long volume) :
+        reqId(reqId), time(time), open(open), high(high), low(low),
+        close(close), volume(volume) {}
+    
+    TickerId reqId;
     IBString date = "";
     long time = 0;
     double open;
@@ -29,6 +50,10 @@ struct Candle {
     double high;
     double low;
     int volume;
+    int barCount = 0;
+    double WAP = 0;
+    int hasGaps = 0;
+    int count = 0;
 };
 
 
@@ -54,6 +79,10 @@ public:
         m_ErrorForRequest = false;
     }
 
+    //========================================
+    // Error Handling
+    //========================================
+
     ///Methods winError & error print the errors reported by IB TWS
     virtual void winError(const IBString& str, int lastError) {
         fprintf(stderr, "WinError: %d = %s\n", lastError, (const char*)str);
@@ -66,6 +95,16 @@ public:
         m_ErrorForRequest = (id > 0);    // id == -1 are 'system' messages, not for user requests
     }
 
+    ///Safer: uncatched exceptions are catched before they reach the IB library code.
+    ///       The Id is tickerId, orderId, or reqId, or -1 when no id known
+    virtual void OnCatch(const char* MethodName, const long Id) {
+        fprintf(stderr, "*** Catch in EWrapper::%s( Id=%ld, ...) \n", MethodName, Id);
+    }
+
+    //=======================================
+    // Connectivity
+    //=======================================
+
     virtual void connectionOpened() {
         std::cout << "Connected to TWS" << std::endl;
     }
@@ -74,18 +113,19 @@ public:
         std::cout << "Connection has been closed" << std::endl;
     }
 
-    ///Safer: uncatched exceptions are catched before they reach the IB library code.
-    ///       The Id is tickerId, orderId, or reqId, or -1 when no id known
-    virtual void OnCatch(const char* MethodName, const long Id) {
-        fprintf(stderr, "*** Catch in EWrapper::%s( Id=%ld, ...) \n", MethodName, Id);
+    // Upon initial API connection, recieves a comma-separated string with the managed account IDs
+    virtual void managedAccounts(const IBString& accountsList) {
+        std::cout << accountsList << std::endl;
     }
 
     virtual void currentTime(long time) {
         std::cout << "Current Unix time received from TWS: " << time << std::endl;
     }
 
-    ///Faster: Implement only the method for the task.
-    /// => TwsApiC++  provides an empty implementation for each EWrapper method.
+    //========================================
+    // Data Retrieval
+    //========================================
+
     virtual void historicalData(TickerId reqId, const IBString& date
         , double open, double high, double low, double close
         , int volume, int barCount, double WAP, int hasGaps) {
@@ -100,13 +140,7 @@ public:
         }
 
         // Upon receiving the price request, populate candlestick data
-        Candle c;
-        c.date = date;
-        c.open = open;
-        c.close = close;
-        c.high = high;
-        c.low = low;
-        c.volume = volume;
+        Candle c(reqId, date, open, high, low, close, volume, barCount, WAP, hasGaps);
         candlesticks.push_back(c);
 
       /*  fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
@@ -128,14 +162,14 @@ public:
         }
 
         // Upon receiving the price request, populate candlestick data
-        Candle c;
+        /*Candle c;
         c.time = time;
         c.open = open;
         c.close = close;
         c.high = high;
         c.low = low;
         c.volume = volume;
-        fiveSecCandles.push_back(c);
+        fiveSecCandles.push_back(c);*/
 
         std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
     }
