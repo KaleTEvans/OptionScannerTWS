@@ -7,17 +7,12 @@ Candle createNewBars(int id, int increment, const vector<Candle>& data) {
 	double close = data[data.size() - 1].close;
 	long time = data[data.size() - 1].time;
 
-	std::cout << open << " " << close << " " << time << std::endl;
-
 	double high = 0;
 	double low = INT_MAX;
 	long volume = 0;
-
-	std::cout << data.size() - 1 << " " << data.size() - increment << std::endl;
-
-	if (data.size() >= increment) std::cout << "larger" << std::endl;
 	
 	for (int i = data.size() - 1; i >= data.size() - increment; i--) {
+		if (i < 0) break; // Initial values causing a vector out of bounds issue for some reason
 		high = max(high, data[i].high);
 		low = min(low, data[i].low);
 
@@ -50,25 +45,25 @@ ContractData::ContractData(TickerId reqId, Candle initData) : contractId(reqId) 
 void ContractData::updateData(Candle c) {
 	// Always push to the 5 sec array
 	fiveSecCandles.push_back(c);
-	std::cout << "size is " << fiveSecCandles.size() << std::endl;
 	// Using the length of the 5 sec array, we will determine if any new candles should be added to the other arrays
 	// 6 increments for the 30 sec
 	if (fiveSecCandles.size() % 6 == 0) {
 		Candle c6 = createNewBars(contractId, 6, fiveSecCandles);
 		thirtySecCandles.push_back(c6);
+
+		// Now we'll reference the 30 sec array for the 1min, so we only need to use increments of 2
+		if (thirtySecCandles.size() > 0 && thirtySecCandles.size() % 2 == 0) {
+			//std::cout << thirtySecCandles.size() << " " << oneMinCandles.size() << std::endl;
+			Candle c1 = createNewBars(contractId, 2, thirtySecCandles);
+			oneMinCandles.push_back(c1);
+
+			// Referencing the 1 min for the 5min array we can use increments of 5
+			if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5 == 0) {
+				Candle c5 = createNewBars(contractId, 5, oneMinCandles);
+				fiveMinCandles.push_back(c5);
+			}
+		}
 	}
-
-	//// Now we'll reference the 30 sec array for the 1min, so we only need to use increments of 2
-	//if (thirtySecCandles.size() > 0 && thirtySecCandles.size() % 2 == 0) {
-	//	Candle c1 = createNewBars(contractId, 2, thirtySecCandles);
-	//	oneMinCandles.push_back(c1);
-	//}
-
-	//// Referencing the 1 min for the 5min array we can use increments of 5
-	//if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5) {
-	//	Candle c5 = createNewBars(contractId, 5, oneMinCandles);
-	//	fiveMinCandles.push_back(c5);
-	//}
 }
 
 //==================================

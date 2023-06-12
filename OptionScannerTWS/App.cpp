@@ -18,7 +18,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : host(host), ti
     getDateTime();
 
 	// Initialize with contract specs
-	underlying.symbol = this->ticker;
+	underlying.symbol = ticker;
 	
     // Check if the symbol is an index or a security
     if (ticker == "SPX") {
@@ -46,7 +46,14 @@ void OptionScanner::getDateTime() {
     struct tm t = *localtime(&tmNow);
 
     if (todayDate.empty()) {
-        todayDate.push_back(t.tm_mday + 1); // To get current data, you have to request one day ahead for IBKR
+        if (ticker == "SPX") {
+            todayDate.push_back(t.tm_mday + 1); // To get current data, you have to request one day ahead for options
+        }
+        else
+        {
+            todayDate.push_back(t.tm_mday);
+        }
+        
         todayDate.push_back(t.tm_mon + 1);
         todayDate.push_back(t.tm_year + 1900);
     }
@@ -89,6 +96,8 @@ void OptionScanner::retreiveUnderlyingPrice(string interval, string duration, Ti
 
 // The multiple variable is the increments of options strikes
 void OptionScanner::populateStrikes(int multiple) {
+    // Ensure date time is updated
+    getDateTime();
     // Retrieve the latest SPX price
     retreiveUnderlyingPrice("1 min", "1 D", 101);
 
