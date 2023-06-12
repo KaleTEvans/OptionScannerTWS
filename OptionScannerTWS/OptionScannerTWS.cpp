@@ -146,7 +146,7 @@ void candleFunctionality() {
     for (int i = 1; i < fiveSec.size(); i++) testCon.updateData(fiveSec[i]);
     // Now compare the data
     cout << endl;
-    cout << "--- Comparing Data ---" << endl;
+    cout << "--- Comparing Data ---" << endl;g
     vector<Candle> test5Sec = testCon.getFiveSecData();
     vector<Candle> test30Sec = testCon.getThirtySecData();
     vector<Candle> test1Min = testCon.getOneMinData();
