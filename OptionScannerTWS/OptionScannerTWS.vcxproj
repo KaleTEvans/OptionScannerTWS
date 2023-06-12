@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="ContractData.h" />
+    <ClInclude Include="Formulas.h" />
     <ClInclude Include="tWrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

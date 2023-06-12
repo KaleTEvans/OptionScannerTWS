@@ -20,6 +20,7 @@
 #include <ctime>
 
 #include "tWrapper.h"
+#include "Formulas.h"
 
 using std::vector;
 using std::string;
@@ -51,23 +52,13 @@ private:
 	vector<Candle> fiveMinCandles;
 
 	// Statistic Variables
-	double stDevPrice5Sec;
-	double stDevPrice30Sec;
-	double stDevPrice1Min;
-	double stDevPrice5Min;
+	StandardDeviation sd5Sec;
+	StandardDeviation sd30Sec;
+	StandardDeviation sd1Min;
+	StandardDeviation sd5Min;
 
-	double meanPrice5Sec;
-	double meanPrice30Sec;
-	double meanPrice1Min;
-	double meanPrice5Min;
-
-	double stDevVol5Sec;
-	double stDevVol30Sec;
-	double stDevVol1Min;
-	double stDevVol5Min;
-
-	double meanVol5Sec;
-	double meanVol30Sec;
-	double meanVol1Min;
-	double meanVol5Min;
+	StandardDeviation sdVol5Sec;
+	StandardDeviation sdVol30Sec;
+	StandardDeviation sdVol1Min;
+	StandardDeviation sdVol5Min;
 };
