@@ -1,6 +1,6 @@
 #include "App.h"
 
-OptionScanner::OptionScanner(const char* host, IBString ticker) : host(host), ticker(ticker), YW(false) {
+App::App(const char* host, IBString ticker) : host(host), ticker(ticker), YW(false) {
 
     cout << "Scanner Initialized" << endl;
 
@@ -34,13 +34,17 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : host(host), ti
 
 }
 
-OptionScanner::~OptionScanner() {
+App::~App() {
     EC->eDisconnect();
     delete EC;
 
 }
 
-void OptionScanner::getDateTime() {
+// Accessors
+IBString App::getTicker() { return ticker; }
+vector<int> App::getDateVector() { return todayDate; }
+
+void App::getDateTime() {
     std::time_t tmNow;
     tmNow = time(NULL);
     struct tm t = *localtime(&tmNow);
@@ -65,7 +69,7 @@ void OptionScanner::getDateTime() {
 }
 
 // This will cause the wrapper to return a vector full of today's SPX price range in minute intervals
-void OptionScanner::retreiveUnderlyingPrice(string interval, string duration, TickerId reqId) {
+void App::retreiveUnderlyingPrice(string interval, string duration, TickerId reqId) {
     // Use reqId 101 for SPX underlying price
     EC->reqHistoricalData
     (reqId
@@ -88,14 +92,14 @@ void OptionScanner::retreiveUnderlyingPrice(string interval, string duration, Ti
     // Clear out the prices vector and repopulate
     if (!prices.empty()) prices.clear();
 
-    for (auto i : YW.candlesticks) prices.push_back(i);
+    for (auto i : YW.underlyingCandles) prices.push_back(i);
 
     // Once completed, clear the wrapper vector for next callback
-    YW.candlesticks.clear();
+    YW.underlyingCandles.clear();
 }
 
 // The multiple variable is the increments of options strikes
-void OptionScanner::populateStrikes(int multiple) {
+void App::populateStrikes(int multiple) {
     // Ensure date time is updated
     getDateTime();
     // Retrieve the latest SPX price
@@ -121,7 +125,7 @@ void OptionScanner::populateStrikes(int multiple) {
 
 }
 
-void OptionScanner::retrieveOptionData() {
+void App::retrieveOptionData() {
     // To get this data, we will need to loop over each option strike and send a request
     // The reqId will be the same as the contract strike value
 

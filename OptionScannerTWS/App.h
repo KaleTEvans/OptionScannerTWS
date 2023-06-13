@@ -1,7 +1,6 @@
 //=============================================================================
-// OptionScanner will retrieve SPX price data every minute during market hours,
-// use that price to determine the closest 12 call and put strikes, and gather
-// volume data to determine if any unusual volume spikes have occured
+// Functionality of the App class is to make customized data requests to the 
+// TWS client, as well as return some of the formatted data from the wrapper
 // ============================================================================
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -21,16 +20,20 @@ using std::cout;
 using std::endl;
 using std::unordered_set;
 
-class OptionScanner {
+class App {
 
 public:
-	OptionScanner(const char* host, IBString ticker);
-	~OptionScanner();
+	App(const char* host, IBString ticker);
+	~App();
 
 	void getDateTime();
 	void retreiveUnderlyingPrice(string interval, string duration, TickerId reqId);
 	void populateStrikes(int multiple = 5);
 	void retrieveOptionData();
+
+	// Accessors
+	IBString getTicker();
+	vector<int> getDateVector();
 
 private:
 
@@ -41,7 +44,6 @@ private:
 
 	vector<int> todayDate;
 
-	vector<int> strikes;
 	int strike;
 
 // Variables for public use
@@ -51,4 +53,5 @@ public:
 
 	const char* host;
 	vector<Candle> prices;
+	vector<int> strikes;
 };

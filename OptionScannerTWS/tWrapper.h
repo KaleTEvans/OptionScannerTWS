@@ -56,6 +56,29 @@ public:
     int count = 0;
 };
 
+//=======================================================================
+// This is a buffer to contain candlestick data and send to app when full
+//=======================================================================
+template <typename T> 
+class CandleBuffer {
+public:
+    CandleBuffer(size_t capacity) : capacity(capacity) {}
+
+    void processBuffer(std::vector<T>& wrapperContainer) {
+        if (buffer.size() == capacity) {
+            std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
+            // Append buffer contents to the target vector
+            wrapperContainer.clear();
+            wrapperContainer.insert(wrapperContainer.end(), buffer.begin(), buffer.end());
+            // Clear the buffer
+            buffer.clear();
+        }
+    }
+
+public:
+    std::vector<T> buffer;
+    size_t capacity;
+};
 
 // We can define our own eWrapper to implement only the functionality that we need to use
 class tWrapper : public EWrapperL0 {
@@ -66,11 +89,15 @@ public:
 
     // Req will be used to track the request to the client, and used to return the correct information once received
     int Req = 0;
+    
 
     //========================================
     // Containers to be used for received data
     //========================================
-    std::vector<Candle> candlesticks;
+    // 22 Candles for each option strikle
+    CandleBuffer<Candle> candleBuffer{ 22 };
+
+    std::vector<Candle> underlyingCandles;
     std::vector<Candle> fiveSecCandles;
 
     ///Easier: The EReader calls all methods automatically(optional)
@@ -141,7 +168,7 @@ public:
 
         // Upon receiving the price request, populate candlestick data
         Candle c(reqId, date, open, high, low, close, volume, barCount, WAP, hasGaps);
-        candlesticks.push_back(c);
+        underlyingCandles.push_back(c);
 
       /*  fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
             , (const  char*)date, open, high, low, close, volume);*/
@@ -162,14 +189,9 @@ public:
         }
 
         // Upon receiving the price request, populate candlestick data
-        /*Candle c;
-        c.time = time;
-        c.open = open;
-        c.close = close;
-        c.high = high;
-        c.low = low;
-        c.volume = volume;
-        fiveSecCandles.push_back(c);*/
+        Candle c(reqId, time, open, high, low, close, volume, wap, count);
+        candleBuffer.buffer.push_back(c);
+        candleBuffer.processBuffer(fiveSecCandles);
 
         std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
     }

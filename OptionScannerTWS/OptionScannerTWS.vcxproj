@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ContractData.cpp" />
+    <ClCompile Include="OptionScanner.cpp" />
     <ClCompile Include="OptionScannerTWS.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +161,7 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="ContractData.h" />
     <ClInclude Include="Formulas.h" />
+    <ClInclude Include="OptionScanner.h" />
     <ClInclude Include="tWrapper.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

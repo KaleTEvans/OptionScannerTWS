@@ -5,6 +5,7 @@
 
 #include "tWrapper.h"
 #include "App.h"
+#include "OptionScanner.h"
 #include "ContractData.h"
 
 //=======================================================================
@@ -15,6 +16,7 @@
 void informalTests();
 // Tests
 void candleFunctionality();
+void candlesWithRealTimeBars();
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
@@ -23,17 +25,17 @@ bool compareCandles(Candle c1, Candle c2);
 //========================================================================
 int main(void) {
 
-    informalTests();
+    //informalTests();
 
 
     ///Easier: just allocate your wrapper and instantiate the EClientL0 with it.
     const char* host = "127.0.0.1";
     IBString ticker = "SPX";
 
-    // OptionScanner* opt = new OptionScanner(host, ticker);
+    OptionScanner* opt = new OptionScanner(host, ticker);
 
-    // opt->populateStrikes();
-    // opt->retrieveOptionData();
+    opt->populateStrikes();
+    //opt->streamOptionData();
 
     //Contract SPXchain;
     //SPXchain.symbol = "SPX";
@@ -102,7 +104,7 @@ void informalTests() {
 
 void candleFunctionality() {
 
-    OptionScanner* test = new OptionScanner("127.0.0.1", "SPY");
+    App* test = new App("127.0.0.1", "SPY");
 
     cout << "========================================================================" << endl;
     cout << "Testing Candle Functionality" << endl;
@@ -172,6 +174,11 @@ void candleFunctionality() {
     cout << "Five minute candles matched correctly" << endl;
 
     delete test;
+}
+
+// Test candle functionality when inputting real time bar data
+void candlesWithRealTimeBars() {
+
 }
 
 bool compareCandles(Candle c1, Candle c2) {
