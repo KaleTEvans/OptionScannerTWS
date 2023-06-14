@@ -30,6 +30,9 @@ void OptionScanner::streamOptionData() {
 					contracts[i.reqId]->updateData(i);
 				}
 			}
+			if (contracts.size() >= 18) {
+				outputChain();
+			}
 		}
 
 		// Every 10 minutes, update the strikes
@@ -39,9 +42,9 @@ void OptionScanner::streamOptionData() {
 		if (elapsedTime >= interval) {
 			updateStrikes();
 			lastExecutionTime = currentTime; // Update the  last execution time
+			std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a short duration
 		}
 
-		std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a short duration
 	}
 }
 
@@ -60,6 +63,10 @@ void OptionScanner::updateStrikes() {
 		}
 	}
 
+	// Add the strikes to the sorted array
+	for (auto i : optionStrikes) if (i % 5 == 0) sortedContractStrikes.push_back(i);
+	std::sort(sortedContractStrikes.begin(), sortedContractStrikes.end());
+
 	// Now we will create a request for each option strike not already in the map
 	for (auto i : optionStrikes) {
 		// Create the contract
@@ -73,17 +80,18 @@ void OptionScanner::updateStrikes() {
 		// Retrieve Date
 		getDateTime();
 		vector<int> date = getDateVector();
+		cout << date[2] << " " << date[1] << " " << date[0] << endl;
 
 		con.expiry = EndDateTime(date[2], date[1], date[0]);
 
 		// These next variables depend on whether or not a put or call
-		if (!i % 5) {
+		if (i % 5 == 0) {
 			con.right = *ContractRight::CALL;
 			con.strike = i;
 		}
 		else {
 			con.right = *ContractRight::PUT;
-			con.strike = i - 1;
+			con.strike = double(i) - 1;
 		}
 
 		// Now create the request
@@ -94,5 +102,28 @@ void OptionScanner::updateStrikes() {
 			, *WhatToShow::TRADES
 			, UseRTH::OnlyRegularTradingData
 		);
+
+	}
+}
+
+void OptionScanner::outputChain() {
+	// This will be an attempt to simulate a dynamic terminal
+
+	cout << "============================================================================" << endl;
+	cout << "===========================Options Chain for SPX============================" << endl;
+	cout << "=========(CALLS)===========================================(PUTS)===========" << endl;
+	cout << "============================================================================" << endl;
+	cout << " Open  | High  |  Low  | Close    |Strike|    Open  | High  |  Low  | Close " << endl;
+	cout << "============================================================================" << endl;
+
+	for (auto i : sortedContractStrikes) {
+		Candle call(contracts[i]->getFiveSecData().back());
+		Candle put(contracts[i + 1]->getFiveSecData().back());
+
+		cout << "  " << call.open << "  |  " << call.high << "  |  " << call.low << "  |  " << call.close << "   |  " << i << "   |  "
+			<< put.open << "  |  " << put.high << "  |  " << put.low << "  |  " << put.close << "    " << endl;
+
+		cout << "============================================================================" << endl;
+
 	}
 }

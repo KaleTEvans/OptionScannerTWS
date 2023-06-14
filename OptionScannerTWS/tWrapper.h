@@ -94,8 +94,8 @@ public:
     //========================================
     // Containers to be used for received data
     //========================================
-    // 22 Candles for each option strikle
-    CandleBuffer<Candle> candleBuffer{ 22 };
+    // 18 Candles for each option strikle
+    CandleBuffer<Candle> candleBuffer{ 18 };
 
     std::vector<Candle> underlyingCandles;
     std::vector<Candle> fiveSecCandles;

@@ -29,7 +29,6 @@ public:
 	void getDateTime();
 	void retreiveUnderlyingPrice(string interval, string duration, TickerId reqId);
 	void populateStrikes(int multiple = 5);
-	void retrieveOptionData();
 
 	// Accessors
 	IBString getTicker();

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 class OptionScanner : public App {
 public:
@@ -17,9 +18,13 @@ public:
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes();
 
+	// This will output the options chain to the screen for debugging purposes
+	void outputChain();
+
 private:
 	// This map will hold all of the contracts and will be updated repeatedly
 	std::unordered_map<int, ContractData*> contracts;
 
 	vector<int> optionStrikes;
+	vector<int> sortedContractStrikes;
 };

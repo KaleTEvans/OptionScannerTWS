@@ -25,7 +25,7 @@ bool compareCandles(Candle c1, Candle c2);
 //========================================================================
 int main(void) {
 
-    //informalTests();
+    // informalTests();
 
 
     ///Easier: just allocate your wrapper and instantiate the EClientL0 with it.
@@ -34,26 +34,26 @@ int main(void) {
 
     OptionScanner* opt = new OptionScanner(host, ticker);
 
-    opt->populateStrikes();
-    //opt->streamOptionData();
+    //opt->populateStrikes();
+    opt->streamOptionData();
 
-    //Contract SPXchain;
-    //SPXchain.symbol = "SPX";
-    //SPXchain.secType = *SecType::OPT;
-    //SPXchain.currency = "USD";
-    //SPXchain.exchange = *Exchange::IB_SMART;
-    //SPXchain.primaryExchange = *Exchange::CBOE;
-    //SPXchain.right = *ContractRight::CALL;
-    //SPXchain.expiry = EndDateTime(2023, 06, 9);
-    //SPXchain.strike = 4230;
+    /*Contract SPXchain;
+    SPXchain.symbol = "SPX";
+    SPXchain.secType = *SecType::OPT;
+    SPXchain.currency = "USD";
+    SPXchain.exchange = *Exchange::IB_SMART;
+    SPXchain.primaryExchange = *Exchange::CBOE;
+    SPXchain.right = *ContractRight::CALL;
+    SPXchain.expiry = EndDateTime(2023, 06, 14);
+    SPXchain.strike = 4380;
 
-    //opt->EC->reqRealTimeBars
-    //(4230
-    //    , SPXchain
-    //    , 5
-    //    , *WhatToShow::TRADES
-    //    , UseRTH::OnlyRegularTradingData
-    //);
+    opt->EC->reqRealTimeBars
+    (4230
+        , SPXchain
+        , 5
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+    );*/
 
     //Easier: Call checkMessages() in a loop. No need to wait between two calls.
     //while (opt->YW.notDone()) {

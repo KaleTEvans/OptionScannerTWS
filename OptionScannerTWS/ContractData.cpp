@@ -73,8 +73,6 @@ void ContractData::updateData(Candle c) {
 			sd1Min.addValue(c1.high - c1.low);
 			sdVol1Min.addValue(c1.volume);
 
-			if (c1.volume > (2 * sdVol1Min.getStDev())) std::cout << "2 StDev greater: " << c1.volume << " for StDev: " << sdVol1Min.getStDev() << std::endl;
-
 			// Referencing the 1 min for the 5min array we can use increments of 5
 			if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5 == 0) {
 				Candle c5 = createNewBars(contractId, 5, oneMinCandles);
