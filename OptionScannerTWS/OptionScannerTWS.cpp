@@ -8,6 +8,8 @@
 #include "OptionScanner.h"
 #include "ContractData.h"
 
+#include "spdlog/spdlog.h"
+
 //=======================================================================
 // Informal testing functions
 //=======================================================================
@@ -15,8 +17,9 @@
 // Main launcher for imformal tests
 void informalTests();
 // Tests
+void basicHistoricalDataRequest();
 void candleFunctionality();
-void candlesWithRealTimeBars();
+void testStreamingAlerts();
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
@@ -25,55 +28,20 @@ bool compareCandles(Candle c1, Candle c2);
 //========================================================================
 int main(void) {
 
-    // informalTests();
+    informalTests();
 
 
     ///Easier: just allocate your wrapper and instantiate the EClientL0 with it.
     const char* host = "127.0.0.1";
     IBString ticker = "SPX";
 
-    OptionScanner* opt = new OptionScanner(host, ticker);
+    //OptionScanner* opt = new OptionScanner(host, ticker);
 
     //opt->populateStrikes();
-    opt->streamOptionData();
+    //opt->streamOptionData();
 
-    /*Contract SPXchain;
-    SPXchain.symbol = "SPX";
-    SPXchain.secType = *SecType::OPT;
-    SPXchain.currency = "USD";
-    SPXchain.exchange = *Exchange::IB_SMART;
-    SPXchain.primaryExchange = *Exchange::CBOE;
-    SPXchain.right = *ContractRight::CALL;
-    SPXchain.expiry = EndDateTime(2023, 06, 14);
-    SPXchain.strike = 4380;
 
-    opt->EC->reqRealTimeBars
-    (4230
-        , SPXchain
-        , 5
-        , *WhatToShow::TRADES
-        , UseRTH::OnlyRegularTradingData
-    );*/
-
-    //Easier: Call checkMessages() in a loop. No need to wait between two calls.
-    //while (opt->YW.notDone()) {
-    //    opt->EC->checkMessages();
-
-    //    /*std::time_t tmNow = std::time(NULL);
-    //    struct tm t = *localtime(&tmNow);
-    //    if (t.tm_hour == 13 && t.tm_min == 39) opt->EC->cancelRealTimeBars(4275);*/
-
-    //    if (opt->YW.Req == 101) opt->YW.m_Done = true;
-
-    //    // Set m_Done to true when you no longer wish to receive messages from the wrapper
-    //    //======================
-    //    // opt.YW->m_Done = true 
-    //    //======================
-    //}
-
-   /* for (auto i : opt->prices) {
-        cout << i.close << endl;
-    }*/
+    
 
     //delete opt;
 
@@ -91,7 +59,8 @@ void informalTests() {
     // Show welcome will be the initial header for testing options
     constexpr bool showWelcome = true;
 
-    constexpr bool showCandleFunctionality = true;
+    constexpr bool showBasicRequest = true;
+    constexpr bool showCandleFunctionality = false;
 
     // Run tests here
     if (showWelcome) {
@@ -99,7 +68,51 @@ void informalTests() {
         cout << "Beginning tests ..." << endl;
     }
 
+
+    if (showBasicRequest) basicHistoricalDataRequest();
     if (showCandleFunctionality) candleFunctionality();
+}
+
+void basicHistoricalDataRequest() {
+    tWrapper YW(false);
+    EClientL0* EC = EClientL0::New(&YW);
+
+    YW.showHistoricalData = true;
+
+    Contract C;
+    C.symbol = "AAPL";
+    C.secType = "STK";
+    C.currency = "USD";
+    C.exchange = "SMART";
+    // C.primaryExchange = *Exchange::AMEX;
+
+    std::time_t rawtime;
+    std::tm* timeinfo;
+    char queryTime[80];
+    std::time(&rawtime);
+    timeinfo = std::gmtime(&rawtime);
+    std::strftime(queryTime, 80, "%Y%m%d-%H:%M:%S", timeinfo);
+
+    if (EC->eConnect("127.0.0.1", 7496, 100)) {
+        EC->reqHistoricalData
+        (20
+            , C
+            , queryTime  // EndDateTime(2018, 02, 20)
+            , DurationStr(1, *DurationHorizon::Months)
+            , *BarSizeSetting::_1_day
+            , *WhatToShow::TRADES
+            , UseRTH::OnlyRegularTradingData
+            , FormatDate::AsDate
+            , false
+        );
+
+        while (YW.notDone()) {
+            EC->checkMessages();
+        }
+    }
+
+    EC->eDisconnect();
+    delete EC;
 }
 
 void candleFunctionality() {
@@ -177,7 +190,18 @@ void candleFunctionality() {
 }
 
 // Test candle functionality when inputting real time bar data
-void candlesWithRealTimeBars() {
+void testStreamingAlerts() {
+    App* test = new App("127.0.0.1", "SPY");
+
+    cout << "========================================================================" << endl;
+    cout << "Testing Alert Capabilities For Streaming Data" << endl;
+    cout << "========================================================================" << endl;
+    cout << "Testing to ensure that alerts are capable of being sent back to the     " << endl;
+    cout << "parent class, Option Scanner from each individual ContractData class via" << endl;
+    cout << "callback functionality. Will use SPX if within market hours, or an hour " << endl;
+    cout << "worth of SPY data when outside market hours" << endl;
+    cout << endl;
+    cout << "Retreiving Data ...." << endl;
 
 }
 

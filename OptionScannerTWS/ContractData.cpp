@@ -81,6 +81,10 @@ void ContractData::updateData(Candle c) {
 				// Update stdev values for 5 minute array
 				sd5Min.addValue(c5.high - c5.low);
 				sdVol5Min.addValue(c5.volume);
+
+				// Update cumulative volume for historical records
+				std::pair<long, long> p = { c5.time, c5.volume };
+				cumulativeVolume.push_back(p);
 			}
 		}
 	}

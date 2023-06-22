@@ -61,4 +61,7 @@ private:
 	StandardDeviation sdVol30Sec;
 	StandardDeviation sdVol1Min;
 	StandardDeviation sdVol5Min;
+
+	// For data keeping purposes
+	vector<std::pair<long, long>> cumulativeVolume;
 };

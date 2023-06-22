@@ -7,7 +7,7 @@ void OptionScanner::streamOptionData() {
 	updateStrikes();
 
 	// This functionality will keep track of the time in order to update the strikes periodically
-	constexpr int intervalMinutes = 10;
+	constexpr int intervalMinutes = 1;
 	const std::chrono::minutes interval(intervalMinutes);
 
 	std::chrono::steady_clock::time_point lastExecutionTime = std::chrono::steady_clock::now();
@@ -33,9 +33,10 @@ void OptionScanner::streamOptionData() {
 			if (contracts.size() >= 18) {
 				outputChain();
 			}
+			// std::this_thread::sleep_for(std::chrono::seconds(5));
 		}
 
-		// Every 10 minutes, update the strikes
+		// Every 1 minute, update the strikes
 		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 		std::chrono::minutes elapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - lastExecutionTime);
 
@@ -80,7 +81,6 @@ void OptionScanner::updateStrikes() {
 		// Retrieve Date
 		getDateTime();
 		vector<int> date = getDateVector();
-		cout << date[2] << " " << date[1] << " " << date[0] << endl;
 
 		con.expiry = EndDateTime(date[2], date[1], date[0]);
 
@@ -124,6 +124,12 @@ void OptionScanner::outputChain() {
 			<< put.open << "  |  " << put.high << "  |  " << put.low << "  |  " << put.close << "    " << endl;
 
 		cout << "============================================================================" << endl;
-
 	}
+
+	cout << endl;
+	cout << endl;
+	cout << endl;
+	cout << endl;
+	cout << endl;
+	cout << endl;
 }

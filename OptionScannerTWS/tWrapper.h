@@ -12,6 +12,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <unordered_set>
 
 ///Easier: Just one include statement for all functionality
 #include "TwsApiL0.h"
@@ -89,7 +90,10 @@ public:
 
     // Req will be used to track the request to the client, and used to return the correct information once received
     int Req = 0;
-    
+
+    // Variables to show data request output
+    bool showHistoricalData = false;
+    bool showRealTimeData = false;
 
     //========================================
     // Containers to be used for received data
@@ -170,8 +174,13 @@ public:
         Candle c(reqId, date, open, high, low, close, volume, barCount, WAP, hasGaps);
         underlyingCandles.push_back(c);
 
-      /*  fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
-            , (const  char*)date, open, high, low, close, volume);*/
+        if (showHistoricalData) {
+            fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
+                , (const  char*)date, open, high, low, close, volume);
+
+            // Close the connection as this is for test purposes
+            m_Done = true;
+        }
     }
 
     // Retrieve real time bars, TWS Api currently only returns 5 second candles
@@ -193,7 +202,9 @@ public:
         candleBuffer.buffer.push_back(c);
         candleBuffer.processBuffer(fiveSecCandles);
 
-        std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
+        if (showRealTimeData) {
+            std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
+        }
     }
 
     virtual void cancelRealTimeBars(TickerId tickerId) {
