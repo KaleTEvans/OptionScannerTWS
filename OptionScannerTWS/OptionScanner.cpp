@@ -12,6 +12,7 @@ void OptionScanner::streamOptionData() {
 
 	std::chrono::steady_clock::time_point lastExecutionTime = std::chrono::steady_clock::now();
 
+
 	//==========================================================================
 	// This while loop is important, as it will be open the entire day, and 
 	// collect all options data and be responsible for sending alerts and all
@@ -31,7 +32,7 @@ void OptionScanner::streamOptionData() {
 				}
 			}
 			if (contracts.size() >= 18) {
-				outputChain();
+				// outputChain();
 			}
 			// std::this_thread::sleep_for(std::chrono::seconds(5));
 		}
@@ -82,7 +83,7 @@ void OptionScanner::updateStrikes() {
 		getDateTime();
 		vector<int> date = getDateVector();
 
-		con.expiry = EndDateTime(date[2], date[1], date[0]);
+		con.lastTradeDateOrContractMonth = EndDateTime(date[2], date[1], date[0]);
 
 		// These next variables depend on whether or not a put or call
 		if (i % 5 == 0) {

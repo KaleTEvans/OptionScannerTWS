@@ -67,7 +67,7 @@ void App::retreiveUnderlyingPrice(string interval, string duration, TickerId req
     EC->reqHistoricalData
     (reqId
         , underlying
-        , EndDateTime(todayDate[2], todayDate[1], todayDate[0])
+        , EndDateTime(todayDate[2], todayDate[1], todayDate[0]) + " US/Central"
         , duration
         , interval
         , *WhatToShow::TRADES

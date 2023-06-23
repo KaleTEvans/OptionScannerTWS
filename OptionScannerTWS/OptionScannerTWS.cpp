@@ -18,6 +18,7 @@
 void informalTests();
 // Tests
 void basicHistoricalDataRequest();
+void testRealTimeBars();
 void candleFunctionality();
 void testStreamingAlerts();
 // Test Helper Functions
@@ -28,17 +29,17 @@ bool compareCandles(Candle c1, Candle c2);
 //========================================================================
 int main(void) {
 
-    informalTests();
+    //informalTests();
 
 
     ///Easier: just allocate your wrapper and instantiate the EClientL0 with it.
     const char* host = "127.0.0.1";
     IBString ticker = "SPX";
 
-    //OptionScanner* opt = new OptionScanner(host, ticker);
+    OptionScanner* opt = new OptionScanner(host, ticker);
 
     //opt->populateStrikes();
-    //opt->streamOptionData();
+    opt->streamOptionData();
 
 
     
@@ -59,7 +60,11 @@ void informalTests() {
     // Show welcome will be the initial header for testing options
     constexpr bool showWelcome = true;
 
+    // Test functionality of a basic historical data request
     constexpr bool showBasicRequest = true;
+    // Test functionality of 5 second real time bars for 30 seconds
+    constexpr bool showRealTimeBarsTest = false;
+    // Test ability for ContractData to create functional candles in different time frames
     constexpr bool showCandleFunctionality = false;
 
     // Run tests here
@@ -70,14 +75,15 @@ void informalTests() {
 
 
     if (showBasicRequest) basicHistoricalDataRequest();
+    if (showRealTimeBarsTest) testRealTimeBars();
     if (showCandleFunctionality) candleFunctionality();
 }
 
 void basicHistoricalDataRequest() {
-    tWrapper YW(false);
-    EClientL0* EC = EClientL0::New(&YW);
+    
+    App* test = new App("127.0.0.1", "AAPL");
 
-    YW.showHistoricalData = true;
+    test->YW.showHistoricalData = true;
 
     Contract C;
     C.symbol = "AAPL";
@@ -93,26 +99,59 @@ void basicHistoricalDataRequest() {
     timeinfo = std::gmtime(&rawtime);
     std::strftime(queryTime, 80, "%Y%m%d-%H:%M:%S", timeinfo);
 
-    if (EC->eConnect("127.0.0.1", 7496, 100)) {
-        EC->reqHistoricalData
-        (20
-            , C
-            , queryTime  // EndDateTime(2018, 02, 20)
-            , DurationStr(1, *DurationHorizon::Months)
-            , *BarSizeSetting::_1_day
-            , *WhatToShow::TRADES
-            , UseRTH::OnlyRegularTradingData
-            , FormatDate::AsDate
-            , false
-        );
+    test->EC->reqHistoricalData
+    (10
+        , C
+        , queryTime  // EndDateTime(2018, 02, 20)
+        , "1 M"
+        , "1 day"
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+        , FormatDate::AsDate
+        , false
+        , TagValueListSPtr()
+    );
 
-        while (YW.notDone()) {
-            EC->checkMessages();
-        }
+    while (test->YW.notDone()) {
+        test->EC->checkMessages();
     }
 
-    EC->eDisconnect();
-    delete EC;
+    test->EC->cancelHistoricalData(10);
+
+    delete test;
+}
+
+void testRealTimeBars() {
+    App* test = new App("127.0.0.1", "AAPL");
+
+    test->YW.showRealTimeData = true;
+
+    Contract C;
+    C.symbol = "AAPL";
+    C.secType = "STK";
+    C.currency = "USD";
+    C.exchange = "SMART";
+
+    test->EC->reqRealTimeBars
+    (20
+        , C
+        , 5
+        , *WhatToShow::MIDPOINT
+        , UseRTH::AllTradingData
+    );
+
+    // Let run for 30 secs
+    int timer = 30;
+
+    while (test->YW.notDone()) {
+        if (timer <= 0) break;
+        test->EC->checkMessages();
+
+        Sleep(1000);
+        timer -= 1;
+    }
+
+    delete test;
 }
 
 void candleFunctionality() {

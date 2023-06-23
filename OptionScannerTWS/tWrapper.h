@@ -123,7 +123,9 @@ public:
     virtual void error(const int id, const int errorCode, const IBString errorString) {
         fprintf(stderr, "Error for id=%d: %d = %s\n"
             , id, errorCode, (const char*)errorString);
-        m_ErrorForRequest = (id > 0);    // id == -1 are 'system' messages, not for user requests
+        if (errorCode != 2176) { // 2176 is a weird api error that claims to not allow use of fractional shares
+            m_ErrorForRequest = (id > 0);    // id == -1 are 'system' messages, not for user requests
+        }
     }
 
     ///Safer: uncatched exceptions are catched before they reach the IB library code.
