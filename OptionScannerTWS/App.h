@@ -28,7 +28,7 @@ public:
 
 	void getDateTime();
 	void retreiveUnderlyingPrice(string interval, string duration, TickerId reqId);
-	void populateStrikes(int multiple = 5);
+	void populateStrikes(int multiple = 5, int reqId = 101);
 
 	// Accessors
 	IBString getTicker();
@@ -53,4 +53,7 @@ public:
 	const char* host;
 	vector<Candle> prices;
 	vector<int> strikes;
+
+	// Use test specific data
+	bool useTestData = false;
 };

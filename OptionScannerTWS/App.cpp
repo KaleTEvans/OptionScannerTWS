@@ -63,11 +63,35 @@ void App::getDateTime() {
 
 // This will cause the wrapper to return a vector full of today's SPX price range in minute intervals
 void App::retreiveUnderlyingPrice(string interval, string duration, TickerId reqId) {
-    // Use reqId 101 for SPX underlying price
+
+    ////////////////////////////////////////////
+    // For some reason, using gmt time tends to cause
+    // less errors when using time windows of one hour
+    // or less with historical data, using a temporary
+    // solution here in leiu of further api updates
+    ////////////////////////////////////////////
+
+    IBString endTime;
+
+    if (!useTestData) {
+        endTime = EndDateTime(todayDate[2], todayDate[1], todayDate[0], 14, 59, 59) + " US/Central";
+    }
+    else
+    {
+        std::time_t rawtime;
+        std::tm* timeinfo;
+        char queryTime[80];
+        std::time(&rawtime);
+        timeinfo = std::gmtime(&rawtime);
+        std::strftime(queryTime, 80, "%Y%m%d-%H:%M:%S", timeinfo);
+
+        endTime = queryTime;
+    }
+
     EC->reqHistoricalData
     (reqId
         , underlying
-        , EndDateTime(todayDate[2], todayDate[1], todayDate[0]) + " US/Central"
+        , endTime
         , duration
         , interval
         , *WhatToShow::TRADES
@@ -92,11 +116,11 @@ void App::retreiveUnderlyingPrice(string interval, string duration, TickerId req
 }
 
 // The multiple variable is the increments of options strikes
-void App::populateStrikes(int multiple) {
+void App::populateStrikes(int multiple, int reqId) {
     // Ensure date time is updated
     getDateTime();
     // Retrieve the latest SPX price
-    retreiveUnderlyingPrice("1 min", "1 D", 101);
+    retreiveUnderlyingPrice("1 min", "1 D", reqId);
 
     // Clear the strikes vector
     if (!strikes.empty()) strikes.clear();

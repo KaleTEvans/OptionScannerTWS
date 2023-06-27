@@ -8,6 +8,7 @@
 #include <thread>
 #include <algorithm>
 
+
 class OptionScanner : public App {
 public:
 	// Option scanner will share the same constructor and destructor as App
@@ -15,6 +16,9 @@ public:
 	
 	// This function will use several functions provided in App to begin streaming contract data
 	void streamOptionData();
+
+	void handleObjectCallback(ContractData& cd);
+	void showAlertOutput(int code, Candle c);
 
 private:
 	// We will update the strikes periodically to ensure that they are close to the underlying
@@ -27,6 +31,11 @@ private:
 	// This map will hold all of the contracts and will be updated repeatedly
 	std::unordered_map<int, ContractData*> contracts;
 
+	// Historical data requests need to be incremented
+	int historicalReq = 8000; // 8000 to avoid conflict with SPX price, be sure to update next bull market
+
 	vector<int> optionStrikes;
 	vector<int> sortedContractStrikes;
+
 };
+

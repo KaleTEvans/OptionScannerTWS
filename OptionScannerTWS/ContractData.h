@@ -18,6 +18,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <functional>
 
 #include "tWrapper.h"
 #include "Formulas.h"
@@ -64,4 +65,14 @@ private:
 
 	// For data keeping purposes
 	vector<std::pair<long, long>> cumulativeVolume;
+
+//=========================================
+// Callback Functionality for Alerts
+//=========================================
+public:
+	using AlertFunction = std::function<void(int, double, Candle)>;
+	void registerAlert(AlertFunction alert);
+
+private:
+	AlertFunction alert_;
 };

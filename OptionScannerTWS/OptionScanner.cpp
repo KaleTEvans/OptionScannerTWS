@@ -43,6 +43,7 @@ void OptionScanner::streamOptionData() {
 
 		if (elapsedTime >= interval) {
 			updateStrikes();
+			cout << "Updating strikes ..." << endl;
 			lastExecutionTime = currentTime; // Update the  last execution time
 			std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a short duration
 		}
@@ -50,11 +51,26 @@ void OptionScanner::streamOptionData() {
 	}
 }
 
+//void OptionScanner::handleObjectCallback(ContractData& cd) {
+//	cd.setAlert([this](int code, Candle c) {
+//		showAlertOutput(code, c);
+//	});
+//}
+//
+//void OptionScanner::showAlertOutput(int code, Candle c) {
+//	cout << "Code: " << " volume: " << c.volume << " time: " << c.time << endl;
+//}
+
 void OptionScanner::updateStrikes() {
 	// Clear out the strikes vector for each use
 	optionStrikes.clear();
 
-	populateStrikes();
+	cout << "Populating strikes ..." << endl;
+
+	populateStrikes(5, historicalReq);
+	historicalReq++;
+
+	cout << "Strikes populated" << endl;
 
 	for (auto i : strikes) {
 		// If the contracts map doesn't already contain the strike, then a new one has come into scope
@@ -64,6 +80,10 @@ void OptionScanner::updateStrikes() {
 			optionStrikes.push_back(i + 1);
 		}
 	}
+
+	cout << "Option Strikes: ";
+	for (auto i : optionStrikes) cout << i << " ";
+	cout << endl;
 
 	// Add the strikes to the sorted array
 	for (auto i : optionStrikes) if (i % 5 == 0) sortedContractStrikes.push_back(i);

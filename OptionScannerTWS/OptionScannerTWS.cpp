@@ -14,6 +14,9 @@
 // Informal testing functions
 //=======================================================================
 
+// Turn on tests or main program here
+constexpr bool runTests = true;
+
 // Main launcher for imformal tests
 void informalTests();
 // Tests
@@ -24,27 +27,45 @@ void testStreamingAlerts();
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
+typedef void (*CallbackFunction)(int);
+
+void performOperation(int data, CallbackFunction callback) {
+    // Do some operation
+    while (data >= 0) {
+        cout << data << endl;
+        // Invoke the callback function
+        if (data == 23) callback(data);
+        data--;
+    }
+    
+}
+
+void myCallBack(int value) {
+    cout << "Callback function called for: " << value << endl;
+}
+
 //========================================================================
 // main entry
 //========================================================================
 int main(void) {
 
-    //informalTests();
+    if (runTests) {
+        informalTests();
+    }
+    else {
+        const char* host = "127.0.0.1";
+        IBString ticker = "SPX";
+
+        OptionScanner* opt = new OptionScanner(host, ticker);
+
+        opt->populateStrikes();
+        // opt->streamOptionData();
 
 
-    ///Easier: just allocate your wrapper and instantiate the EClientL0 with it.
-    const char* host = "127.0.0.1";
-    IBString ticker = "SPX";
-
-    OptionScanner* opt = new OptionScanner(host, ticker);
-
-    //opt->populateStrikes();
-    opt->streamOptionData();
-
+        //delete opt;
+    }
 
     
-
-    //delete opt;
 
     return 0;
 }
@@ -61,11 +82,13 @@ void informalTests() {
     constexpr bool showWelcome = true;
 
     // Test functionality of a basic historical data request
-    constexpr bool showBasicRequest = true;
+    constexpr bool showBasicRequest = false;
     // Test functionality of 5 second real time bars for 30 seconds
     constexpr bool showRealTimeBarsTest = false;
     // Test ability for ContractData to create functional candles in different time frames
     constexpr bool showCandleFunctionality = false;
+    // Test ability to receive alerts from ContractData as callbacks
+    constexpr bool showAlertFunctionality = true;
 
     // Run tests here
     if (showWelcome) {
@@ -77,6 +100,7 @@ void informalTests() {
     if (showBasicRequest) basicHistoricalDataRequest();
     if (showRealTimeBarsTest) testRealTimeBars();
     if (showCandleFunctionality) candleFunctionality();
+    if (showAlertFunctionality) testStreamingAlerts();
 }
 
 void basicHistoricalDataRequest() {
@@ -103,8 +127,8 @@ void basicHistoricalDataRequest() {
     (10
         , C
         , queryTime  // EndDateTime(2018, 02, 20)
-        , "1 M"
-        , "1 day"
+        , "3600 S"
+        , "5 secs"
         , *WhatToShow::TRADES
         , UseRTH::OnlyRegularTradingData
         , FormatDate::AsDate
@@ -168,6 +192,8 @@ void candleFunctionality() {
     cout << endl;
     cout << "Retrieving data ..." << endl;
 
+    test->useTestData = true;
+
     test->retreiveUnderlyingPrice("5 secs", "3600 S", 201);
 
     // Vectors to store data for each candle size
@@ -196,8 +222,12 @@ void candleFunctionality() {
 
     // Now create the Contract Data instance and compare candles
     ContractData testCon(111, fiveSec[0]);
+
+    cout << "Initialized Data" << endl;
+
     // Use update data to fill the arrays
-    for (int i = 1; i < fiveSec.size(); i++) testCon.updateData(fiveSec[i]);
+    for (size_t i = 1; i < fiveSec.size(); i++) testCon.updateData(fiveSec[i]);
+
     // Now compare the data
     cout << endl;
     cout << "--- Comparing Data ---" << endl;
@@ -210,17 +240,15 @@ void candleFunctionality() {
     if (test5Sec.size() != fiveSec.size() || test30Sec.size() != thirtySec.size()
         || test1Min.size() != oneMin.size() || test5Min.size() != fiveMin.size()) throw std::runtime_error("Error: Vector sizes do not match");
 
-    for (int i = 0; i < thirtySec.size(); i++) {
+    for (size_t i = 0; i < thirtySec.size(); i++) {
         if (!compareCandles(thirtySec[i], test30Sec[i])) throw std::runtime_error("Error: 30 Second candle comparison incorrect");
     }
     cout << "30 Second candles matched correctly" << endl;
-    for (int i = 0; i < oneMin.size(); i++) {
+    for (size_t i = 0; i < oneMin.size(); i++) {
         if (!compareCandles(oneMin[i], test1Min[i])) throw std::runtime_error("Error: 1 Minute candle comparison incorrect");
-        /*cout << "TWS open: " << thirtySec[i].open << " close: " << thirtySec[i].close << " high: " << thirtySec[i].high << " low: " << thirtySec[i].low << " volume: " << thirtySec[i].volume
-            << " CD open: " << test30Sec[i].open << " close: " << test30Sec[i].close << " high: " << test30Sec[i].high << " low: " << test30Sec[i].low << " volume: " << test30Sec[i].volume << endl;*/
     }
     cout << "One Minute candles matched correctly" << endl;
-    for (int i = 0; i < fiveMin.size(); i++) {
+    for (size_t i = 0; i < fiveMin.size(); i++) {
         if (!compareCandles(fiveMin[i], test5Min[i])) throw std::runtime_error("Error: 5 Minute candle comparison incorrect");
     }
     cout << "Five minute candles matched correctly" << endl;
@@ -242,6 +270,23 @@ void testStreamingAlerts() {
     cout << endl;
     cout << "Retreiving Data ...." << endl;
 
+    test->useTestData = true;
+
+    vector<Candle> fiveSecData;
+    vector<Candle> testFiveSec;
+
+    // Retrieve data from spy
+    test->retreiveUnderlyingPrice("5 secs", "3600 S", 202);
+    for (auto i : test->prices) fiveSecData.push_back(i);
+
+    // Register the callback
+    ContractData testCon(112, fiveSecData[0]);
+    testCon.registerAlert([&](int data, double stDev, Candle c) {
+        cout << "Callback Received: " << data << " stdev: " << stDev << " volume: " << c.volume << " close price: " << c.close << endl;
+    });
+
+    // Fill ContractData object with remaining data
+    for (size_t i = 1; i < fiveSecData.size(); i++) testCon.updateData(fiveSecData[i]);
 }
 
 bool compareCandles(Candle c1, Candle c2) {

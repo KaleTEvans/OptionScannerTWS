@@ -1,7 +1,7 @@
 #include "ContractData.h"
 
 // Helper function to create new candles from time increments
-Candle createNewBars(int id, int increment, const vector<Candle>& data) {
+Candle createNewBars(int id, int increment, const vector<Candle> data) {
 	// Need to get total volume, high and low, and the open and close prices
 	double open = data[data.size() - increment].open;
 	double close = data[data.size() - 1].close;
@@ -11,11 +11,9 @@ Candle createNewBars(int id, int increment, const vector<Candle>& data) {
 	double low = INT_MAX;
 	long volume = 0;
 	
-	for (int i = data.size() - 1; i >= data.size() - increment; i--) {
-		if (i < 0) break; // Initial values causing a vector out of bounds issue for some reason
+	for (size_t i = data.size() - 1; i > 0 && i > data.size() - increment; i--) {
 		high = max(high, data[i].high);
 		low = min(low, data[i].low);
-
 		volume += data[i].volume;
 	}
 
@@ -32,7 +30,7 @@ ContractData::ContractData(TickerId reqId, Candle initData) : contractId(reqId) 
 	sdVol5Sec.addValue(initData.volume);
 
 	// Determine whether call or put using reqId
-	if (!reqId % 5) {
+	if (reqId % 5 == 0) {
 		optionType = "CALL";
 		contractStrike = reqId;
 	}
@@ -52,6 +50,10 @@ void ContractData::updateData(Candle c) {
 	// Update stdev values for 5 sec array
 	sd5Sec.addValue(c.high - c.low);
 	sdVol5Sec.addValue(c.volume);
+
+	if (c.volume > 2 * (sdVol5Sec.getStDev())) {
+		if (alert_) alert_(101, sdVol5Sec.getStDev(), c);
+	}
 
 	// Using the length of the 5 sec array, we will determine if any new candles should be added to the other arrays
 	// 6 increments for the 30 sec
@@ -89,6 +91,10 @@ void ContractData::updateData(Candle c) {
 		}
 	}
 
+}
+
+void ContractData::registerAlert(AlertFunction alert) {
+	alert_ = std::move(alert);
 }
 
 //==================================
