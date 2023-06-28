@@ -63,6 +63,9 @@ private:
 	StandardDeviation sdVol1Min;
 	StandardDeviation sdVol5Min;
 
+	double dailyHigh = 0;
+	double dailyLow = 10000;
+
 	// For data keeping purposes
 	vector<std::pair<long, long>> cumulativeVolume;
 

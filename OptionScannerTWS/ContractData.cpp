@@ -1,7 +1,7 @@
 #include "ContractData.h"
 
 // Helper function to create new candles from time increments
-Candle createNewBars(int id, int increment, const vector<Candle> data) {
+Candle createNewBars(int id, int increment, const vector<Candle>& data) {
 	// Need to get total volume, high and low, and the open and close prices
 	double open = data[data.size() - increment].open;
 	double close = data[data.size() - 1].close;
@@ -87,6 +87,10 @@ void ContractData::updateData(Candle c) {
 				// Update cumulative volume for historical records
 				std::pair<long, long> p = { c5.time, c5.volume };
 				cumulativeVolume.push_back(p);
+
+				// Update daily high and low values to check relative price
+				dailyHigh = max(dailyHigh, c5.high);
+				dailyLow = min(dailyLow, c5.low);
 			}
 		}
 	}

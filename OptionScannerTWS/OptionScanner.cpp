@@ -25,16 +25,17 @@ void OptionScanner::streamOptionData() {
 			for (auto i : YW.fiveSecCandles) {
 				if (contracts.find(i.reqId) == contracts.end()) {
 					ContractData* cd = new ContractData(i.reqId, i);
+					registerAlertCallback(cd);
 					contracts[i.reqId] = cd;
 				}
 				else {
 					contracts[i.reqId]->updateData(i);
 				}
 			}
-			if (contracts.size() >= 18) {
-				// outputChain();
-			}
-			// std::this_thread::sleep_for(std::chrono::seconds(5));
+			/*if (contracts.size() >= 18) {
+				outputChain();
+			}*/
+			std::this_thread::sleep_for(std::chrono::seconds(5));
 		}
 
 		// Every 1 minute, update the strikes
@@ -43,23 +44,23 @@ void OptionScanner::streamOptionData() {
 
 		if (elapsedTime >= interval) {
 			updateStrikes();
-			cout << "Updating strikes ..." << endl;
+			// cout << "Updating strikes ..." << endl;
 			lastExecutionTime = currentTime; // Update the  last execution time
-			std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a short duration
+			//std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a short duration
 		}
 
 	}
 }
 
-//void OptionScanner::handleObjectCallback(ContractData& cd) {
-//	cd.setAlert([this](int code, Candle c) {
-//		showAlertOutput(code, c);
-//	});
-//}
-//
-//void OptionScanner::showAlertOutput(int code, Candle c) {
-//	cout << "Code: " << " volume: " << c.volume << " time: " << c.time << endl;
-//}
+void OptionScanner::registerAlertCallback(ContractData * cd) {
+	cd->registerAlert([this](int data, double stDev, Candle c) {
+		showAlertOutput(data, stDev, c);
+	});
+}
+
+void OptionScanner::showAlertOutput(int data, double stDev, Candle c) {
+	cout << "Callback Received for contract: " << c.reqId << "Code: " << data << " stdev: " << stDev << " volume: " << c.volume << " close price: " << c.close << endl;
+}
 
 void OptionScanner::updateStrikes() {
 	// Clear out the strikes vector for each use

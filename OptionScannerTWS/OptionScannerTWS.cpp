@@ -15,7 +15,7 @@
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = true;
+constexpr bool runTests = false;
 
 // Main launcher for imformal tests
 void informalTests();
@@ -26,23 +26,6 @@ void candleFunctionality();
 void testStreamingAlerts();
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
-
-typedef void (*CallbackFunction)(int);
-
-void performOperation(int data, CallbackFunction callback) {
-    // Do some operation
-    while (data >= 0) {
-        cout << data << endl;
-        // Invoke the callback function
-        if (data == 23) callback(data);
-        data--;
-    }
-    
-}
-
-void myCallBack(int value) {
-    cout << "Callback function called for: " << value << endl;
-}
 
 //========================================================================
 // main entry
@@ -58,8 +41,8 @@ int main(void) {
 
         OptionScanner* opt = new OptionScanner(host, ticker);
 
-        opt->populateStrikes();
-        // opt->streamOptionData();
+        // opt->populateStrikes();
+        opt->streamOptionData();
 
 
         //delete opt;

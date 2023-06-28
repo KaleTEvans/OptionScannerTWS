@@ -66,17 +66,21 @@ public:
     CandleBuffer(size_t capacity) : capacity(capacity) {}
 
     void processBuffer(std::vector<T>& wrapperContainer) {
-        if (buffer.size() == capacity) {
+        if (buffer.size() == capacity && bufferReqs.size() == capacity) {
             std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
             // Append buffer contents to the target vector
             wrapperContainer.clear();
             wrapperContainer.insert(wrapperContainer.end(), buffer.begin(), buffer.end());
             // Clear the buffer
             buffer.clear();
+            // Clear the set
+            bufferReqs.clear();
         }
     }
 
 public:
+    // bufferReqs will ensure we have all reqIds from the request list before emptying the buffer
+    std::unordered_set<int> bufferReqs;
     std::vector<T> buffer;
     size_t capacity;
 };
@@ -201,7 +205,11 @@ public:
 
         // Upon receiving the price request, populate candlestick data
         Candle c(reqId, time, open, high, low, close, volume, wap, count);
-        candleBuffer.buffer.push_back(c);
+        if (candleBuffer.bufferReqs.find(c.reqId) == candleBuffer.bufferReqs.end()) {
+            candleBuffer.buffer.push_back(c);
+            
+            candleBuffer.bufferReqs.insert(c.reqId);
+        }
         candleBuffer.processBuffer(fiveSecCandles);
 
         if (showRealTimeData) {
