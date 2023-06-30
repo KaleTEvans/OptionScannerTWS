@@ -73,7 +73,7 @@ private:
 // Callback Functionality for Alerts
 //=========================================
 public:
-	using AlertFunction = std::function<void(int, double, Candle)>;
+	using AlertFunction = std::function<void(int, double, double, Candle)>;
 	void registerAlert(AlertFunction alert);
 
 private:

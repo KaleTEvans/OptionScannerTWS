@@ -21,5 +21,8 @@ an alert. The 5 second, 30 second, 1 minute, and 5 minute time frames will all b
 * C++
 * TWS API (Interactive Brokers)
 
+## Progress Updates
+<img src="./assets/TerminalOutput1.jpg" />
+
 ## Author
 Kale Evans

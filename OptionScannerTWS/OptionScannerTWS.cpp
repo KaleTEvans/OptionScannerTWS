@@ -20,10 +20,10 @@ constexpr bool runTests = false;
 // Main launcher for imformal tests
 void informalTests();
 // Tests
-void basicHistoricalDataRequest();
-void testRealTimeBars();
-void candleFunctionality();
-void testStreamingAlerts();
+void basicHistoricalDataRequest(App * test);
+void testRealTimeBars(App* test);
+void candleFunctionality(App* test);
+void testStreamingAlerts(App* test);
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
@@ -79,16 +79,22 @@ void informalTests() {
         cout << "Beginning tests ..." << endl;
     }
 
+    // Create a connection to TWS for use in all functions
+    App* test = new App("127.0.0.1", "SPY");
 
-    if (showBasicRequest) basicHistoricalDataRequest();
-    if (showRealTimeBarsTest) testRealTimeBars();
-    if (showCandleFunctionality) candleFunctionality();
-    if (showAlertFunctionality) testStreamingAlerts();
+    if (showBasicRequest) basicHistoricalDataRequest(test);
+    if (showRealTimeBarsTest) testRealTimeBars(test);
+    if (showCandleFunctionality) candleFunctionality(test);
+    if (showAlertFunctionality) testStreamingAlerts(test);
+
+    delete test;
 }
 
-void basicHistoricalDataRequest() {
+void basicHistoricalDataRequest(App* test) {
     
-    App* test = new App("127.0.0.1", "AAPL");
+    cout << "========================================================================" << endl;
+    cout << "Testing Historical Data Functionality" << endl;
+    cout << "========================================================================" << endl;
 
     test->YW.showHistoricalData = true;
 
@@ -125,11 +131,13 @@ void basicHistoricalDataRequest() {
 
     test->EC->cancelHistoricalData(10);
 
-    delete test;
 }
 
-void testRealTimeBars() {
-    App* test = new App("127.0.0.1", "AAPL");
+void testRealTimeBars(App* test) {
+
+    cout << "========================================================================" << endl;
+    cout << "Testing Real Time Bar Output" << endl;
+    cout << "========================================================================" << endl;
 
     test->YW.showRealTimeData = true;
 
@@ -147,8 +155,8 @@ void testRealTimeBars() {
         , UseRTH::AllTradingData
     );
 
-    // Let run for 30 secs
-    int timer = 30;
+    // Let run for 15 secs
+    int timer = 15;
 
     while (test->YW.notDone()) {
         if (timer <= 0) break;
@@ -157,13 +165,9 @@ void testRealTimeBars() {
         Sleep(1000);
         timer -= 1;
     }
-
-    delete test;
 }
 
-void candleFunctionality() {
-
-    App* test = new App("127.0.0.1", "SPY");
+void candleFunctionality(App* test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing Candle Functionality" << endl;
@@ -177,7 +181,7 @@ void candleFunctionality() {
 
     test->useTestData = true;
 
-    test->retreiveUnderlyingPrice("5 secs", "3600 S", 201);
+    test->retreiveUnderlyingPrice("5 secs", "3600 S", 21);
 
     // Vectors to store data for each candle size
     vector<Candle> fiveSec;
@@ -191,15 +195,15 @@ void candleFunctionality() {
     cout << "5 second data for SPY received, size: " << fiveSec.size() << " bars" << endl;
 
     // Repeat for other intervals
-    test->retreiveUnderlyingPrice("30 secs", "3600 S", 202);
+    test->retreiveUnderlyingPrice("30 secs", "3600 S", 22);
     for (auto i : test->prices) thirtySec.push_back(i);
     cout << "30 second data for SPY received, size: " << thirtySec.size() << " bars" << endl;
 
-    test->retreiveUnderlyingPrice("1 min", "3600 S", 203);
+    test->retreiveUnderlyingPrice("1 min", "3600 S", 23);
     for (auto i : test->prices) oneMin.push_back(i);
     cout << "1 min data for SPY received, size: " << oneMin.size() << " bars" << endl;
 
-    test->retreiveUnderlyingPrice("5 mins", "3600 S", 204);
+    test->retreiveUnderlyingPrice("5 mins", "3600 S", 24);
     for (auto i : test->prices) fiveMin.push_back(i);
     cout << "5 min data for SPY received, size: " << fiveMin.size() << " bars" << endl;
 
@@ -236,12 +240,10 @@ void candleFunctionality() {
     }
     cout << "Five minute candles matched correctly" << endl;
 
-    delete test;
 }
 
 // Test candle functionality when inputting real time bar data
-void testStreamingAlerts() {
-    App* test = new App("127.0.0.1", "SPY");
+void testStreamingAlerts(App* test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing Alert Capabilities For Streaming Data" << endl;
@@ -259,13 +261,13 @@ void testStreamingAlerts() {
     vector<Candle> testFiveSec;
 
     // Retrieve data from spy
-    test->retreiveUnderlyingPrice("5 secs", "3600 S", 202);
+    test->retreiveUnderlyingPrice("5 secs", "3600 S", 31);
     for (auto i : test->prices) fiveSecData.push_back(i);
 
     // Register the callback
     ContractData testCon(112, fiveSecData[0]);
-    testCon.registerAlert([&](int data, double stDev, Candle c) {
-        cout << "Callback Received: " << data << " stdev: " << stDev << " volume: " << c.volume << " close price: " << c.close << endl;
+    testCon.registerAlert([&](int data, double stDevVol, double stDevPrice, Candle c) {
+        cout << "Callback Received: " << data << " stdev: " << stDevVol << " volume: " << c.volume << " close price: " << c.close << endl;
     });
 
     // Fill ContractData object with remaining data

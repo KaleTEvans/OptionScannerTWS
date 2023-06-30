@@ -67,7 +67,7 @@ public:
 
     void processBuffer(std::vector<T>& wrapperContainer) {
         if (buffer.size() == capacity && bufferReqs.size() == capacity) {
-            std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
+            // std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
             // Append buffer contents to the target vector
             wrapperContainer.clear();
             wrapperContainer.insert(wrapperContainer.end(), buffer.begin(), buffer.end());

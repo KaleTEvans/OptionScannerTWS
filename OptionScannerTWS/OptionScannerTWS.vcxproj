@@ -158,6 +158,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AlertHandler.h" />
     <ClInclude Include="App.h" />
     <ClInclude Include="ContractData.h" />
     <ClInclude Include="Formulas.h" />

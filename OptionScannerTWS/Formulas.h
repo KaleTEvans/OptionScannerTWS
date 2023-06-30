@@ -27,6 +27,10 @@ public:
         stdDev = std::sqrt(variance);
     }
 
+    double getTotal() const {
+        return n;
+    }
+
     double getStDev() const {
         return stdDev;
     }

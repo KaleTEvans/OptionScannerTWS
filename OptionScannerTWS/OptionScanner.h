@@ -1,7 +1,17 @@
+
+//===============================================================================
+// Option scanner will set up requests for all contract data residing around a
+// single stock, or in this case the SPX index. It will continously update all
+// connected contracts throughout the day, and receive and monitor alerts. At
+// the end of the day, OptionScanner will also be responsible for packaging and
+// sending all contract data to the db
+//===============================================================================
+
 #pragma once
 
 #include "App.h"
 #include "ContractData.h"
+#include "AlertHandler.h"
 
 #include <unordered_map>
 #include <chrono>
@@ -18,7 +28,7 @@ public:
 	void streamOptionData();
 
 	void registerAlertCallback(ContractData * cd);
-	void showAlertOutput(int data, double stDev, Candle c);
+	void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
 
 private:
 	// We will update the strikes periodically to ensure that they are close to the underlying
@@ -37,5 +47,6 @@ private:
 	vector<int> optionStrikes;
 	vector<int> sortedContractStrikes;
 
+	AlertHandler ah;
 };
 

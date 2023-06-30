@@ -51,8 +51,11 @@ void ContractData::updateData(Candle c) {
 	sd5Sec.addValue(c.high - c.low);
 	sdVol5Sec.addValue(c.volume);
 
-	if (c.volume > 2 * (sdVol5Sec.getStDev())) {
-		if (alert_) alert_(101, sdVol5Sec.getStDev(), c);
+	//==============================================
+	// 5 Second Timeframe Alert Options
+	//==============================================
+	if (c.volume > 5 * (sdVol5Sec.getStDev()) && sdVol5Sec.getStDev() > 0 && sdVol5Sec.getTotal() > 9) {
+		if (alert_) alert_(1001, sdVol5Sec.getStDev(), sd5Sec.getStDev(), c);
 	}
 
 	// Using the length of the 5 sec array, we will determine if any new candles should be added to the other arrays
@@ -65,6 +68,13 @@ void ContractData::updateData(Candle c) {
 		sd30Sec.addValue(c6.high - c6.low);
 		sdVol30Sec.addValue(c6.volume);
 
+		//==============================================
+		// 30 Second Timeframe Alert Options
+		//==============================================
+		if (c6.volume > 3 * (sdVol30Sec.getStDev()) && sdVol30Sec.getStDev() > 0 && sdVol30Sec.getTotal() > 9) {
+			if (alert_) alert_(1002, sdVol30Sec.getStDev(), sd30Sec.getStDev(), c6);
+		}
+
 		// Now we'll reference the 30 sec array for the 1min, so we only need to use increments of 2
 		if (thirtySecCandles.size() > 0 && thirtySecCandles.size() % 2 == 0) {
 			//std::cout << thirtySecCandles.size() << " " << oneMinCandles.size() << std::endl;
@@ -75,6 +85,13 @@ void ContractData::updateData(Candle c) {
 			sd1Min.addValue(c1.high - c1.low);
 			sdVol1Min.addValue(c1.volume);
 
+			//==============================================
+			// 1 Minute Timeframe Alert Options
+			//==============================================
+			if (c1.volume > 2 * (sdVol1Min.getStDev()) && sdVol1Min.getStDev() > 0 && sdVol1Min.getTotal() > 9) {
+				if (alert_) alert_(1003, sdVol1Min.getStDev(), sd1Min.getStDev(), c1);
+			}
+
 			// Referencing the 1 min for the 5min array we can use increments of 5
 			if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5 == 0) {
 				Candle c5 = createNewBars(contractId, 5, oneMinCandles);
@@ -83,6 +100,13 @@ void ContractData::updateData(Candle c) {
 				// Update stdev values for 5 minute array
 				sd5Min.addValue(c5.high - c5.low);
 				sdVol5Min.addValue(c5.volume);
+
+				//==============================================
+				// 5 Minute Timeframe Alert Options
+				//==============================================
+				if (c5.volume > 2 * (sdVol5Min.getStDev()) && sdVol5Min.getStDev() > 0 && sdVol5Min.getTotal() > 9) {
+					if (alert_) alert_(102, sdVol5Min.getStDev(), sd5Min.getStDev(), c5);
+				}
 
 				// Update cumulative volume for historical records
 				std::pair<long, long> p = { c5.time, c5.volume };

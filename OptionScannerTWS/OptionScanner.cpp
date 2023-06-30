@@ -53,13 +53,15 @@ void OptionScanner::streamOptionData() {
 }
 
 void OptionScanner::registerAlertCallback(ContractData * cd) {
-	cd->registerAlert([this](int data, double stDev, Candle c) {
-		showAlertOutput(data, stDev, c);
+	cd->registerAlert([this](int data, double stDevVol, double stDevPrice, Candle c) {
+		Alert a(c, data, stDevVol, stDevPrice);
+		ah.outputAlert(a);
+		// showAlertOutput(data, stDevVol, stDevPrice, c);
 	});
 }
 
-void OptionScanner::showAlertOutput(int data, double stDev, Candle c) {
-	cout << "Callback Received for contract: " << c.reqId << "Code: " << data << " stdev: " << stDev << " volume: " << c.volume << " close price: " << c.close << endl;
+void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
+	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " stdev: " << stDevVol << " volume: " << c.volume << " close price: " << c.close << endl;
 }
 
 void OptionScanner::updateStrikes() {
@@ -82,6 +84,7 @@ void OptionScanner::updateStrikes() {
 		}
 	}
 
+
 	cout << "Option Strikes: ";
 	for (auto i : optionStrikes) cout << i << " ";
 	cout << endl;
@@ -89,6 +92,11 @@ void OptionScanner::updateStrikes() {
 	// Add the strikes to the sorted array
 	for (auto i : optionStrikes) if (i % 5 == 0) sortedContractStrikes.push_back(i);
 	std::sort(sortedContractStrikes.begin(), sortedContractStrikes.end());
+
+	// Be sure to update the size of the buffer capaciity in the wrapper if more strikes are added
+	if (sortedContractStrikes.size() > 18) {
+		YW.candleBuffer.capacity = (sortedContractStrikes.size());
+	}
 
 	// Now we will create a request for each option strike not already in the map
 	for (auto i : optionStrikes) {
