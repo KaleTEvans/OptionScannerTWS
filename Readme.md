@@ -24,5 +24,8 @@ an alert. The 5 second, 30 second, 1 minute, and 5 minute time frames will all b
 ## Progress Updates
 <img src="Assets/TerminalOutput1.PNG" />
 
+1. Very raw form of alerts has been completed, outputting to terminal. All we are doing here is checking for volume above normal 
+	standard deviations for each timeframe. 
+
 ## Author
 Kale Evans
