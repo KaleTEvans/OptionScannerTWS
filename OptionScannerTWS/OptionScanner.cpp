@@ -2,6 +2,10 @@
 
 OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, ticker) {}
 
+//============================================================
+// Open Market Data Processing Funtions
+//============================================================
+
 void OptionScanner::streamOptionData() {
 
 	updateStrikes();
@@ -18,6 +22,7 @@ void OptionScanner::streamOptionData() {
 	// collect all options data and be responsible for sending alerts and all
 	// other info
 	//==========================================================================
+
 	while (YW.notDone()) {
 		EC->checkMessages();
 
@@ -32,9 +37,7 @@ void OptionScanner::streamOptionData() {
 					contracts[i.reqId]->updateData(i);
 				}
 			}
-			/*if (contracts.size() >= 18) {
-				outputChain();
-			}*/
+
 			std::this_thread::sleep_for(std::chrono::seconds(5));
 		}
 
@@ -42,33 +45,27 @@ void OptionScanner::streamOptionData() {
 		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 		std::chrono::minutes elapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - lastExecutionTime);
 
+		// Get the current time, and check with market close (3pm cst) to determine when to end the connection
+		std::time_t tmNow = std::time(NULL);
+		struct tm t = *localtime(&tmNow);
+
+		if (t.tm_hour == 15 && t.tm_sec >= 0) {
+			prepareContractData();
+			break;
+		}
+
 		if (elapsedTime >= interval) {
 			updateStrikes();
-			// cout << "Updating strikes ..." << endl;
+			cout << "Buffer size currently at: " << YW.candleBuffer.buffer.size() << endl;
 			lastExecutionTime = currentTime; // Update the  last execution time
-			//std::this_thread::sleep_for(std::chrono::seconds(1)); // Sleep for a short duration
 		}
 
 	}
 }
 
-void OptionScanner::registerAlertCallback(ContractData * cd) {
-	cd->registerAlert([this](int data, double stDevVol, double stDevPrice, Candle c) {
-		Alert a(c, data, stDevVol, stDevPrice);
-		ah.outputAlert(a);
-		// showAlertOutput(data, stDevVol, stDevPrice, c);
-	});
-}
-
-void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
-	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " stdev: " << stDevVol << " volume: " << c.volume << " close price: " << c.close << endl;
-}
-
 void OptionScanner::updateStrikes() {
 	// Clear out the strikes vector for each use
 	optionStrikes.clear();
-
-	cout << "Populating strikes ..." << endl;
 
 	populateStrikes(5, historicalReq);
 	historicalReq++;
@@ -135,6 +132,38 @@ void OptionScanner::updateStrikes() {
 
 	}
 }
+
+//===================================================
+// Alert Callback Functions
+//===================================================
+
+void OptionScanner::registerAlertCallback(ContractData* cd) {
+	cd->registerAlert([this](int data, double stDevVol, double stDevPrice, Candle c) {
+		Alert a(c, data, stDevVol, stDevPrice);
+		ah.outputAlert(a);
+		// showAlertOutput(data, stDevVol, stDevPrice, c);
+		});
+}
+
+void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
+	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " stdev: " << stDevVol << " volume: " << c.volume << " close price: " << c.close << endl;
+}
+
+
+//===================================================
+// Post Close Data Processing
+//===================================================
+
+void OptionScanner::prepareContractData() {
+	std::cout << "Market closed, ending realTimeBar connection" << std::endl;
+	
+	for (auto i : contracts) EC->cancelRealTimeBars(i.first);
+}
+
+
+//===================================================
+// Debuging and Test Output
+//===================================================
 
 void OptionScanner::outputChain() {
 	// This will be an attempt to simulate a dynamic terminal

@@ -193,16 +193,6 @@ public:
     virtual void realtimeBar(TickerId reqId, long time, double open, double high,
         double low, double close, long volume, double wap, int count) {
 
-        // Get the current time, and check with market close (3pm cst) to determine when to end the connection
-        std::time_t tmNow = std::time(NULL);
-        struct tm t = *localtime(&tmNow);
-
-        if (t.tm_hour == 15 && t.tm_min == 0) {
-            std::cout << "Market closed, ending realTimeBar connection" << std::endl;
-            m_Done = true;
-            return;
-        }
-
         // Upon receiving the price request, populate candlestick data
         Candle c(reqId, time, open, high, low, close, volume, wap, count);
         if (candleBuffer.bufferReqs.find(c.reqId) == candleBuffer.bufferReqs.end()) {

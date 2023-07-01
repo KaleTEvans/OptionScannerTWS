@@ -41,7 +41,6 @@ int main(void) {
 
         OptionScanner* opt = new OptionScanner(host, ticker);
 
-        // opt->populateStrikes();
         opt->streamOptionData();
 
 
@@ -181,7 +180,7 @@ void candleFunctionality(App* test) {
 
     test->useTestData = true;
 
-    test->retreiveUnderlyingPrice("5 secs", "3600 S", 21);
+    test->retreiveRecentData("5 secs", "3600 S", 21);
 
     // Vectors to store data for each candle size
     vector<Candle> fiveSec;
@@ -195,15 +194,15 @@ void candleFunctionality(App* test) {
     cout << "5 second data for SPY received, size: " << fiveSec.size() << " bars" << endl;
 
     // Repeat for other intervals
-    test->retreiveUnderlyingPrice("30 secs", "3600 S", 22);
+    test->retreiveRecentData("30 secs", "3600 S", 22);
     for (auto i : test->prices) thirtySec.push_back(i);
     cout << "30 second data for SPY received, size: " << thirtySec.size() << " bars" << endl;
 
-    test->retreiveUnderlyingPrice("1 min", "3600 S", 23);
+    test->retreiveRecentData("1 min", "3600 S", 23);
     for (auto i : test->prices) oneMin.push_back(i);
     cout << "1 min data for SPY received, size: " << oneMin.size() << " bars" << endl;
 
-    test->retreiveUnderlyingPrice("5 mins", "3600 S", 24);
+    test->retreiveRecentData("5 mins", "3600 S", 24);
     for (auto i : test->prices) fiveMin.push_back(i);
     cout << "5 min data for SPY received, size: " << fiveMin.size() << " bars" << endl;
 
@@ -261,7 +260,7 @@ void testStreamingAlerts(App* test) {
     vector<Candle> testFiveSec;
 
     // Retrieve data from spy
-    test->retreiveUnderlyingPrice("5 secs", "3600 S", 31);
+    test->retreiveRecentData("5 secs", "3600 S", 31);
     for (auto i : test->prices) fiveSecData.push_back(i);
 
     // Register the callback

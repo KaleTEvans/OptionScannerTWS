@@ -27,8 +27,12 @@ public:
 	// This function will use several functions provided in App to begin streaming contract data
 	void streamOptionData();
 
+	// Alert Callback Functions
 	void registerAlertCallback(ContractData * cd);
 	void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
+
+	// Functions for storing data after market close
+	void prepareContractData();
 
 private:
 	// We will update the strikes periodically to ensure that they are close to the underlying

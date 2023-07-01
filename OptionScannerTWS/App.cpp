@@ -2,8 +2,6 @@
 
 App::App(const char* host, IBString ticker) : host(host), ticker(ticker), YW(false) {
 
-    cout << "Scanner Initialized" << endl;
-
     // Initialize connection
     EC = EClientL0::New(&YW);
     // Connect to TWS
@@ -41,8 +39,8 @@ App::~App() {
 }
 
 // Accessors
-IBString App::getTicker() { return ticker; }
-vector<int> App::getDateVector() { return todayDate; }
+IBString App::getTicker() const { return ticker; }
+vector<int> App::getDateVector() const { return todayDate; }
 
 void App::getDateTime() {
     std::time_t tmNow;
@@ -53,28 +51,36 @@ void App::getDateTime() {
         todayDate.push_back(t.tm_mday);
         todayDate.push_back(t.tm_mon + 1);
         todayDate.push_back(t.tm_year + 1900);
+        todayDate.push_back(t.tm_hour);
+        todayDate.push_back(t.tm_min);
+        todayDate.push_back(t.tm_sec);
     }
     else {
         todayDate[0] = t.tm_mday;
         todayDate[1] = t.tm_mon + 1;
         todayDate[2] = t.tm_year + 1900;
+        todayDate[3] = t.tm_hour;
+        todayDate[4] = t.tm_min;
+        todayDate[5] = t.tm_sec;
     }
 }
 
 // This will cause the wrapper to return a vector full of today's SPX price range in minute intervals
-void App::retreiveUnderlyingPrice(string interval, string duration, TickerId reqId) {
+void App::retreiveRecentData(string interval, string duration, TickerId reqId) {
 
-    ////////////////////////////////////////////
+    //================================================
     // For some reason, using gmt time tends to cause
     // less errors when using time windows of one hour
     // or less with historical data, using a temporary
     // solution here in leiu of further api updates
-    ////////////////////////////////////////////
+    // just for the purpose of testing
+    //================================================
 
     IBString endTime;
 
     if (!useTestData) {
-        endTime = EndDateTime(todayDate[2], todayDate[1], todayDate[0], 14, 59, 59) + " US/Central";
+        endTime = EndDateTime(todayDate[2], todayDate[1], todayDate[0], todayDate[3],
+            todayDate[4], todayDate[5]) + " US/Central";
     }
     else
     {
@@ -120,7 +126,7 @@ void App::populateStrikes(int multiple, int reqId) {
     // Ensure date time is updated
     getDateTime();
     // Retrieve the latest SPX price
-    retreiveUnderlyingPrice("1 min", "1 D", reqId);
+    retreiveHistoricalData("1 min", "1 D", reqId);
 
     // Clear the strikes vector
     if (!strikes.empty()) strikes.clear();
