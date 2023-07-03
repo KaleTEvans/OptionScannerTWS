@@ -30,7 +30,7 @@ using std::min;
 
 class ContractData {
 public:
-	ContractData(TickerId reqId, Candle initData);
+	ContractData(TickerId reqId, Candle initData, bool isUnderlying = false);
 
 	// With each incoming candle, we will need to update the vectors for each time frame
 	// This will also update stDevs for each time series
@@ -42,9 +42,9 @@ public:
 	vector<Candle> getOneMinData() const;
 	vector<Candle> getFiveMinData() const;
 
-	TickerId contractId; // Different from contractStrike for unique key put
-	int contractStrike;
-	string optionType;
+	TickerId contractId = 0; // Different from contractStrike for unique key put
+	int contractStrike = 0;
+	string optionType = "";
 
 private:
 	vector<Candle> fiveSecCandles;
@@ -66,8 +66,16 @@ private:
 	double dailyHigh = 0;
 	double dailyLow = 10000;
 
+	// To be used for local high and low in 30 minute frames
+	double localHigh = 0;
+	double localLow = 10000;
+
 	// For data keeping purposes
 	vector<std::pair<long, long>> cumulativeVolume;
+
+	// We will also need to keep a connection open for the underlying price
+	// Will cancel all alerts when an underlying security is being passed through
+	bool isUnderlying = false;
 
 //=========================================
 // Callback Functionality for Alerts

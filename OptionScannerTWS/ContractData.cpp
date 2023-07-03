@@ -22,7 +22,7 @@ Candle createNewBars(int id, int increment, const vector<Candle>& data) {
 	return c1;
 }
 
-ContractData::ContractData(TickerId reqId, Candle initData) : contractId(reqId) {
+ContractData::ContractData(TickerId reqId, Candle initData, bool isUnderlying) : contractId(reqId) {
 	// Push the first candle only in the 5 sec array
 	fiveSecCandles.push_back(initData);
 	// Update the standard deviation class for the first 5 sec candle
@@ -30,13 +30,15 @@ ContractData::ContractData(TickerId reqId, Candle initData) : contractId(reqId) 
 	sdVol5Sec.addValue(initData.volume);
 
 	// Determine whether call or put using reqId
-	if (reqId % 5 == 0) {
-		optionType = "CALL";
-		contractStrike = reqId;
-	}
-	else {
-		optionType = "PUT";
-		contractStrike = reqId - 1;
+	if (!isUnderlying) {
+		if (reqId % 5 == 0) {
+			optionType = "CALL";
+			contractStrike = reqId;
+		}
+		else {
+			optionType = "PUT";
+			contractStrike = reqId - 1;
+		}
 	}
 }
 
@@ -54,7 +56,7 @@ void ContractData::updateData(Candle c) {
 	//==============================================
 	// 5 Second Timeframe Alert Options
 	//==============================================
-	if (c.volume > 5 * (sdVol5Sec.getStDev()) && sdVol5Sec.getStDev() > 0 && sdVol5Sec.getTotal() > 9) {
+	if (c.volume > 5 * (sdVol5Sec.getStDev()) && sdVol5Sec.getStDev() > 0 && sdVol5Sec.getTotal() > 9 && !isUnderlying) {
 		if (alert_) alert_(1001, sdVol5Sec.getStDev(), sd5Sec.getStDev(), c);
 	}
 
@@ -71,7 +73,7 @@ void ContractData::updateData(Candle c) {
 		//==============================================
 		// 30 Second Timeframe Alert Options
 		//==============================================
-		if (c6.volume > 3 * (sdVol30Sec.getStDev()) && sdVol30Sec.getStDev() > 0 && sdVol30Sec.getTotal() > 9) {
+		if (c6.volume > 3 * (sdVol30Sec.getStDev()) && sdVol30Sec.getStDev() > 0 && sdVol30Sec.getTotal() > 9 && !isUnderlying) {
 			if (alert_) alert_(1002, sdVol30Sec.getStDev(), sd30Sec.getStDev(), c6);
 		}
 
@@ -88,7 +90,7 @@ void ContractData::updateData(Candle c) {
 			//==============================================
 			// 1 Minute Timeframe Alert Options
 			//==============================================
-			if (c1.volume > 2 * (sdVol1Min.getStDev()) && sdVol1Min.getStDev() > 0 && sdVol1Min.getTotal() > 9) {
+			if (c1.volume > 2 * (sdVol1Min.getStDev()) && sdVol1Min.getStDev() > 0 && sdVol1Min.getTotal() > 9 && !isUnderlying) {
 				if (alert_) alert_(1003, sdVol1Min.getStDev(), sd1Min.getStDev(), c1);
 			}
 
@@ -104,7 +106,7 @@ void ContractData::updateData(Candle c) {
 				//==============================================
 				// 5 Minute Timeframe Alert Options
 				//==============================================
-				if (c5.volume > 2 * (sdVol5Min.getStDev()) && sdVol5Min.getStDev() > 0 && sdVol5Min.getTotal() > 9) {
+				if (c5.volume > 2 * (sdVol5Min.getStDev()) && sdVol5Min.getStDev() > 0 && sdVol5Min.getTotal() > 9 && !isUnderlying) {
 					if (alert_) alert_(102, sdVol5Min.getStDev(), sd5Min.getStDev(), c5);
 				}
 

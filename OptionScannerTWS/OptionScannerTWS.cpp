@@ -64,13 +64,13 @@ void informalTests() {
     constexpr bool showWelcome = true;
 
     // Test functionality of a basic historical data request
-    constexpr bool showBasicRequest = false;
+    constexpr bool showBasicRequest = true;
     // Test functionality of 5 second real time bars for 30 seconds
     constexpr bool showRealTimeBarsTest = false;
     // Test ability for ContractData to create functional candles in different time frames
     constexpr bool showCandleFunctionality = false;
     // Test ability to receive alerts from ContractData as callbacks
-    constexpr bool showAlertFunctionality = true;
+    constexpr bool showAlertFunctionality = false;
 
     // Run tests here
     if (showWelcome) {

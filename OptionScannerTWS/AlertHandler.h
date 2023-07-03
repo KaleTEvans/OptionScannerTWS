@@ -61,7 +61,7 @@ public:
 	time_t time;
 	string dateTime;
 	int strike;
-	std::string optionType;
+	string optionType;
 	int code;
 	double closePrice;
 	double vol;

@@ -1,6 +1,12 @@
 #include "OptionScanner.h"
 
-OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, ticker) {}
+OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, ticker) {
+	underlying.symbol = getTicker();
+	underlying.secType = *SecType::OPT;
+	underlying.currency = "USD";
+	underlying.exchange = *Exchange::IB_SMART;
+	underlying.primaryExchange = *Exchange::CBOE;
+}
 
 //============================================================
 // Open Market Data Processing Funtions
@@ -16,6 +22,15 @@ void OptionScanner::streamOptionData() {
 
 	std::chrono::steady_clock::time_point lastExecutionTime = std::chrono::steady_clock::now();
 
+	// Start a request for realtime bars for the underlying
+	EC->reqRealTimeBars
+	(1234
+		, underlying
+		, 5
+		, *WhatToShow::TRADES
+		, UseRTH::OnlyRegularTradingData
+	);
+
 
 	//==========================================================================
 	// This while loop is important, as it will be open the entire day, and 
@@ -26,12 +41,20 @@ void OptionScanner::streamOptionData() {
 	while (YW.notDone()) {
 		EC->checkMessages();
 
+		// Update underlying
+		if (YW.underlyingRTBs.reqId == 1234) {
+			if (SPXBars->contractId == 0) SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);
+
+			SPXBars->updateData(YW.underlyingRTBs);
+		}
+
 		if (!YW.fiveSecCandles.empty()) {
 			for (auto i : YW.fiveSecCandles) {
 				if (contracts.find(i.reqId) == contracts.end()) {
 					ContractData* cd = new ContractData(i.reqId, i);
 					registerAlertCallback(cd);
 					contracts[i.reqId] = cd;
+
 				}
 				else {
 					contracts[i.reqId]->updateData(i);
@@ -46,10 +69,9 @@ void OptionScanner::streamOptionData() {
 		std::chrono::minutes elapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - lastExecutionTime);
 
 		// Get the current time, and check with market close (3pm cst) to determine when to end the connection
-		std::time_t tmNow = std::time(NULL);
-		struct tm t = *localtime(&tmNow);
+		getDateTime();
 
-		if (t.tm_hour == 15 && t.tm_sec >= 0) {
+		if (getDateVector()[0] == 15 && getDateVector()[5] >= 0) {
 			prepareContractData();
 			break;
 		}

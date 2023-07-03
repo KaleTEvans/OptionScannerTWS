@@ -79,6 +79,7 @@ void App::retreiveRecentData(string interval, string duration, TickerId reqId) {
     IBString endTime;
 
     if (!useTestData) {
+        getDateTime();
         endTime = EndDateTime(todayDate[2], todayDate[1], todayDate[0], todayDate[3],
             todayDate[4], todayDate[5]) + " US/Central";
     }
@@ -126,7 +127,7 @@ void App::populateStrikes(int multiple, int reqId) {
     // Ensure date time is updated
     getDateTime();
     // Retrieve the latest SPX price
-    retreiveHistoricalData("1 min", "1 D", reqId);
+    retreiveRecentData("1 min", "1 D", reqId);
 
     // Clear the strikes vector
     if (!strikes.empty()) strikes.clear();

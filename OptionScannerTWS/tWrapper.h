@@ -21,7 +21,10 @@
 #include "TwsApiDefs.h"
 using namespace TwsApi; // for TwsApiDefs.h
 
-// **** Use this definition for candlesticks
+//================================================
+// Use this definition for candlesticks
+//================================================
+
 class Candle {
 public:
     // Constructor for historical data
@@ -42,6 +45,16 @@ public:
         double low, double close, long volume) :
         reqId(reqId), time(time), open(open), high(high), low(low),
         close(close), volume(volume) {}
+
+    // Default Constructor
+    Candle() {
+        reqId = 0;
+        open = 0;
+        close = 0;
+        high = 0;
+        low = 0;
+        volume = 0;
+    }
     
     TickerId reqId;
     IBString date = "";
@@ -60,6 +73,7 @@ public:
 //=======================================================================
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
+
 template <typename T> 
 class CandleBuffer {
 public:
@@ -107,6 +121,9 @@ public:
 
     std::vector<Candle> underlyingCandles;
     std::vector<Candle> fiveSecCandles;
+
+    // Candle to be used repeatedly for realtime bars
+    Candle underlyingRTBs;
 
     ///Easier: The EReader calls all methods automatically(optional)
     tWrapper(bool runEReader = true) : EWrapperL0(runEReader) {
@@ -195,12 +212,27 @@ public:
 
         // Upon receiving the price request, populate candlestick data
         Candle c(reqId, time, open, high, low, close, volume, wap, count);
-        if (candleBuffer.bufferReqs.find(c.reqId) == candleBuffer.bufferReqs.end()) {
-            candleBuffer.buffer.push_back(c);
-            
-            candleBuffer.bufferReqs.insert(c.reqId);
+
+        // ReqId 1234 will be used for the underlying contract
+        if (reqId == 1234) {
+            underlyingRTBs.reqId = reqId;
+            underlyingRTBs.time = time;
+            underlyingRTBs.open = open;
+            underlyingRTBs.high = high;
+            underlyingRTBs.low = low;
+            underlyingRTBs.close = close;
+            underlyingRTBs.volume = volume;
         }
-        candleBuffer.processBuffer(fiveSecCandles);
+        // Otherwise use the buffer for the option contracts
+        else {
+            if (candleBuffer.bufferReqs.find(c.reqId) == candleBuffer.bufferReqs.end()) {
+                candleBuffer.buffer.push_back(c);
+
+                candleBuffer.bufferReqs.insert(c.reqId);
+            }
+            candleBuffer.processBuffer(fiveSecCandles);
+        }
+
 
         if (showRealTimeData) {
             std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;

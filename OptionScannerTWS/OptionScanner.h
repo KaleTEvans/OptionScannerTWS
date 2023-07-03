@@ -45,6 +45,10 @@ private:
 	// This map will hold all of the contracts and will be updated repeatedly
 	std::unordered_map<int, ContractData*> contracts;
 
+	// Contains data for the underlying
+	ContractData* SPXBars;
+	Contract underlying;
+
 	// Historical data requests need to be incremented
 	int historicalReq = 8000; // 8000 to avoid conflict with SPX price, be sure to update next bull market
 
