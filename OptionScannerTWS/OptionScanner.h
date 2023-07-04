@@ -47,7 +47,6 @@ private:
 
 	// Contains data for the underlying
 	ContractData* SPXBars;
-	Contract underlying;
 
 	// Historical data requests need to be incremented
 	int historicalReq = 8000; // 8000 to avoid conflict with SPX price, be sure to update next bull market
@@ -55,6 +54,6 @@ private:
 	vector<int> optionStrikes;
 	vector<int> sortedContractStrikes;
 
-	AlertHandler ah;
+	Alerts::AlertHandler ah;
 };
 

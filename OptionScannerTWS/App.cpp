@@ -38,10 +38,6 @@ App::~App() {
 
 }
 
-// Accessors
-IBString App::getTicker() const { return ticker; }
-vector<int> App::getDateVector() const { return todayDate; }
-
 void App::getDateTime() {
     std::time_t tmNow;
     tmNow = time(NULL);
@@ -120,6 +116,9 @@ void App::retreiveRecentData(string interval, string duration, TickerId reqId) {
 
     // Once completed, clear the wrapper vector for next callback
     YW.underlyingCandles.clear();
+    
+    // Close the request
+    EC->cancelHistoricalData(reqId);
 }
 
 // The multiple variable is the increments of options strikes

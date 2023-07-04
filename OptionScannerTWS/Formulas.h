@@ -5,6 +5,7 @@
 //==================================================
 
 #include <cmath>
+#include <algorithm>
 
 class StandardDeviation {
 private:
@@ -39,3 +40,15 @@ public:
         return mean;
     }
 };
+
+template <typename T>
+bool isWithinXPercent(T value1, T value2, T percent) {
+    // Calculate the absolute difference between the two values
+    T diff = std::abs(value1 - value2);
+
+    // Calculate 5% of the average of the two values
+    T threshold = (percent * 1/100) * (std::abs(value1) + std::abs(value2)) / 2;
+
+    // Check if the absolute difference is within the threshold
+    return diff <= threshold;
+}

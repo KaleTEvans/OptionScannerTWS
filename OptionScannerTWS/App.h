@@ -31,8 +31,9 @@ public:
 	void populateStrikes(int multiple = 5, int reqId = 101);
 
 	// Accessors
-	IBString getTicker() const;
-	vector<int> getDateVector() const;
+	IBString getTicker() const { return ticker; }
+	vector<int> getDateVector() const { return todayDate; }
+	Contract getUnderlyingContract() const { return underlying; }
 
 private:
 

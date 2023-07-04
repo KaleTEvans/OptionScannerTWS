@@ -147,6 +147,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AlertHandler.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ContractData.cpp" />
     <ClCompile Include="OptionScanner.cpp" />

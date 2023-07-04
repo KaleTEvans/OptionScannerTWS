@@ -37,10 +37,28 @@ public:
 	void updateData(Candle c);
 
 	// Time series accessors
-	vector<Candle> getFiveSecData() const;
-	vector<Candle> getThirtySecData() const;
-	vector<Candle> getOneMinData() const;
-	vector<Candle> getFiveMinData() const;
+	vector<Candle> getFiveSecData() const { return fiveSecCandles; }
+	vector<Candle> getThirtySecData() const { return thirtySecCandles; }
+	vector<Candle> getOneMinData() const { return oneMinCandles; }
+	vector<Candle> getFiveMinData() const { return fiveMinCandles; }
+
+	// Other data acessors
+	double getCurrentPrice() const { return fiveSecCandles[fiveSecCandles.size() - 1].close; }
+	double getDailyHigh() const { return dailyHigh; }
+	double getDailyLow() const { return dailyLow; }
+	double getLocalHigh() const { return localHigh; }
+	double getLocalLow() const { return localLow; }
+	long getCumulativeVol() const { return cumulativeVolume[cumulativeVolume.size() - 1].second; }
+
+	vector<bool> getHighLowComparisons() const {
+		vector<bool> comparisons;
+		comparisons.push_back(nearDailyLow);
+		comparisons.push_back(nearDailyHigh);
+		comparisons.push_back(nearLocalLow);
+		comparisons.push_back(nearLocalHigh);
+
+		return comparisons;
+	}
 
 	TickerId contractId = 0; // Different from contractStrike for unique key put
 	int contractStrike = 0;
@@ -69,6 +87,17 @@ private:
 	// To be used for local high and low in 30 minute frames
 	double localHigh = 0;
 	double localLow = 10000;
+	double tempHigh = 0;
+	double tempLow = 10000;
+
+	// Data retrieval to compare and add to alerts
+	bool nearDailyHigh = false;
+	bool nearDailyLow = false;
+	bool nearLocalHigh = false;
+	bool nearLocalLow = false;
+
+	// Function to update the comparison values
+	void updateUnderlyingComparisons();
 
 	// For data keeping purposes
 	vector<std::pair<long, long>> cumulativeVolume;

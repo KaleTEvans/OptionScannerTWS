@@ -1,11 +1,17 @@
 #include "OptionScanner.h"
 
 OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, ticker) {
-	underlying.symbol = getTicker();
-	underlying.secType = *SecType::OPT;
-	underlying.currency = "USD";
-	underlying.exchange = *Exchange::IB_SMART;
-	underlying.primaryExchange = *Exchange::CBOE;
+	// Start a request for realtime bars for the underlying
+	EC->reqRealTimeBars
+	(1234
+		, getUnderlyingContract()
+		, 5
+		, *WhatToShow::TRADES
+		, UseRTH::OnlyRegularTradingData
+	);
+
+	while (YW.underlyingRTBs.reqId != 1234) EC->checkMessages();
+	SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);
 }
 
 //============================================================
@@ -22,15 +28,6 @@ void OptionScanner::streamOptionData() {
 
 	std::chrono::steady_clock::time_point lastExecutionTime = std::chrono::steady_clock::now();
 
-	// Start a request for realtime bars for the underlying
-	EC->reqRealTimeBars
-	(1234
-		, underlying
-		, 5
-		, *WhatToShow::TRADES
-		, UseRTH::OnlyRegularTradingData
-	);
-
 
 	//==========================================================================
 	// This while loop is important, as it will be open the entire day, and 
@@ -42,11 +39,7 @@ void OptionScanner::streamOptionData() {
 		EC->checkMessages();
 
 		// Update underlying
-		if (YW.underlyingRTBs.reqId == 1234) {
-			if (SPXBars->contractId == 0) SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);
-
-			SPXBars->updateData(YW.underlyingRTBs);
-		}
+		if (YW.underlyingRTBs.reqId == 1234) SPXBars->updateData(YW.underlyingRTBs);
 
 		if (!YW.fiveSecCandles.empty()) {
 			for (auto i : YW.fiveSecCandles) {
@@ -160,8 +153,14 @@ void OptionScanner::updateStrikes() {
 //===================================================
 
 void OptionScanner::registerAlertCallback(ContractData* cd) {
-	cd->registerAlert([this](int data, double stDevVol, double stDevPrice, Candle c) {
-		Alert a(c, data, stDevVol, stDevPrice);
+	cd->registerAlert([this, cd](int data, double stDevVol, double stDevPrice, Candle c) {
+
+		vector<bool> v1 = cd->getHighLowComparisons();
+		vector<bool> v2 = SPXBars->getHighLowComparisons();
+		int compCode = Alerts::getComparisonCode(v1, v2);
+
+		Alerts::AlertData a(c, data, stDevVol, stDevPrice, cd->getDailyHigh(), cd->getDailyLow(), 
+			cd->getCumulativeVol(), SPXBars->getCurrentPrice(), compCode);
 		ah.outputAlert(a);
 		// showAlertOutput(data, stDevVol, stDevPrice, c);
 		});
@@ -180,6 +179,7 @@ void OptionScanner::prepareContractData() {
 	std::cout << "Market closed, ending realTimeBar connection" << std::endl;
 	
 	for (auto i : contracts) EC->cancelRealTimeBars(i.first);
+	EC->cancelRealTimeBars(1234);
 }
 
 

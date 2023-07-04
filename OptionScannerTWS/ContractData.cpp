@@ -117,20 +117,65 @@ void ContractData::updateData(Candle c) {
 				// Update daily high and low values to check relative price
 				dailyHigh = max(dailyHigh, c5.high);
 				dailyLow = min(dailyLow, c5.low);
+
+				// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between
+				tempHigh = max(tempHigh, c5.high);
+				tempLow = max(tempLow, c5.low);
+
+				if (fiveMinCandles.size() % 6 == 0) {
+					localHigh = tempHigh;
+					localLow = tempLow;
+					tempHigh = 0;
+					tempLow = 10000;
+				}
+
+				updateUnderlyingComparisons();
 			}
 		}
 	}
 
 }
 
+//==============================================
+// Helper Functions
+//==============================================
+
+void ContractData::updateUnderlyingComparisons() {
+	// Update underlying information
+	int index = getFiveSecData().size() - 1;
+	double lastPrice = fiveSecCandles[index].close;
+	double percentDiff = 0.1;
+
+	// Check values against the underlying price, will use 0.1% difference
+	if (isWithinXPercent(lastPrice, dailyHigh, percentDiff)) {
+		nearDailyHigh = true;
+	}
+	else {
+		nearDailyHigh = false;
+	}
+
+	if (isWithinXPercent(lastPrice, dailyLow, percentDiff)) {
+		nearDailyLow = true;
+	}
+	else {
+		nearDailyLow = false;
+	}
+
+	if (isWithinXPercent(lastPrice, localHigh, percentDiff)) {
+		nearLocalHigh = true;
+	}
+	else {
+		nearLocalHigh = false;
+	}
+
+	if (isWithinXPercent(lastPrice, localLow, percentDiff)) {
+		nearLocalLow = true;
+	}
+	else {
+		nearLocalLow = false;
+	}
+}
+
 void ContractData::registerAlert(AlertFunction alert) {
 	alert_ = std::move(alert);
 }
-
-//==================================
-// Accessor Functions
-//===================================
-vector<Candle> ContractData::getFiveSecData() const { return fiveSecCandles; }
-vector<Candle> ContractData::getThirtySecData() const { return thirtySecCandles; }
-vector<Candle> ContractData::getOneMinData() const { return oneMinCandles; }
-vector<Candle> ContractData::getFiveMinData() const { return fiveMinCandles; }

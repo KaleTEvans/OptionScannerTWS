@@ -63,7 +63,7 @@ public:
     double close;
     double high;
     double low;
-    int volume;
+    long volume;
     int barCount = 0;
     double WAP = 0;
     int hasGaps = 0;
