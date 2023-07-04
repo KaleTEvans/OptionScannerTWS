@@ -17,6 +17,13 @@ The first iteration of the strategy will be this: If the volume of a contract ex
 with the price delta (high-low) for both the contract and the underlying being less than one standard deviation, this will constitute
 an alert. The 5 second, 30 second, 1 minute, and 5 minute time frames will all be monitored simultaneously for each contract.
 
+### Current Status
+I have decided to make the alert system much more complex. Each alert contains a vector of different codes. These codes each have different 
+attributes, for example, timeframe, magnitude of volume, time of day, etc. This will allow me to store the alerts in a tree structure, about 6 or 7
+layers depending on the type of alert. Each alert will also be updated at 5, 15, and 30 minute intervals, to determine the magnitude of
+success of the given alert. As data is collected each day and analyzed, this should allow the program to add a probability of success
+for every level of data provided in each alert.
+
 ## Technologies Used
 * C++
 * TWS API (Interactive Brokers)
