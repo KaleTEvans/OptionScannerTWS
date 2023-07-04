@@ -106,7 +106,7 @@ void ContractData::updateData(Candle c) {
 				//==============================================
 				// 5 Minute Timeframe Alert Options
 				//==============================================
-				if (c5.volume > 2 * (sdVol5Min.getStDev()) && sdVol5Min.getStDev() > 0 && sdVol5Min.getTotal() > 9 && !isUnderlying) {
+				if (c5.volume > 2 * (sdVol5Min.getStDev()) && sdVol5Min.getStDev() > 0 && sdVol5Min.getTotal() > 4 && !isUnderlying) {
 					if (alert_) alert_(102, sdVol5Min.getStDev(), sd5Min.getStDev(), c5);
 				}
 
@@ -147,33 +147,17 @@ void ContractData::updateUnderlyingComparisons() {
 	double percentDiff = 0.1;
 
 	// Check values against the underlying price, will use 0.1% difference
-	if (isWithinXPercent(lastPrice, dailyHigh, percentDiff)) {
-		nearDailyHigh = true;
-	}
-	else {
-		nearDailyHigh = false;
-	}
+	if (isWithinXPercent(lastPrice, dailyHigh, percentDiff)) nearDailyHigh = true;
+	else nearDailyHigh = false;
 
-	if (isWithinXPercent(lastPrice, dailyLow, percentDiff)) {
-		nearDailyLow = true;
-	}
-	else {
-		nearDailyLow = false;
-	}
+	if (isWithinXPercent(lastPrice, dailyLow, percentDiff)) nearDailyLow = true;
+	else nearDailyLow = false;
 
-	if (isWithinXPercent(lastPrice, localHigh, percentDiff)) {
-		nearLocalHigh = true;
-	}
-	else {
-		nearLocalHigh = false;
-	}
+	if (isWithinXPercent(lastPrice, localHigh, percentDiff)) nearLocalHigh = true;
+	else nearLocalHigh = false;
 
-	if (isWithinXPercent(lastPrice, localLow, percentDiff)) {
-		nearLocalLow = true;
-	}
-	else {
-		nearLocalLow = false;
-	}
+	if (isWithinXPercent(lastPrice, localLow, percentDiff)) nearLocalLow = true;
+	else nearLocalLow = false;
 }
 
 void ContractData::registerAlert(AlertFunction alert) {

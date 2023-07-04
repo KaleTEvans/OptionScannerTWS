@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <ctime>
+#include <bitset>
 
 #include "tWrapper.h"
 #include "App.h"
@@ -46,8 +47,6 @@ int main(void) {
 
         //delete opt;
     }
-
-    
 
     return 0;
 }

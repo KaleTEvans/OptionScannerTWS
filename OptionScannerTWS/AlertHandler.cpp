@@ -2,68 +2,6 @@
 
 namespace Alerts {
 
-	//========================================================
-	// Helper Functions
-	//========================================================
-
-	int getCurrentHourSlot() {
-		// Get the current time
-		auto now = std::chrono::system_clock::now();
-		time_t currentTime = std::chrono::system_clock::to_time_t(now);
-
-		// Convert the current time to local time
-		tm* localTime = std::localtime(&currentTime);
-
-		// Get the current hour and minute
-		int currentHour = localTime->tm_hour;
-		int currentMinute = localTime->tm_min;
-
-		// Calculate the time in minutes since 8:30 AM
-		int minutesSince830AM = (currentHour - 8) * 60 + currentMinute - 30;
-
-		// Calculate the slot number (1 to 7)
-		int slotNumber = minutesSince830AM / 60 + 1;
-
-		return slotNumber;
-	}
-
-	int getComparisonCode(vector<bool>& optionComparisons, vector<bool>& priceComparisons) {
-		// Now determine the alert code for the comparison of highs and lows
-		int comparisonCode;
-
-		bool oc0 = optionComparisons[0]; // Near daily low
-		bool oc1 = optionComparisons[1]; // Near daily high
-		bool oc2 = optionComparisons[2]; // Near local low
-		bool oc3 = optionComparisons[3]; // Near local high
- 
-		bool pc0 = priceComparisons[0];
-		bool pc1 = priceComparisons[1];
-		bool pc2 = priceComparisons[2];
-		bool pc3 = priceComparisons[3];
-
-		if (oc1 && !oc3 && !pc1 && !pc3) comparisonCode = 5010;
-		else if (!oc1 && oc3 && !pc1 && !pc3) comparisonCode = 5011;
-		else if (oc1 && oc3 && !pc1 && pc3) comparisonCode = 5012;
-		else if (oc0 && !oc2 && !pc0 && !pc2) comparisonCode = 5013;
-		else if (!oc0 && oc2 && !pc0 && !pc2) comparisonCode = 5014;
-		else if (oc0 && oc2 && !pc0 && !pc2) comparisonCode = 5015;
-		else if (!oc1 && !oc3 && pc1 && !pc3) comparisonCode = 5020;
-		else if (!oc1 && !oc3 && !pc1 && pc3) comparisonCode = 5021;
-		else if (!oc1 && !oc3 && pc1 && pc3) comparisonCode = 5022;
-		else if (!oc0 && !oc2 && pc0 && !pc2) comparisonCode = 5023;
-		else if (!oc0 && !oc2 && !pc0 && pc2) comparisonCode = 5024;
-		else if (!oc0 && !oc2 && pc0 && pc2) comparisonCode = 5025;
-		else if (oc1 && !oc3 && pc1 && !pc3) comparisonCode = 5030;
-		else if (!oc1 && oc3 && !pc1 && pc3) comparisonCode = 5031;
-		else if (oc1 && oc3 && pc1 && pc3) comparisonCode = 5032;
-		else if (oc0 && !oc2 && pc0 && !pc2) comparisonCode = 5033;
-		else if (!oc0 && oc2 && !pc0 && pc2) comparisonCode = 5034;
-		else if (oc0 && oc2 && pc0 && pc2) comparisonCode = 5035;
-		else comparisonCode = 5100;
-
-		return comparisonCode;
-	}
-
 	//===================================================
 	// Alert Data Constructor
 	//===================================================
@@ -131,5 +69,109 @@ namespace Alerts {
 
 		alertCodes.push_back(volAlertCode);
 		alertCodes.push_back(compCode);
+	}
+
+	//========================================================
+	// Helper Functions
+	//========================================================
+
+	int getCurrentHourSlot() {
+		// Get the current time
+		auto now = std::chrono::system_clock::now();
+		time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+		// Convert the current time to local time
+		tm* localTime = std::localtime(&currentTime);
+
+		// Get the current hour and minute
+		int currentHour = localTime->tm_hour;
+		int currentMinute = localTime->tm_min;
+
+		// Calculate the time in minutes since 8:30 AM
+		int minutesSince830AM = (currentHour - 8) * 60 + currentMinute - 30;
+
+		// Calculate the slot number (1 to 7)
+		int slotNumber = minutesSince830AM / 60 + 1;
+
+		return slotNumber;
+	}
+
+	int getComparisonCode(vector<bool>& optionComparisons, vector<bool>& SPXComparisons) {
+		// Now determine the alert code for the comparison of highs and lows
+		int comparisonCode = 0;
+
+		// Convert v1 to an integer value (bits 0-3)
+		for (int i = 0; i < 4; ++i) {
+			if (optionComparisons[i]) {
+				comparisonCode |= (1 << (optionComparisons.size() - 1 - i));
+			}
+		}
+
+		// Convert v2 to an integer value (bits 4-7)
+		for (int i = 0; i < 4; ++i) {
+			if (SPXComparisons[i]) {
+				comparisonCode |= (1 << (2 * SPXComparisons.size() - 1 - i));
+			}
+		}
+
+		return comparisonCode;
+	}
+
+	string decodeComparisonCode(int combinationValue) {
+		string output;
+		int size = 4;
+
+		// Check each bit for v1
+		output += "| Con | ";
+		for (int i = 0; i < size; ++i) {
+			if (combinationValue & (1 << (size - 1 - i))) {
+				//output += " | ";
+				switch (i) {
+				case 0:
+					output += "NDL";
+					break;
+				case 1:
+					output += "NDH";
+					break;
+				case 2:
+					output += "NLL";
+					break;
+				case 3:
+					output += "NLH";
+					break;
+				}
+				output += " ";
+			}
+		}
+
+		// Check each bit for v2
+		output += "| SPX | ";
+		for (int i = 0; i < size; ++i) {
+			if (combinationValue & (1 << (2 * size - 1 - i))) {
+				//output += "SPX | ";
+				switch (i) {
+				case 0:
+					output += "NDL";
+					break;
+				case 1:
+					output += "NDH";
+					break;
+				case 2:
+					output += "NLL";
+					break;
+				case 3:
+					output += "NLH";
+					break;
+				}
+				output += " ";
+			}
+		}
+
+		// Remove the trailing space if any
+		if (!output.empty()) {
+			output.pop_back();
+		}
+
+		return output;
 	}
 }

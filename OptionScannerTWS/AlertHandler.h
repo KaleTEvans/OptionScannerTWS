@@ -84,25 +84,8 @@ using std::string;
 // 4007 - Price delta greater than 2 stdev
 
 // alertCodes[6] - Contract and Underlying daily highs and lows
-// 5010 - Near daily high (Contract)
-// 5011 - Near local hgih (Contract) 
-// 5012 - Near daily and local high (Contract)
-// 5013 - Near daily low (Contract)
-// 5014 - Near local low (Contract)
-// 5015 - Near daily and local low (Contract)
-// 5020 - Near daily high (Underlying)
-// 5021 - Near local hgih (Underlying) 
-// 5022 - Near daily and local high (Underlying)
-// 5023 - Near daily low (Underlying)
-// 5024 - Near local low (Underlying)
-// 5025 - Near daily and local low (Underlying)
-// 5030 - Near daily high (Underlying and Contract)
-// 5031 - Near local hgih (Underlying and Contract) 
-// 5032 - Near daily and local high (Underlying and Contract)
-// 5033 - Near daily low (Underlying and Contract)
-// 5034 - Near local low (Underlying and Contract)
-// 5035 - Near daily and local low (Underlying and Contract)
-// 5100 - Not near high or low
+// These will be a bit different. Since there are 4 bools for both contract and underlying
+// highs and lows, these will be coded into binary. A decode function will also be provided for output
 
 // alertCodes[7] - Extra tags to further determine win rate
 // 6021 - Repeated hits (more than 2 of same alert back to back)
@@ -113,12 +96,19 @@ using std::string;
 // 6032 - High local high - local low delta
 // 6033 - Low daily high - daily low delta
 // 6034 - High daily high - daily low delta
+//
+// 6041 - Higher relative volume on underlying
+// 6042 - Lower relative volume on underlying
+
 
 
 namespace Alerts {
 
-	// Helper function to get code for comparing price to high and low values
-	int getComparisonCode(vector<bool>& optionComparisons, vector<bool>& priceComparisons);
+	// Helper function to get bindary code for comparing price to high and low values
+	int getComparisonCode(vector<bool>& optionComparisons, vector<bool>& SPXComparisons);
+	string decodeComparisonCode(int comparisonCode);
+	// Get the code based on the current market hour
+	int getCurrentHourSlot();
 
 	class AlertData {
 	public:
@@ -153,7 +143,7 @@ namespace Alerts {
 
 		// Variables that will be filled to check alert success
 	public:
-		bool alertSuccess; // Return false if the price falls 50% or more before returning profit
+		bool alertSuccess; // Return false if the price falls 30% or more before returning profit
 
 		double maxPercentGain;
 
@@ -186,6 +176,7 @@ namespace Alerts {
 
 		void inputAlert(AlertData& a);
 
+		// **** Be sure to take into account alerts right before close
 		void checkQueueUpdates(Candle c, std::unordered_map<int, ContractData*>& contractMap);
 
 		void outputAlert(AlertData& a) {
