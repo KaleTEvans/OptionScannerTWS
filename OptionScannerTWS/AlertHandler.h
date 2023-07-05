@@ -143,13 +143,10 @@ namespace Alerts {
 
 		// Variables that will be filled to check alert success
 	public:
-		bool alertSuccess; // Return false if the price falls 30% or more before returning profit
-
-		double maxPercentGain;
-
-		double maxPrice5Min;
-		double maxPrice15Min;
-		double maxPrice30Min;
+		// This will be provided based on levels
+		// -30% will be a failure or 0, 1 will be 15-30%, and so on
+		void getSuccessLevel(vector<Candle> prior30);
+		int successLevel = 0;
 	};
 
 	// Each alert node will be associated with a strike, and contain all alerts for both puts and calls
@@ -167,8 +164,8 @@ namespace Alerts {
 		// PUTS[2] = Code 1003
 		// PUTS[3] = Code 1004
 		//=========================================
-		vector<AlertData*> PUTS;
-		vector<AlertData*> CALLS;
+		vector<vector<AlertData*>> PUTS;
+		vector<vector<AlertData*>> CALLS;
 	};
 
 	class AlertHandler {
@@ -186,9 +183,7 @@ namespace Alerts {
 
 	private:
 		std::unordered_map<int, AlertNode> alertStorage;
-		std::queue<AlertData*> min5UpdateQueue;
-		std::queue<AlertData*> min15UpdateQueue;
-		std::queue<AlertData*> min30UpdateQueue;
+		std::queue<AlertData*> alerUpdateQueue;
 	};
 
 }

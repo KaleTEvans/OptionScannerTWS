@@ -190,6 +190,10 @@ void OptionScanner::prepareContractData() {
 void OptionScanner::outputChain() {
 	// This will be an attempt to simulate a dynamic terminal
 
+	// Get underlying output
+	Candle c = SPXBars->getFiveSecData().back();
+	cout << "SPX Prices | open: " << c.open << " | high: " << c.high << " | low: " << c.low << " | close: " << c.close << endl;
+
 	cout << "============================================================================" << endl;
 	cout << "===========================Options Chain for SPX============================" << endl;
 	cout << "=========(CALLS)===========================================(PUTS)===========" << endl;
@@ -207,10 +211,5 @@ void OptionScanner::outputChain() {
 		cout << "============================================================================" << endl;
 	}
 
-	cout << endl;
-	cout << endl;
-	cout << endl;
-	cout << endl;
-	cout << endl;
 	cout << endl;
 }

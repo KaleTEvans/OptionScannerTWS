@@ -124,6 +124,8 @@ public:
 
     // Candle to be used repeatedly for realtime bars
     Candle underlyingRTBs;
+    // Boolean if only needing the single realtime bars
+    bool singleRTBs = false;
 
     ///Easier: The EReader calls all methods automatically(optional)
     tWrapper(bool runEReader = true) : EWrapperL0(runEReader) {
@@ -214,7 +216,7 @@ public:
         Candle c(reqId, time, open, high, low, close, volume, wap, count);
 
         // ReqId 1234 will be used for the underlying contract
-        if (reqId == 1234) {
+        if (reqId == 1234 || singleRTBs) {
             underlyingRTBs.reqId = reqId;
             underlyingRTBs.time = time;
             underlyingRTBs.open = open;

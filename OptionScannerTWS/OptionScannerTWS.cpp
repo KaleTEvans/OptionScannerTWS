@@ -8,6 +8,7 @@
 #include "App.h"
 #include "OptionScanner.h"
 #include "ContractData.h"
+#include "AlertHandler.h"
 
 #include "spdlog/spdlog.h"
 
@@ -25,6 +26,8 @@ void basicHistoricalDataRequest(App * test);
 void testRealTimeBars(App* test);
 void candleFunctionality(App* test);
 void testStreamingAlerts(App* test);
+void testLowAndHighAccuracy(App* test);
+void testContractVolumes(App* test);
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
@@ -70,6 +73,10 @@ void informalTests() {
     constexpr bool showCandleFunctionality = false;
     // Test ability to receive alerts from ContractData as callbacks
     constexpr bool showAlertFunctionality = false;
+    // Test the accuracy of daily high/low attributes from ContractData
+    constexpr bool showDailyLowHighAccuracy = true;
+    // Test the accuracy of the volume in a few contracts
+    constexpr bool testVolumeAccuracy = true;
 
     // Run tests here
     if (showWelcome) {
@@ -84,9 +91,15 @@ void informalTests() {
     if (showRealTimeBarsTest) testRealTimeBars(test);
     if (showCandleFunctionality) candleFunctionality(test);
     if (showAlertFunctionality) testStreamingAlerts(test);
+    if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);
+    if(testVolumeAccuracy) testContractVolumes(test);
 
     delete test;
 }
+
+//=================================================================
+// Test functionality of a basic historical data request
+//=================================================================
 
 void basicHistoricalDataRequest(App* test) {
     
@@ -131,6 +144,10 @@ void basicHistoricalDataRequest(App* test) {
 
 }
 
+//=================================================================
+// Test functionality of 5 second real time bars for 30 seconds
+//=================================================================
+
 void testRealTimeBars(App* test) {
 
     cout << "========================================================================" << endl;
@@ -164,6 +181,10 @@ void testRealTimeBars(App* test) {
         timer -= 1;
     }
 }
+
+//======================================================================================
+// Test ability for ContractData to create functional candles in different time frames
+//======================================================================================
 
 void candleFunctionality(App* test) {
 
@@ -240,7 +261,10 @@ void candleFunctionality(App* test) {
 
 }
 
+//==================================================================
 // Test candle functionality when inputting real time bar data
+//==================================================================
+
 void testStreamingAlerts(App* test) {
 
     cout << "========================================================================" << endl;
@@ -272,6 +296,152 @@ void testStreamingAlerts(App* test) {
     for (size_t i = 1; i < fiveSecData.size(); i++) testCon.updateData(fiveSecData[i]);
 }
 
+//==================================================================
+// Test the accuracy of daily high/low attributes from ContractData
+//==================================================================
+
+void testLowAndHighAccuracy(App* test) {
+
+    cout << "========================================================================" << endl;
+    cout << "Testing the accuracy of the low and high booleans in ContractData" << endl;
+    cout << "========================================================================" << endl;
+    cout << "Currently being within 0.1% of the high or low of the daily or local" << endl;
+    cout << "price range will constitute a true output. This test will determine" << endl;
+    cout << "whether or not this is accurate enough to be a valuable point of data" << endl;
+    cout << endl;
+    cout << "Retreiving data ...." << endl;
+
+    test->useTestData = true;
+
+    test->retreiveRecentData("5 secs", "3600 S", 31);
+    // Store the data
+    vector<Candle> fiveSec;
+    for (auto i : test->prices) fiveSec.push_back(i);
+
+    // Now create the Contract Data instance and compare candles
+    ContractData testCon(131, fiveSec[0]);
+
+    cout << "Initialized Data" << endl;
+
+    // While filling ContractData, check every 60 iterations, which would be 1 minute, and
+    // when the comparisons are updated
+    for (size_t i = 1; i < fiveSec.size(); i++) {
+        if (i % 60 == 0) {
+            vector<bool> v = testCon.getHighLowComparisons();
+            cout << "==================================================================" << endl;
+            cout << "CURRENT PRICE: " << testCon.getCurrentPrice() << endl;
+            cout << "Current vector state: " << v[0] << " " << v[1] << " " << v[2] << " " << v[3] << endl;
+            cout << "Current conditions: ";
+            (v[0]) ? cout << "near DL | " : cout << "not near DL | ";
+            (v[1]) ? cout << "near DH | " : cout << "not near DH | ";
+            (v[2]) ? cout << "near LL | " : cout << "not near LL | ";
+            (v[3]) ? cout << "near LH | " : cout << "not near LH | ";
+            cout << "Daily Low: " << testCon.getDailyLow() << " | Daily High: " << testCon.getDailyHigh() << endl;
+            cout << "Local Low: " << testCon.getLocalLow() << " | Local Low: " << testCon.getLocalLow() << endl;
+            cout << "===================================================================" << endl;
+        }
+
+        testCon.updateData(fiveSec[i]);
+    }
+}
+
+//============================================================
+//Test the accuracy of the volume in a few contracts
+//===========================================================
+
+void testContractVolumes(App* test) {
+    cout << "========================================================================" << endl;
+    cout << "Testing the accuracy of volume data in a contract " << endl;
+    cout << "========================================================================" << endl;
+    cout << "This test will gather data for a certain contract for a few minutes, " << endl;
+    cout << "and then make a historical request to check that the values match up" << endl;
+    cout << endl;
+    cout << "Retreiving data ...." << endl;
+
+    Contract C;
+    C.symbol = "SPX";
+    C.secType = *SecType::OPT;
+    C.currency = "USD";
+    C.exchange = *Exchange::IB_SMART;
+    C.primaryExchange = *Exchange::CBOE;
+    C.right = *ContractRight::CALL;
+
+    // Retrieve Date
+    test->getDateTime();
+    vector<int> date = test->getDateVector();
+
+    C.lastTradeDateOrContractMonth = EndDateTime(date[2], date[1], date[0]);
+
+    // Get the strike
+    test->populateStrikes(41);
+    int strike = test->strikes[4];
+
+    C.strike = strike;
+
+    test->EC->reqRealTimeBars
+    (42
+        , C
+        , 5
+        , *WhatToShow::MIDPOINT
+        , UseRTH::OnlyRegularTradingData
+    );
+
+    test->YW.singleRTBs = true;
+    // Initialize contract data
+    ContractData* testCon;
+
+    bool firstCallback = true;
+
+    while (test->YW.notDone()) {
+        // Make sure only one instance of the ContractData is created
+        if (test->YW.underlyingRTBs.reqId == 42 && firstCallback) {
+            testCon = new ContractData(test->YW.underlyingRTBs.reqId, test->YW.underlyingRTBs, true);
+            firstCallback = false;
+        }
+        
+        // After 5 minutes, break the loop
+        if (testCon->getOneMinData().size() >= 5) break;
+
+        testCon->updateData(test->YW.underlyingRTBs);
+    }
+
+    // Now, we'll make a historical request of the last 5 mintues
+    std::time_t rawtime;
+    std::tm* timeinfo;
+    char queryTime[80];
+    std::time(&rawtime);
+    timeinfo = std::gmtime(&rawtime);
+    std::strftime(queryTime, 80, "%Y%m%d-%H:%M:%S", timeinfo);
+
+    test->EC->reqHistoricalData
+    (43
+        , C
+        , queryTime  
+        , "3600 S"
+        , "1 mins"
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+        , FormatDate::AsDate
+        , false
+        , TagValueListSPtr()
+    );
+
+    vector<Candle> histData = test->prices;
+    int volSum = 0;
+    // Get the last 5 candles
+    int j = 0; // For the contract vector
+    for (size_t i = histData.size() - 6; i < histData.size(); i++) {
+        cout << "1 Min volume from RTBs: " << testCon->getOneMinData()[j].volume << " at time: " << testCon->getOneMinData()[i].time <<
+            " 1 Min volume from historical request: " << histData[i].volume << " at time: " << histData[i].date << endl;
+
+        volSum += histData[i].volume;
+        j++;
+    }
+
+    // Now output the cumulative volume
+    cout << "Total vol for RTB data: " << testCon->getCumulativeVol() << " | Total vol for hist data: " << volSum << endl;
+}
+
 bool compareCandles(Candle c1, Candle c2) {
     // Allow for a 1% error in comparison
     if (abs(c1.open - c2.open)/c1.open > 0.01) return false;
@@ -282,3 +452,4 @@ bool compareCandles(Candle c1, Candle c2) {
 
     return true;
 }
+

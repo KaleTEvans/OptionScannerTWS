@@ -60,9 +60,7 @@ public:
 		return comparisons;
 	}
 
-	TickerId contractId = 0; // Different from contractStrike for unique key put
-	int contractStrike = 0;
-	string optionType = "";
+	TickerId contractId = 0; 
 
 private:
 	vector<Candle> fiveSecCandles;

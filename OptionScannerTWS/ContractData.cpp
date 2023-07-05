@@ -28,18 +28,6 @@ ContractData::ContractData(TickerId reqId, Candle initData, bool isUnderlying) :
 	// Update the standard deviation class for the first 5 sec candle
 	sd5Sec.addValue(initData.high - initData.low);
 	sdVol5Sec.addValue(initData.volume);
-
-	// Determine whether call or put using reqId
-	if (!isUnderlying) {
-		if (reqId % 5 == 0) {
-			optionType = "CALL";
-			contractStrike = reqId;
-		}
-		else {
-			optionType = "PUT";
-			contractStrike = reqId - 1;
-		}
-	}
 }
 
 // The input data function will be called each time a new candle is received, and will be where we 
@@ -94,6 +82,16 @@ void ContractData::updateData(Candle c) {
 				if (alert_) alert_(1003, sdVol1Min.getStDev(), sd1Min.getStDev(), c1);
 			}
 
+			// Update cumulative volume for historical records
+			std::pair<long, long> p = { c1.time, c1.volume };
+			cumulativeVolume.push_back(p);
+
+			// Update daily high and low values to check relative price
+			dailyHigh = max(dailyHigh, c1.high);
+			dailyLow = min(dailyLow, c1.low);
+
+			updateUnderlyingComparisons();
+
 			// Referencing the 1 min for the 5min array we can use increments of 5
 			if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5 == 0) {
 				Candle c5 = createNewBars(contractId, 5, oneMinCandles);
@@ -110,14 +108,6 @@ void ContractData::updateData(Candle c) {
 					if (alert_) alert_(102, sdVol5Min.getStDev(), sd5Min.getStDev(), c5);
 				}
 
-				// Update cumulative volume for historical records
-				std::pair<long, long> p = { c5.time, c5.volume };
-				cumulativeVolume.push_back(p);
-
-				// Update daily high and low values to check relative price
-				dailyHigh = max(dailyHigh, c5.high);
-				dailyLow = min(dailyLow, c5.low);
-
 				// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between
 				tempHigh = max(tempHigh, c5.high);
 				tempLow = max(tempLow, c5.low);
@@ -128,8 +118,6 @@ void ContractData::updateData(Candle c) {
 					tempHigh = 0;
 					tempLow = 10000;
 				}
-
-				updateUnderlyingComparisons();
 			}
 		}
 	}
@@ -142,8 +130,7 @@ void ContractData::updateData(Candle c) {
 
 void ContractData::updateUnderlyingComparisons() {
 	// Update underlying information
-	int index = getFiveSecData().size() - 1;
-	double lastPrice = fiveSecCandles[index].close;
+	double lastPrice = fiveSecCandles.back().close;
 	double percentDiff = 0.1;
 
 	// Check values against the underlying price, will use 0.1% difference
