@@ -288,8 +288,8 @@ void testStreamingAlerts(App* test) {
 
     // Register the callback
     ContractData testCon(112, fiveSecData[0]);
-    testCon.registerAlert([&](int data, StandardDeviation& sdVol, StandardDeviation& sdPrice, Candle c) {
-        cout << "Callback Received: " << data << " stdev: " << sdVol.getStDev() << " volume: " << c.volume << " close price: " << c.close << endl;
+    testCon.registerAlert([&](int data, StandardDeviation sdVol, StandardDeviation sdPrice, Candle c) {
+        //cout << "Callback Received: " << data << " stdev: " << sdVol.getStDev() << " volume: " << c.volume << " close price: " << c.close << endl;
     });
 
     // Fill ContractData object with remaining data

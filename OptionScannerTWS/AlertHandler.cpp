@@ -6,15 +6,16 @@ namespace Alerts {
 	// Alert Data Constructor
 	//===================================================
 
-	AlertData::AlertData(Candle c, int code, StandardDeviation& sdVol, StandardDeviation& sdPriceDelta,
-		double dailyHigh, double dailyLow, double cumulativeVol, double underlyingPrice, int compCode) :
-		code(code), sdVol(sdVol), sdPriceDelta(sdPriceDelta),
-		dailyHigh(dailyHigh), dailyLow(dailyLow), cumulativeVol(cumulativeVol), underlyingPrice(underlyingPrice),
-		compCode(compCode) {
+	AlertData::AlertData(Candle c, int code, StandardDeviation sdVol, StandardDeviation sdPriceDelta,
+		StandardDeviation uSdVol, StandardDeviation uSdPriceDelta, Candle uBars, int compCode) :
+		code(code), sdVol(sdVol), sdPriceDelta(sdPriceDelta), uSdVol(uSdVol), uSdPriceDelta(uSdPriceDelta),
+		underlyingPrice(underlyingPrice),compCode(compCode) {
 		time = c.time;
 		vol = c.volume;
 		closePrice = c.close;
 		priceDelta = c.high - c.low;
+		underlyingPrice = uBars.close;
+		underlyingPriceDelta = uBars.high - uBars.low;
 
 		// Determine whether call or put using reqId
 		if (c.reqId % 5 == 0) {
@@ -30,15 +31,8 @@ namespace Alerts {
 
 		alertCodes.push_back(code);
 
-		struct tm* timeInfo;
-		char buffer[80];
-
-		timeInfo = localtime(&time);
-		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
-
-		dateTime = buffer;
-
-		// Determine how close to the money the option is
+		//==================================================================
+		// Alert code termining how close to the money the option is
 		double difference = strike - underlyingPrice;
 		if (difference <= 5 && difference > 0) (optionType == "CALL") ? alertCodes.push_back(1210) : alertCodes.push_back(1110);
 		else if (difference <= 10 && difference > 5) (optionType == "CALL") ? alertCodes.push_back(1220) : alertCodes.push_back(1120);
@@ -50,10 +44,20 @@ namespace Alerts {
 			cout << "Error, could not retrieve OTM or ITM code for contract: " << strike << " difference: " << difference << endl;
 		}
 
-		// Push back the alert code for time of day
+		//==========================================================
+		// Alert code for time of day
+		struct tm* timeInfo;
+		char buffer[80];
+
+		timeInfo = localtime(&time);
+		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
+
+		dateTime = buffer;
+
 		alertCodes.push_back(2000 + getCurrentHourSlot());
 
-		// Now determine the alert code to be used for the volume
+		//=====================================================
+		// Alert code to be used for the volume
 		int volAlertCode = 3011;
 
 		if (sdVol.numStDev(vol) > 2) volAlertCode++; // 3012
@@ -65,7 +69,51 @@ namespace Alerts {
 		if (vol > 1000) volAlertCode += 100; // 400
 
 		alertCodes.push_back(volAlertCode);
+
+		//================================================================
+		// Alert code for the underlying price delta standard deviations
+		int priceDeltaCode = 0;
+		double numStDevCon = sdPriceDelta.numStDev(priceDelta);
+		double numStDevU = uSdPriceDelta.numStDev(underlyingPriceDelta);
+
+		if (numStDevCon >= 2 && numStDevU >= 2) priceDeltaCode = 4007;
+		if (numStDevCon < 2 && numStDevU < 2) priceDeltaCode = 4006;
+		if (numStDevCon <= 1 && numStDevU <= 1) priceDeltaCode = 4005;
+		if (numStDevCon < 2 && numStDevU >= 2) priceDeltaCode = 4004;
+		if (numStDevCon < 1 && numStDevU >= 1) priceDeltaCode = 4003;
+		if (numStDevCon >= 2 && numStDevU < 2) priceDeltaCode = 4002;
+		if (numStDevCon >= 1 && numStDevU < 1) priceDeltaCode = 4001;
+		//===================================
+		// Add logger here if no codes returned
+
+		alertCodes.push_back(priceDeltaCode);
 		alertCodes.push_back(compCode);
+	}
+
+	//========================================================
+	// Function to get the AlertData level of success
+	//========================================================
+
+	void AlertData::getSuccessLevel(vector<Candle> prior30) {
+		double maxPrice = INT_MAX;
+		double minPrice = 0;
+		double percentChange = 0;
+
+		for (size_t i = 0; i < prior30.size(); i++) {
+			// break the loop if the price drops below 30% before any gains
+			if (minPrice > 0 && abs(((prior30[i].close - minPrice) / minPrice) * 100) >= 30) {
+				// Add a log here to say max loss was met
+				break;
+			}
+
+			if (maxPrice < INT_MAX) percentChange = abs(((prior30[i].close - maxPrice) / maxPrice) * 100);
+			if (percentChange >= 15 && percentChange < 30) successLevel = 1;
+			if (percentChange > 30 && percentChange < 100) successLevel = 2;
+			if (percentChange >= 100) successLevel = 3;
+
+			minPrice = min(minPrice, prior30[i].low);
+			maxPrice = max(maxPrice, prior30[i].high);
+		}
 	}
 
 	//========================================================

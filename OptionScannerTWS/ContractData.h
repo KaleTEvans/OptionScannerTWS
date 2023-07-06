@@ -27,6 +27,7 @@ using std::vector;
 using std::string;
 using std::max;
 using std::min;
+using std::pair;
 
 class ContractData {
 public:
@@ -49,6 +50,11 @@ public:
 	double getLocalHigh() const { return localHigh; }
 	double getLocalLow() const { return localLow; }
 	long getCumulativeVol() const { return cumulativeVolume.back().second; }
+
+	pair<StandardDeviation, StandardDeviation> get5SecStDev() const { return { sd5Sec, sdVol5Sec }; }
+	pair<StandardDeviation, StandardDeviation> get30SecStDev() const { return { sd30Sec, sdVol30Sec }; }
+	pair<StandardDeviation, StandardDeviation> get1MinStDev() const { return { sd1Min, sdVol1Min }; }
+	pair<StandardDeviation, StandardDeviation> get5MinStDev() const { return { sd5Min, sdVol5Min }; }
 
 	vector<bool> getHighLowComparisons() const {
 		vector<bool> comparisons;
@@ -108,8 +114,8 @@ private:
 // Callback Functionality for Alerts
 //=========================================
 public:
-	using AlertFunction = std::function<void(int, StandardDeviation&, StandardDeviation&, Candle)>;
-	void registerAlert(AlertFunction alert);
+	using AlertFunction = std::function<void(int, StandardDeviation, StandardDeviation, Candle)>;
+	void registerAlert(AlertFunction alert) { alert_ = std::move(alert); }
 
 private:
 	AlertFunction alert_;

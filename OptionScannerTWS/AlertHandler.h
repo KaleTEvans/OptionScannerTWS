@@ -89,14 +89,14 @@ using std::string;
 // 6021 - Repeated hits (more than 2 of same alert back to back)
 // 6022 - Repeated hits (more than 3)
 // 6023 - Repeated hits (more than 5)
-// 
+
+// To be used after lots of data has been obtained
+// Higher than average cumulative vol
+
 // 6031 - Low local high - local low delta
 // 6032 - High local high - local low delta
 // 6033 - Low daily high - daily low delta
 // 6034 - High daily high - daily low delta
-//
-// 6041 - Higher relative volume on underlying
-// 6042 - Lower relative volume on underlying
 
 
 
@@ -110,9 +110,8 @@ namespace Alerts {
 
 	class AlertData {
 	public:
-		AlertData(Candle c, int code, StandardDeviation& sdVol, StandardDeviation& sdPriceDelta,
-			double dailyHigh, double dailyLow, double cumulativeVol, double underlyingPrice, int compCode
-		);
+		AlertData(Candle c, int code, StandardDeviation sdVol, StandardDeviation sdPriceDelta,
+			StandardDeviation uSdVol, StandardDeviation uSdPriceDelta, Candle uBars, int compCode);
 
 		// Need a copy constructor for additional alerts like repeated hits
 
@@ -122,21 +121,26 @@ namespace Alerts {
 
 		// Initial variables to be sent from callback
 	public:
+
+		// Incoming Variables
+		int code;
+		StandardDeviation sdVol;
+		StandardDeviation sdPriceDelta;
+		StandardDeviation uSdVol; // Underlying
+		StandardDeviation uSdPriceDelta; // Underlying
+		Candle uBars; // Underlying
+		int compCode;
+
+		// Added variables
 		time_t time;
 		string dateTime;
 		int strike;
 		string optionType;
-		int code;
 		double vol;
-		StandardDeviation& sdVol;
-		StandardDeviation& sdPriceDelta;
 		double priceDelta;
 		double closePrice;
-		double dailyHigh;
-		double dailyLow;
-		double cumulativeVol;
 		double underlyingPrice;
-		int compCode;
+		double underlyingPriceDelta;
 		vector<int> alertCodes;
 
 		// Variables that will be filled to check alert success

@@ -153,17 +153,43 @@ void OptionScanner::updateStrikes() {
 //===================================================
 
 void OptionScanner::registerAlertCallback(ContractData* cd) {
-	cd->registerAlert([this, cd](int data, StandardDeviation& sdVol, StandardDeviation& sdPrice, Candle c) {
+	cd->registerAlert([this, cd](int data, const StandardDeviation& sdPrice, const StandardDeviation sdVol, const Candle c) {
 
 		vector<bool> v1 = cd->getHighLowComparisons();
 		vector<bool> v2 = SPXBars->getHighLowComparisons();
 		int compCode = Alerts::getComparisonCode(v1, v2);
 
-		Alerts::AlertData a(c, data, sdVol, sdPrice, cd->getDailyHigh(), cd->getDailyLow(), 
-			cd->getCumulativeVol(), SPXBars->getCurrentPrice(), compCode);
-		ah.outputAlert(a);
-		// showAlertOutput(data, stDevVol, stDevPrice, c);
-		});
+		StandardDeviation uSdPrice;
+		StandardDeviation uSdVol;
+		Candle uBars;
+
+		// Determine which timeframe of underlying data to send
+		switch (data)
+		{
+		case 1001:
+			uSdPrice = SPXBars->get5SecStDev().first;
+			uSdVol = SPXBars->get5SecStDev().second;
+			uBars = SPXBars->getFiveSecData().back();
+			break;
+		case 1002:
+			uSdPrice = SPXBars->get30SecStDev().first;
+			uSdVol = SPXBars->get30SecStDev().second;
+			uBars = SPXBars->getThirtySecData().back();
+			break;
+		case 1003:
+			uSdPrice = SPXBars->get1MinStDev().first;
+			uSdVol = SPXBars->get1MinStDev().second;
+			uBars = SPXBars->getOneMinData().back();
+			break;
+		case 1004:
+			uSdPrice = SPXBars->get5MinStDev().first;
+			uSdVol = SPXBars->get5MinStDev().second;
+			uBars = SPXBars->getFiveMinData().back();
+			break;
+		}
+
+		Alerts::AlertData a(c, data, sdVol, sdPrice, uSdVol, uSdPrice, uBars, compCode);
+	});
 }
 
 //void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {

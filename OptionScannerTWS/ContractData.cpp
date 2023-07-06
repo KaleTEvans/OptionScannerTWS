@@ -45,7 +45,7 @@ void ContractData::updateData(Candle c) {
 	// 5 Second Timeframe Alert Options
 	//==============================================
 	if (sdVol5Sec.checkDeviation(c.volume, 2) && sdVol5Sec.getTotal() > 9 && !isUnderlying) {
-		if (alert_) alert_(1001, sdVol5Sec, sd5Sec, c);
+		if (alert_) alert_(1001, sd5Sec, sdVol5Sec, c);
 	}
 
 	// Using the length of the 5 sec array, we will determine if any new candles should be added to the other arrays
@@ -62,7 +62,7 @@ void ContractData::updateData(Candle c) {
 		// 30 Second Timeframe Alert Options
 		//==============================================
 		if (sdVol30Sec.checkDeviation(c6.volume, 1.5) && sdVol30Sec.getTotal() > 9 && !isUnderlying) {
-			if (alert_) alert_(1002, sdVol30Sec, sd30Sec, c6);
+			if (alert_) alert_(1002, sd30Sec, sdVol30Sec, c6);
 		}
 
 		// Now we'll reference the 30 sec array for the 1min, so we only need to use increments of 2
@@ -79,7 +79,7 @@ void ContractData::updateData(Candle c) {
 			// 1 Minute Timeframe Alert Options
 			//==============================================
 			if (sdVol1Min.checkDeviation(c1.volume, 1) && sdVol1Min.getTotal() > 9 && !isUnderlying) {
-				if (alert_) alert_(1003, sdVol1Min, sd1Min, c1);
+				if (alert_) alert_(1003, sd1Min, sdVol1Min, c1);
 			}
 
 			// Update cumulative volume for historical records
@@ -105,7 +105,7 @@ void ContractData::updateData(Candle c) {
 				// 5 Minute Timeframe Alert Options
 				//==============================================
 				if (sdVol5Min.checkDeviation(c5.volume, 1) && sdVol5Min.getTotal() > 4 && !isUnderlying) {
-					if (alert_) alert_(102, sdVol5Min, sd5Min, c5);
+					if (alert_) alert_(1004, sd5Sec, sdVol5Sec, c5);
 				}
 
 				// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between
@@ -145,8 +145,4 @@ void ContractData::updateUnderlyingComparisons() {
 
 	if (isWithinXPercent(lastPrice, localLow, percentDiff)) nearLocalLow = true;
 	else nearLocalLow = false;
-}
-
-void ContractData::registerAlert(AlertFunction alert) {
-	alert_ = std::move(alert);
 }
