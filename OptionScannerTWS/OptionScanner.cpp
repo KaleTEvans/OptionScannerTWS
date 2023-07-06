@@ -153,22 +153,22 @@ void OptionScanner::updateStrikes() {
 //===================================================
 
 void OptionScanner::registerAlertCallback(ContractData* cd) {
-	cd->registerAlert([this, cd](int data, double stDevVol, double stDevPrice, Candle c) {
+	cd->registerAlert([this, cd](int data, StandardDeviation& sdVol, StandardDeviation& sdPrice, Candle c) {
 
 		vector<bool> v1 = cd->getHighLowComparisons();
 		vector<bool> v2 = SPXBars->getHighLowComparisons();
 		int compCode = Alerts::getComparisonCode(v1, v2);
 
-		Alerts::AlertData a(c, data, stDevVol, stDevPrice, cd->getDailyHigh(), cd->getDailyLow(), 
+		Alerts::AlertData a(c, data, sdVol, sdPrice, cd->getDailyHigh(), cd->getDailyLow(), 
 			cd->getCumulativeVol(), SPXBars->getCurrentPrice(), compCode);
 		ah.outputAlert(a);
 		// showAlertOutput(data, stDevVol, stDevPrice, c);
 		});
 }
 
-void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
-	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " stdev: " << stDevVol << " volume: " << c.volume << " close price: " << c.close << endl;
-}
+//void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
+//	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " volume: " << c.volume << " close price: " << c.close << endl;
+//}
 
 
 //===================================================

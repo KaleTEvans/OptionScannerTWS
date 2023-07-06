@@ -37,8 +37,8 @@ using std::string;
 // and levels, and attach win probabilities
 //===========================================================
 // alertCodes[0] - Call or Put
-// 01 - Call
-// 02 - PUT
+// 11 - Call
+// 22 - PUT
 // 
 // alertCodes[1] - Timeframe
 // 1001 - 5 Second Timeframe
@@ -64,11 +64,9 @@ using std::string;
 // 2007 - 14:30 CST Last Thirty Minutes
 
 // alertCodes[4] - These codes will actually create alerts
-// 3010 - Volume over 2 standard deviations
-// 3011 - Volume over 5 standard deviations
-// 3012 - Volume over 10 standard deviations
-// 3013 - Volume over 15 standard deviations
-// 3014 - Volume over 20 standard deviations
+// 3011 - Volume over 1 standard deviations
+// 3012 - Volume over 2 standard deviations
+// 3013 - Volume over 3 standard deviations
 // 31xx - Volume over 100, combined with last two digits from above
 // 32xx - Volume over 250, combined with last two digits from above
 // 33xx - Volume over 500, combined with last two digits from above
@@ -112,7 +110,7 @@ namespace Alerts {
 
 	class AlertData {
 	public:
-		AlertData(Candle c, int code, double stDevVol, double stDevPriceDelta,
+		AlertData(Candle c, int code, StandardDeviation& sdVol, StandardDeviation& sdPriceDelta,
 			double dailyHigh, double dailyLow, double cumulativeVol, double underlyingPrice, int compCode
 		);
 
@@ -129,11 +127,11 @@ namespace Alerts {
 		int strike;
 		string optionType;
 		int code;
-		double closePrice;
 		double vol;
-		double stDevVol;
+		StandardDeviation& sdVol;
+		StandardDeviation& sdPriceDelta;
 		double priceDelta;
-		double stDevPriceDelta;
+		double closePrice;
 		double dailyHigh;
 		double dailyLow;
 		double cumulativeVol;
@@ -178,7 +176,7 @@ namespace Alerts {
 
 		void outputAlert(AlertData& a) {
 			cout << a.dateTime << " " << a.optionType << " " << a.strike << " | " << a.code << " | Current Price: " << a.closePrice
-				<< " | Volume: " << a.vol << " Volume StDev: " << a.stDevVol << endl;
+				<< " | Volume: " << a.vol  << endl;
 		}
 
 	private:

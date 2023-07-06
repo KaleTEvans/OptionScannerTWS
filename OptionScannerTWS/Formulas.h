@@ -28,17 +28,11 @@ public:
         stdDev = std::sqrt(variance);
     }
 
-    double getTotal() const {
-        return n;
-    }
-
-    double getStDev() const {
-        return stdDev;
-    }
-
-    double getMean() const {
-        return mean;
-    }
+    double getTotal() const { return n; }
+    double getStDev() const { return stdDev; }
+    double getMean() const { return mean; }
+    bool checkDeviation(double val, double n) const { return val > ((n * stdDev) + mean); }
+    double numStDev(double val) { return ((val - mean) / stdDev); }
 };
 
 template <typename T>

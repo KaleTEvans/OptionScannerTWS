@@ -6,9 +6,9 @@ namespace Alerts {
 	// Alert Data Constructor
 	//===================================================
 
-	AlertData::AlertData(Candle c, int code, double stDevVol, double stDevPriceDelta,
+	AlertData::AlertData(Candle c, int code, StandardDeviation& sdVol, StandardDeviation& sdPriceDelta,
 		double dailyHigh, double dailyLow, double cumulativeVol, double underlyingPrice, int compCode) :
-		code(code), stDevVol(stDevVol), stDevPriceDelta(stDevPriceDelta),
+		code(code), sdVol(sdVol), sdPriceDelta(sdPriceDelta),
 		dailyHigh(dailyHigh), dailyLow(dailyLow), cumulativeVol(cumulativeVol), underlyingPrice(underlyingPrice),
 		compCode(compCode) {
 		time = c.time;
@@ -19,12 +19,12 @@ namespace Alerts {
 		// Determine whether call or put using reqId
 		if (c.reqId % 5 == 0) {
 			optionType = "CALL";
-			alertCodes.push_back(01);
+			alertCodes.push_back(11);
 			strike = c.reqId;
 		}
 		else {
 			optionType = "PUT";
-			alertCodes.push_back(02);
+			alertCodes.push_back(22);
 			strike = c.reqId - 1;
 		}
 
@@ -54,18 +54,15 @@ namespace Alerts {
 		alertCodes.push_back(2000 + getCurrentHourSlot());
 
 		// Now determine the alert code to be used for the volume
-		int volAlertCode;
+		int volAlertCode = 3011;
 
-		if (vol > 20 * stDevVol) volAlertCode = 3014;
-		else if (vol > 15 * stDevVol) volAlertCode = 3013;
-		else if (vol > 10 * stDevVol) volAlertCode = 3012;
-		else if (vol > 5 * stDevVol) volAlertCode = 3011;
-		else volAlertCode = 3010;
+		if (sdVol.numStDev(vol) > 2) volAlertCode++; // 3012
+		if (sdVol.numStDev(vol) > 3) volAlertCode++; // 3013
 
-		if (vol > 1000) volAlertCode += 400;
-		else if (vol > 500) volAlertCode += 300;
-		else if (vol > 250) volAlertCode += 200;
-		else if (vol > 100) volAlertCode += 100;
+		if (vol > 100) volAlertCode += 100;
+		if (vol > 250) volAlertCode += 100; // 200
+		if (vol > 500) volAlertCode += 100; // 300
+		if (vol > 1000) volAlertCode += 100; // 400
 
 		alertCodes.push_back(volAlertCode);
 		alertCodes.push_back(compCode);

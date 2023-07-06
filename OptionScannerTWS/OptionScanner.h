@@ -29,7 +29,7 @@ public:
 
 	// Alert Callback Functions
 	void registerAlertCallback(ContractData * cd);
-	void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
+	// void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
 
 	// Functions for storing data after market close
 	void prepareContractData();
@@ -46,7 +46,7 @@ private:
 	std::unordered_map<int, ContractData*> contracts;
 
 	// Contains data for the underlying
-	ContractData* SPXBars;
+	ContractData* SPXBars = nullptr;
 
 	// Historical data requests need to be incremented
 	int historicalReq = 8000; // 8000 to avoid conflict with SPX price, be sure to update next bull market

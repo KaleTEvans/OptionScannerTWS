@@ -43,12 +43,12 @@ public:
 	vector<Candle> getFiveMinData() const { return fiveMinCandles; }
 
 	// Other data acessors
-	double getCurrentPrice() const { return fiveSecCandles[fiveSecCandles.size() - 1].close; }
+	double getCurrentPrice() const { return fiveSecCandles.back().close; }
 	double getDailyHigh() const { return dailyHigh; }
 	double getDailyLow() const { return dailyLow; }
 	double getLocalHigh() const { return localHigh; }
 	double getLocalLow() const { return localLow; }
-	long getCumulativeVol() const { return cumulativeVolume[cumulativeVolume.size() - 1].second; }
+	long getCumulativeVol() const { return cumulativeVolume.back().second; }
 
 	vector<bool> getHighLowComparisons() const {
 		vector<bool> comparisons;
@@ -108,7 +108,7 @@ private:
 // Callback Functionality for Alerts
 //=========================================
 public:
-	using AlertFunction = std::function<void(int, double, double, Candle)>;
+	using AlertFunction = std::function<void(int, StandardDeviation&, StandardDeviation&, Candle)>;
 	void registerAlert(AlertFunction alert);
 
 private:

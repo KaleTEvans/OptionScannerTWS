@@ -44,8 +44,8 @@ void ContractData::updateData(Candle c) {
 	//==============================================
 	// 5 Second Timeframe Alert Options
 	//==============================================
-	if (c.volume > 5 * (sdVol5Sec.getStDev()) && sdVol5Sec.getStDev() > 0 && sdVol5Sec.getTotal() > 9 && !isUnderlying) {
-		if (alert_) alert_(1001, sdVol5Sec.getStDev(), sd5Sec.getStDev(), c);
+	if (sdVol5Sec.checkDeviation(c.volume, 2) && sdVol5Sec.getTotal() > 9 && !isUnderlying) {
+		if (alert_) alert_(1001, sdVol5Sec, sd5Sec, c);
 	}
 
 	// Using the length of the 5 sec array, we will determine if any new candles should be added to the other arrays
@@ -61,8 +61,8 @@ void ContractData::updateData(Candle c) {
 		//==============================================
 		// 30 Second Timeframe Alert Options
 		//==============================================
-		if (c6.volume > 3 * (sdVol30Sec.getStDev()) && sdVol30Sec.getStDev() > 0 && sdVol30Sec.getTotal() > 9 && !isUnderlying) {
-			if (alert_) alert_(1002, sdVol30Sec.getStDev(), sd30Sec.getStDev(), c6);
+		if (sdVol30Sec.checkDeviation(c6.volume, 1.5) && sdVol30Sec.getTotal() > 9 && !isUnderlying) {
+			if (alert_) alert_(1002, sdVol30Sec, sd30Sec, c6);
 		}
 
 		// Now we'll reference the 30 sec array for the 1min, so we only need to use increments of 2
@@ -78,8 +78,8 @@ void ContractData::updateData(Candle c) {
 			//==============================================
 			// 1 Minute Timeframe Alert Options
 			//==============================================
-			if (c1.volume > 2 * (sdVol1Min.getStDev()) && sdVol1Min.getStDev() > 0 && sdVol1Min.getTotal() > 9 && !isUnderlying) {
-				if (alert_) alert_(1003, sdVol1Min.getStDev(), sd1Min.getStDev(), c1);
+			if (sdVol1Min.checkDeviation(c1.volume, 1) && sdVol1Min.getTotal() > 9 && !isUnderlying) {
+				if (alert_) alert_(1003, sdVol1Min, sd1Min, c1);
 			}
 
 			// Update cumulative volume for historical records
@@ -104,8 +104,8 @@ void ContractData::updateData(Candle c) {
 				//==============================================
 				// 5 Minute Timeframe Alert Options
 				//==============================================
-				if (c5.volume > 2 * (sdVol5Min.getStDev()) && sdVol5Min.getStDev() > 0 && sdVol5Min.getTotal() > 4 && !isUnderlying) {
-					if (alert_) alert_(102, sdVol5Min.getStDev(), sd5Min.getStDev(), c5);
+				if (sdVol5Min.checkDeviation(c5.volume, 1) && sdVol5Min.getTotal() > 4 && !isUnderlying) {
+					if (alert_) alert_(102, sdVol5Min, sd5Min, c5);
 				}
 
 				// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between

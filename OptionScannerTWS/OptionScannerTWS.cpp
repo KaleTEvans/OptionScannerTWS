@@ -17,7 +17,7 @@
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = false;
+constexpr bool runTests = true;
 
 // Main launcher for imformal tests
 void informalTests();
@@ -74,9 +74,9 @@ void informalTests() {
     // Test ability to receive alerts from ContractData as callbacks
     constexpr bool showAlertFunctionality = false;
     // Test the accuracy of daily high/low attributes from ContractData
-    constexpr bool showDailyLowHighAccuracy = true;
+    constexpr bool showDailyLowHighAccuracy = false;
     // Test the accuracy of the volume in a few contracts
-    constexpr bool testVolumeAccuracy = true;
+    constexpr bool testVolumeAccuracy = false;
 
     // Run tests here
     if (showWelcome) {
@@ -126,7 +126,7 @@ void basicHistoricalDataRequest(App* test) {
     test->EC->reqHistoricalData
     (10
         , C
-        , queryTime  // EndDateTime(2018, 02, 20)
+        , queryTime  
         , "3600 S"
         , "5 secs"
         , *WhatToShow::TRADES
@@ -288,8 +288,8 @@ void testStreamingAlerts(App* test) {
 
     // Register the callback
     ContractData testCon(112, fiveSecData[0]);
-    testCon.registerAlert([&](int data, double stDevVol, double stDevPrice, Candle c) {
-        cout << "Callback Received: " << data << " stdev: " << stDevVol << " volume: " << c.volume << " close price: " << c.close << endl;
+    testCon.registerAlert([&](int data, StandardDeviation& sdVol, StandardDeviation& sdPrice, Candle c) {
+        cout << "Callback Received: " << data << " stdev: " << sdVol.getStDev() << " volume: " << c.volume << " close price: " << c.close << endl;
     });
 
     // Fill ContractData object with remaining data
@@ -388,7 +388,7 @@ void testContractVolumes(App* test) {
 
     test->YW.singleRTBs = true;
     // Initialize contract data
-    ContractData* testCon;
+    ContractData* testCon = nullptr;
 
     bool firstCallback = true;
 
