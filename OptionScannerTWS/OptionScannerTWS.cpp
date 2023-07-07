@@ -1,5 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#define DEBUG_LOGS
+
+#include "Logger.h"
+
 #include <iostream>
 #include <ctime>
 #include <bitset>
@@ -9,8 +13,6 @@
 #include "OptionScanner.h"
 #include "ContractData.h"
 #include "AlertHandler.h"
-
-#include "spdlog/spdlog.h"
 
 //=======================================================================
 // Informal testing functions
@@ -36,6 +38,8 @@ bool compareCandles(Candle c1, Candle c2);
 //========================================================================
 int main(void) {
 
+    Logger::Initialize();
+
     if (runTests) {
         informalTests();
     }
@@ -50,6 +54,8 @@ int main(void) {
 
         //delete opt;
     }
+
+    Logger::Shutdown();
 
     return 0;
 }
@@ -115,6 +121,8 @@ void basicHistoricalDataRequest(App* test) {
     C.currency = "USD";
     C.exchange = "SMART";
     // C.primaryExchange = *Exchange::AMEX;
+
+    OPTIONSCANNER_DEBUG("This is a log for {}", C.symbol);
 
     std::time_t rawtime;
     std::tm* timeinfo;

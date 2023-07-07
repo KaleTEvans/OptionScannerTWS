@@ -3,13 +3,14 @@
 namespace Alerts {
 
 	//===================================================
-	// Alert Data Constructor
+	// Alert Data 
 	//===================================================
 
 	AlertData::AlertData(Candle c, int code, StandardDeviation sdVol, StandardDeviation sdPriceDelta,
 		StandardDeviation uSdVol, StandardDeviation uSdPriceDelta, Candle uBars, int compCode) :
 		code(code), sdVol(sdVol), sdPriceDelta(sdPriceDelta), uSdVol(uSdVol), uSdPriceDelta(uSdPriceDelta),
 		underlyingPrice(underlyingPrice),compCode(compCode) {
+		reqId = c.reqId;
 		time = c.time;
 		vol = c.volume;
 		closePrice = c.close;
@@ -94,25 +95,25 @@ namespace Alerts {
 	// Function to get the AlertData level of success
 	//========================================================
 
-	void AlertData::getSuccessLevel(vector<Candle> prior30) {
+	void AlertData::getSuccessLevel(vector<Candle> postAlertData) {
 		double maxPrice = INT_MAX;
 		double minPrice = 0;
 		double percentChange = 0;
 
-		for (size_t i = 0; i < prior30.size(); i++) {
+		for (size_t i = 0; i < postAlertData.size(); i++) {
 			// break the loop if the price drops below 30% before any gains
-			if (minPrice > 0 && abs(((prior30[i].close - minPrice) / minPrice) * 100) >= 30) {
+			if (minPrice > 0 && abs(((postAlertData[i].close - minPrice) / minPrice) * 100) >= 30) {
 				// Add a log here to say max loss was met
 				break;
 			}
 
-			if (maxPrice < INT_MAX) percentChange = abs(((prior30[i].close - maxPrice) / maxPrice) * 100);
+			if (maxPrice < INT_MAX) percentChange = abs(((postAlertData[i].close - maxPrice) / maxPrice) * 100);
 			if (percentChange >= 15 && percentChange < 30) successLevel = 1;
 			if (percentChange > 30 && percentChange < 100) successLevel = 2;
 			if (percentChange >= 100) successLevel = 3;
 
-			minPrice = min(minPrice, prior30[i].low);
-			maxPrice = max(maxPrice, prior30[i].high);
+			minPrice = min(minPrice, postAlertData[i].low);
+			maxPrice = max(maxPrice, postAlertData[i].high);
 		}
 	}
 

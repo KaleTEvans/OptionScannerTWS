@@ -163,6 +163,7 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="ContractData.h" />
     <ClInclude Include="Formulas.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="OptionScanner.h" />
     <ClInclude Include="tWrapper.h" />
   </ItemGroup>
