@@ -14,6 +14,8 @@
 #include <ctime>
 #include <unordered_set>
 
+#include "Logger.h"
+
 ///Easier: Just one include statement for all functionality
 #include "TwsApiL0.h"
 
@@ -108,6 +110,7 @@ public:
 
     // Req will be used to track the request to the client, and used to return the correct information once received
     int Req = 0;
+    int barCount = 0;
 
     // Variables to show data request output
     bool showHistoricalData = false;
@@ -203,7 +206,6 @@ public:
             fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
                 , (const  char*)date, open, high, low, close, volume);
 
-            // Close the connection as this is for test purposes
             m_Done = true;
         }
     }

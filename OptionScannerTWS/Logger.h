@@ -2,6 +2,8 @@
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 
+#define DEBUG_LOGS
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -27,10 +29,15 @@ public:
 		spdlog::register_logger(option_data_logs);
 		//spdlog::set_default_logger(option_data_logs);
 
+		/*auto debugFileLogs = std::make_shared<spdlog::sinks::basic_file_sink_mt>("../logs/debug.txt");
+		debugFileLogs->set_pattern("[%Y-%m-%d %H:%M:%S] %^[ %s ] [ %! ] [ line: %# ]%$ %v");*/
+
 		auto debugConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 		debugConsoleSink->set_pattern("[%Y-%m-%d %H:%M:%S] %^[ %s ] [ %! ] [ line: %# ]%$ %v");
 		debugConsoleSink->set_level(spdlog::level::debug);
 
+		//std::vector<spdlog::sink_ptr> debugSinks{ debugConsoleSink, debugFileLogs };
+		//debug_logs = std::make_shared<spdlog::logger>("debuglogs", sinks.begin(), sinks.end());
 		debug_logs = std::make_shared<spdlog::logger>("debuglogs", debugConsoleSink);
 		debug_logs->set_level(spdlog::level::debug);
 		debug_logs->flush_on(spdlog::level::debug);
@@ -48,9 +55,6 @@ private:
 	static std::shared_ptr<spdlog::logger> option_data_logs;
 	static std::shared_ptr<spdlog::logger> debug_logs;
 };
-
-std::shared_ptr<spdlog::logger> Logger::option_data_logs;
-std::shared_ptr<spdlog::logger> Logger::debug_logs;
 
 #define OPTIONSCANNER_TRACE(...) SPDLOG_LOGGER_TRACE(Logger::getCoreLogger(), __VA_ARGS__)
 

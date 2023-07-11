@@ -116,15 +116,12 @@ void App::retreiveRecentData(string interval, string duration, TickerId reqId) {
 
     // Once completed, clear the wrapper vector for next callback
     YW.underlyingCandles.clear();
-    
-    // Close the request
-    EC->cancelHistoricalData(reqId);
 }
 
 // The multiple variable is the increments of options strikes
 void App::populateStrikes(int multiple, int reqId) {
     // Ensure date time is updated
-    getDateTime();
+    //getDateTime();
     // Retrieve the latest SPX price
     retreiveRecentData("1 min", "1 D", reqId);
 

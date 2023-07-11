@@ -150,6 +150,7 @@
     <ClCompile Include="AlertHandler.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ContractData.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="OptionScanner.cpp" />
     <ClCompile Include="OptionScannerTWS.cpp" />
   </ItemGroup>

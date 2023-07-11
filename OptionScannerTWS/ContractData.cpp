@@ -11,7 +11,7 @@ Candle createNewBars(int id, int increment, const vector<Candle>& data) {
 	double low = INT_MAX;
 	long volume = 0;
 	
-	for (size_t i = data.size() - 1; i > 0 && i > data.size() - increment; i--) {
+	for (size_t i = data.size() - increment; i <= data.size() - 1; i++) {
 		high = max(high, data[i].high);
 		low = min(low, data[i].low);
 		volume += data[i].volume;
@@ -75,6 +75,16 @@ void ContractData::updateData(Candle c) {
 			sd1Min.addValue(c1.high - c1.low);
 			sdVol1Min.addValue(c1.volume);
 
+			if (cumulativeVolume.empty()) {
+				std::pair<long, long> p = { c1.time, c1.volume };
+				cumulativeVolume.push_back(p);
+			}
+			else {
+				int totalVol = c1.volume + cumulativeVolume.back().second;
+				std::pair<long, long> p = { c1.time, totalVol };
+				cumulativeVolume.push_back(p);
+			}
+
 			//==============================================
 			// 1 Minute Timeframe Alert Options
 			//==============================================
@@ -83,8 +93,15 @@ void ContractData::updateData(Candle c) {
 			}
 
 			// Update cumulative volume for historical records
-			std::pair<long, long> p = { c1.time, c1.volume };
-			cumulativeVolume.push_back(p);
+			/*if (cumulativeVolume.empty()) {
+				std::pair<long, long> p = { c1.time, c1.volume };
+				cumulativeVolume.push_back(p);
+			}
+			else {
+				int totalVol = c1.volume + cumulativeVolume.back().second;
+				std::pair<long, long> p = { c1.time, totalVol };
+				cumulativeVolume.push_back(p);
+			}*/
 
 			// Update daily high and low values to check relative price
 			dailyHigh = max(dailyHigh, c1.high);
@@ -117,6 +134,11 @@ void ContractData::updateData(Candle c) {
 					localLow = tempLow;
 					tempHigh = 0;
 					tempLow = 10000;
+
+					std::cout << "6 five min candles created" << std::endl;
+
+					OPTIONSCANNER_DEBUG("Local variables updatd for {} | Local High: {} | Local Low: {} ", contractId, localHigh, localLow);
+					OPTIONSCANNER_DEBUG("Daily high: {} | Daily Low: {} | Current Price: {}", dailyHigh, dailyLow, getCurrentPrice());
 				}
 			}
 		}

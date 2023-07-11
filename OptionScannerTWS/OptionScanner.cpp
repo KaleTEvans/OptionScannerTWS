@@ -2,7 +2,7 @@
 
 OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, ticker) {
 	// Start a request for realtime bars for the underlying
-	EC->reqRealTimeBars
+	/*EC->reqRealTimeBars
 	(1234
 		, getUnderlyingContract()
 		, 5
@@ -11,7 +11,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, tick
 	);
 
 	while (YW.underlyingRTBs.reqId != 1234) EC->checkMessages();
-	SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);
+	SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);*/
 }
 
 //============================================================
