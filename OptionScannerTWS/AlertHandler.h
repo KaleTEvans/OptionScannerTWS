@@ -18,6 +18,7 @@
 
 #include <unordered_map>
 #include <queue>
+#include <sstream>
 
 #include "tWrapper.h"
 #include "ContractData.h"
@@ -179,19 +180,16 @@ namespace Alerts {
 	class AlertHandler {
 	public:
 
-		void inputAlert(AlertData& a);
+		void inputAlert(AlertData* a);
 
 		// **** Be sure to take into account alerts right before close
 		void checkQueueUpdates(Candle c, std::unordered_map<int, ContractData*>& contractMap);
 
-		void outputAlert(AlertData& a) {
-			cout << a.dateTime << " " << a.optionType << " " << a.strike << " | " << a.code << " | Current Price: " << a.closePrice
-				<< " | Volume: " << a.vol  << endl;
-		}
+		void outputAlert(AlertData* a);
 
 	private:
-		std::unordered_map<int, AlertNode> alertStorage;
-		std::queue<AlertData*> alerUpdateQueue;
+		// std::unordered_map<int, AlertNode> alertStorage;
+		std::queue<AlertData*> alertUpdateQueue;
 	};
 
 }

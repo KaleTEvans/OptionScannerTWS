@@ -41,6 +41,12 @@ void ContractData::updateData(Candle c) {
 	sd5Sec.addValue(c.high - c.low);
 	sdVol5Sec.addValue(c.volume);
 
+	// Update daily high and low values to check relative price
+	dailyHigh = max(dailyHigh, c.high);
+	dailyLow = min(dailyLow, c.low);
+
+	updateComparisons();
+
 	//==============================================
 	// 5 Second Timeframe Alert Options
 	//==============================================
@@ -75,6 +81,7 @@ void ContractData::updateData(Candle c) {
 			sd1Min.addValue(c1.high - c1.low);
 			sdVol1Min.addValue(c1.volume);
 
+			// Update cumulative volume for historical records
 			if (cumulativeVolume.empty()) {
 				std::pair<long, long> p = { c1.time, c1.volume };
 				cumulativeVolume.push_back(p);
@@ -85,29 +92,20 @@ void ContractData::updateData(Candle c) {
 				cumulativeVolume.push_back(p);
 			}
 
+			OPTIONSCANNER_DEBUG("{} Contract: {}, Cumulative Volume: {}", cumulativeVolume.back().first, contractId,
+				cumulativeVolume.back().second);
+
+			if (oneMinCandles.size() % 5 == 0) {
+				OPTIONSCANNER_DEBUG("Local variables updatd for {} | Local High: {} | Local Low: {} ", contractId, localHigh, localLow);
+				OPTIONSCANNER_DEBUG("Daily high: {} | Daily Low: {} | Current Price: {}", dailyHigh, dailyLow, getCurrentPrice());
+			}
+
 			//==============================================
 			// 1 Minute Timeframe Alert Options
 			//==============================================
 			if (sdVol1Min.checkDeviation(c1.volume, 1) && sdVol1Min.getTotal() > 9 && !isUnderlying) {
 				if (alert_) alert_(1003, sd1Min, sdVol1Min, c1);
 			}
-
-			// Update cumulative volume for historical records
-			/*if (cumulativeVolume.empty()) {
-				std::pair<long, long> p = { c1.time, c1.volume };
-				cumulativeVolume.push_back(p);
-			}
-			else {
-				int totalVol = c1.volume + cumulativeVolume.back().second;
-				std::pair<long, long> p = { c1.time, totalVol };
-				cumulativeVolume.push_back(p);
-			}*/
-
-			// Update daily high and low values to check relative price
-			dailyHigh = max(dailyHigh, c1.high);
-			dailyLow = min(dailyLow, c1.low);
-
-			updateUnderlyingComparisons();
 
 			// Referencing the 1 min for the 5min array we can use increments of 5
 			if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5 == 0) {
@@ -127,7 +125,7 @@ void ContractData::updateData(Candle c) {
 
 				// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between
 				tempHigh = max(tempHigh, c5.high);
-				tempLow = max(tempLow, c5.low);
+				tempLow = min(tempLow, c5.low);
 
 				if (fiveMinCandles.size() % 6 == 0) {
 					localHigh = tempHigh;
@@ -150,7 +148,7 @@ void ContractData::updateData(Candle c) {
 // Helper Functions
 //==============================================
 
-void ContractData::updateUnderlyingComparisons() {
+void ContractData::updateComparisons() {
 	// Update underlying information
 	double lastPrice = fiveSecCandles.back().close;
 	double percentDiff = 0.1;
@@ -162,9 +160,9 @@ void ContractData::updateUnderlyingComparisons() {
 	if (isWithinXPercent(lastPrice, dailyLow, percentDiff)) nearDailyLow = true;
 	else nearDailyLow = false;
 
-	if (isWithinXPercent(lastPrice, localHigh, percentDiff)) nearLocalHigh = true;
+	if (isWithinXPercent(lastPrice, localHigh, percentDiff) || lastPrice > localHigh) nearLocalHigh = true;
 	else nearLocalHigh = false;
 
-	if (isWithinXPercent(lastPrice, localLow, percentDiff)) nearLocalLow = true;
+	if (isWithinXPercent(lastPrice, localLow, percentDiff) || lastPrice < localLow) nearLocalLow = true;
 	else nearLocalLow = false;
 }

@@ -101,7 +101,7 @@ private:
 	bool nearLocalLow = false;
 
 	// Function to update the comparison values
-	void updateUnderlyingComparisons();
+	void updateComparisons();
 
 	// For data keeping purposes
 	vector<std::pair<long, long>> cumulativeVolume;

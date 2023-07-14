@@ -6,6 +6,8 @@
 
 #include <cmath>
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 
 class StandardDeviation {
 private:

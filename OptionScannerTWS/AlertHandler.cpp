@@ -18,6 +18,14 @@ namespace Alerts {
 		underlyingPrice = uBars.close;
 		underlyingPriceDelta = uBars.high - uBars.low;
 
+		struct tm* timeInfo;
+		char buffer[80];
+
+		timeInfo = localtime(&time);
+		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
+
+		dateTime = buffer;
+
 		// Determine whether call or put using reqId
 		if (c.reqId % 5 == 0) {
 			optionType = "CALL";
@@ -47,13 +55,6 @@ namespace Alerts {
 
 		//==========================================================
 		// Alert code for time of day
-		struct tm* timeInfo;
-		char buffer[80];
-
-		timeInfo = localtime(&time);
-		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
-
-		dateTime = buffer;
 
 		alertCodes.push_back(2000 + getCurrentHourSlot());
 
@@ -115,6 +116,23 @@ namespace Alerts {
 			minPrice = min(minPrice, postAlertData[i].low);
 			maxPrice = max(maxPrice, postAlertData[i].high);
 		}
+	}
+
+	void AlertHandler::inputAlert(AlertData* a) {
+		alertUpdateQueue.push(a);
+
+		outputAlert(a);
+	}
+
+	void AlertHandler::outputAlert(AlertData* a) {
+		std::stringstream ss;
+		for (size_t i = 0; i < a->alertCodes.size(); ++i) {
+			ss << a->alertCodes[i];
+			if (i != a->alertCodes.size() - 1) ss << ' ';
+		}
+
+		OPTIONSCANNER_INFO("Alert for {} {} | Current Price: {} | Codes: {} | Volume: {}", 
+			a->strike, a->optionType, a->closePrice, ss.str(), a->vol);
 	}
 
 	//========================================================

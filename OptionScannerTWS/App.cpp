@@ -1,6 +1,6 @@
 #include "App.h"
 
-App::App(const char* host, IBString ticker) : host(host), ticker(ticker), YW(false) {
+App::App(const char* host) : host(host), YW(false) {
 
     // Initialize connection
     EC = EClientL0::New(&YW);
@@ -15,27 +15,31 @@ App::App(const char* host, IBString ticker) : host(host), ticker(ticker), YW(fal
 
     getDateTime();
 
-	// Initialize with contract specs
-	underlying.symbol = ticker;
-	
-    // Check if the symbol is an index or a security
-    if (ticker == "SPX") {
-        underlying.secType = *SecType::IND;
-        underlying.primaryExchange = *Exchange::CBOE;
-    }
-    else {
-        underlying.secType = *SecType::STK;
-    }
-
-	underlying.currency = "USD";
-    underlying.exchange = *Exchange::IB_SMART;
-
+    // Default contract will be SPX
+    createUnderlyingContract("SPX", true);
 }
 
 App::~App() {
     EC->eDisconnect();
     delete EC;
 
+}
+
+void App::createUnderlyingContract(IBString ticker, bool isIndex) {
+    underlying.symbol = ticker;
+
+    // Check if the symbol is an index or a security
+    if (isIndex) {
+        underlying.secType = *SecType::IND;
+        underlying.primaryExchange = *Exchange::CBOE;
+    }
+    else {
+        underlying.secType = *SecType::STK;
+        underlying.primaryExchange = *Exchange::IB_SMART;
+    }
+
+    underlying.currency = "USD";
+    underlying.exchange = *Exchange::IB_SMART;
 }
 
 void App::getDateTime() {
@@ -120,9 +124,7 @@ void App::retreiveRecentData(string interval, string duration, TickerId reqId) {
 
 // The multiple variable is the increments of options strikes
 void App::populateStrikes(int multiple, int reqId) {
-    // Ensure date time is updated
-    //getDateTime();
-    // Retrieve the latest SPX price
+    // Retrieve the latest Underlying price
     retreiveRecentData("1 min", "1 D", reqId);
 
     // Clear the strikes vector
@@ -130,12 +132,12 @@ void App::populateStrikes(int multiple, int reqId) {
 
     // Round the price down to nearest increment
     double currentPrice = prices[prices.size() - 1].close;
-    int roundedPrice = currentPrice + (multiple / 2);
+    int roundedPrice = int(currentPrice + (multiple / 2));
     roundedPrice -= roundedPrice % multiple;
-    int strikePrice = roundedPrice - (multiple * 5);
+    int strikePrice = roundedPrice - (multiple * 4);
 
     // This will give us 9 strikes in total
-    while (strikePrice <= roundedPrice + (multiple * 3)) {
+    while (strikePrice <= roundedPrice + (multiple * 4)) {
         strikes.push_back(strikePrice);
         strikePrice += multiple;
     }

@@ -1,17 +1,24 @@
 #include "OptionScanner.h"
 
-OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host, ticker) {
+OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker), alertHandler() {
 	// Start a request for realtime bars for the underlying
-	/*EC->reqRealTimeBars
+	// With SPX and other indexes, we only set the primary exchange to CBOE
+	Contract rtbSPX;
+	rtbSPX.symbol = ticker;
+	rtbSPX.secType = *SecType::IND;
+	rtbSPX.currency = "USD";
+	rtbSPX.primaryExchange = *Exchange::CBOE;
+
+	EC->reqRealTimeBars
 	(1234
-		, getUnderlyingContract()
+		, rtbSPX
 		, 5
 		, *WhatToShow::TRADES
 		, UseRTH::OnlyRegularTradingData
 	);
 
 	while (YW.underlyingRTBs.reqId != 1234) EC->checkMessages();
-	SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);*/
+	SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);
 }
 
 //============================================================
@@ -38,10 +45,10 @@ void OptionScanner::streamOptionData() {
 	while (YW.notDone()) {
 		EC->checkMessages();
 
-		// Update underlying
-		if (YW.underlyingRTBs.reqId == 1234) SPXBars->updateData(YW.underlyingRTBs);
-
 		if (!YW.fiveSecCandles.empty()) {
+			// Update underlying
+			if (YW.underlyingRTBs.reqId == 1234) SPXBars->updateData(YW.underlyingRTBs);
+
 			for (auto i : YW.fiveSecCandles) {
 				if (contracts.find(i.reqId) == contracts.end()) {
 					ContractData* cd = new ContractData(i.reqId, i);
@@ -87,34 +94,38 @@ void OptionScanner::updateStrikes() {
 
 	cout << "Strikes populated" << endl;
 
+	contractsInScope.clear();
+
 	for (auto i : strikes) {
 		// If the contracts map doesn't already contain the strike, then a new one has come into scope
 		if (contracts.find(i) == contracts.end()) {
 			optionStrikes.push_back(i);
 			// Contracts with reqId +1 will represent put options
 			optionStrikes.push_back(i + 1);
+
+			contractsInBuffer += 2;
 		}
+
+		contractsInScope.insert(i);
+		contractsInScope.insert(i + 1);
 	}
 
+	if (contractsInBuffer > 18) YW.candleBuffer.capacity = contractsInBuffer;
+	OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.capacity);
 
 	cout << "Option Strikes: ";
 	for (auto i : optionStrikes) cout << i << " ";
 	cout << endl;
 
-	// Add the strikes to the sorted array
+	// Add the strikes to the sorted array for output
 	for (auto i : optionStrikes) if (i % 5 == 0) sortedContractStrikes.push_back(i);
 	std::sort(sortedContractStrikes.begin(), sortedContractStrikes.end());
-
-	// Be sure to update the size of the buffer capaciity in the wrapper if more strikes are added
-	if (sortedContractStrikes.size() > 18) {
-		YW.candleBuffer.capacity = (sortedContractStrikes.size());
-	}
 
 	// Now we will create a request for each option strike not already in the map
 	for (auto i : optionStrikes) {
 		// Create the contract
 		Contract con;
-		con.symbol = getTicker();
+		con.symbol = ticker;
 		con.secType = *SecType::OPT;
 		con.currency = "USD";
 		con.exchange = *Exchange::IB_SMART;
@@ -155,40 +166,44 @@ void OptionScanner::updateStrikes() {
 void OptionScanner::registerAlertCallback(ContractData* cd) {
 	cd->registerAlert([this, cd](int data, const StandardDeviation& sdPrice, const StandardDeviation sdVol, const Candle c) {
 
-		vector<bool> v1 = cd->getHighLowComparisons();
-		vector<bool> v2 = SPXBars->getHighLowComparisons();
-		int compCode = Alerts::getComparisonCode(v1, v2);
+		// Make sure contract is in scope
+		if (contractsInScope.find(c.reqId) != contractsInScope.end()) {
+			vector<bool> v1 = cd->getHighLowComparisons();
+			vector<bool> v2 = SPXBars->getHighLowComparisons();
+			int compCode = Alerts::getComparisonCode(v1, v2);
 
-		StandardDeviation uSdPrice;
-		StandardDeviation uSdVol;
-		Candle uBars;
+			StandardDeviation uSdPrice;
+			StandardDeviation uSdVol;
+			Candle uBars;
 
-		// Determine which timeframe of underlying data to send
-		switch (data)
-		{
-		case 1001:
-			uSdPrice = SPXBars->get5SecStDev().first;
-			uSdVol = SPXBars->get5SecStDev().second;
-			uBars = SPXBars->getFiveSecData().back();
-			break;
-		case 1002:
-			uSdPrice = SPXBars->get30SecStDev().first;
-			uSdVol = SPXBars->get30SecStDev().second;
-			uBars = SPXBars->getThirtySecData().back();
-			break;
-		case 1003:
-			uSdPrice = SPXBars->get1MinStDev().first;
-			uSdVol = SPXBars->get1MinStDev().second;
-			uBars = SPXBars->getOneMinData().back();
-			break;
-		case 1004:
-			uSdPrice = SPXBars->get5MinStDev().first;
-			uSdVol = SPXBars->get5MinStDev().second;
-			uBars = SPXBars->getFiveMinData().back();
-			break;
+			// Determine which timeframe of underlying data to send
+			switch (data)
+			{
+			case 1001:
+				uSdPrice = SPXBars->get5SecStDev().first;
+				uSdVol = SPXBars->get5SecStDev().second;
+				uBars = SPXBars->getFiveSecData().back();
+				break;
+			case 1002:
+				uSdPrice = SPXBars->get30SecStDev().first;
+				uSdVol = SPXBars->get30SecStDev().second;
+				uBars = SPXBars->getThirtySecData().back();
+				break;
+			case 1003:
+				uSdPrice = SPXBars->get1MinStDev().first;
+				uSdVol = SPXBars->get1MinStDev().second;
+				uBars = SPXBars->getOneMinData().back();
+				break;
+			case 1004:
+				uSdPrice = SPXBars->get5MinStDev().first;
+				uSdVol = SPXBars->get5MinStDev().second;
+				uBars = SPXBars->getFiveMinData().back();
+				break;
+			}
+
+			Alerts::AlertData* a = new Alerts::AlertData(c, data, sdVol, sdPrice, uSdVol, uSdPrice, uBars, compCode);
+			alertHandler.inputAlert(a);
 		}
-
-		Alerts::AlertData a(c, data, sdVol, sdPrice, uSdVol, uSdPrice, uBars, compCode);
 	});
 }
 

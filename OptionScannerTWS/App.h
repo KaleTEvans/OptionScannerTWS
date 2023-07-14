@@ -23,28 +23,22 @@ using std::unordered_set;
 class App {
 
 public:
-	App(const char* host, IBString ticker);
+	App(const char* host);
 	~App();
 
+	void createUnderlyingContract(IBString ticker, bool isIndex = true);
 	void getDateTime();
 	void retreiveRecentData(string interval, string duration, TickerId reqId);
 	void populateStrikes(int multiple = 5, int reqId = 101);
 
 	// Accessors
-	IBString getTicker() const { return ticker; }
 	vector<int> getDateVector() const { return todayDate; }
 	Contract getUnderlyingContract() const { return underlying; }
 
 private:
-
-	// One contract for price, one variable contract for option strikes
-	IBString ticker;
 	Contract underlying;
-	Contract SPXchain;
 
 	vector<int> todayDate;
-
-	int strike;
 
 // Variables for public use
 public:

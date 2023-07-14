@@ -14,6 +14,7 @@
 #include "AlertHandler.h"
 
 #include <unordered_map>
+#include <unordered_set>
 #include <chrono>
 #include <thread>
 #include <algorithm>
@@ -35,6 +36,8 @@ public:
 	void prepareContractData();
 
 private:
+	IBString ticker;
+
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes();
 
@@ -52,8 +55,11 @@ private:
 	int historicalReq = 8000; // 8000 to avoid conflict with SPX price, be sure to update next bull market
 
 	vector<int> optionStrikes;
+	int contractsInBuffer = 0;
 	vector<int> sortedContractStrikes;
 
-	Alerts::AlertHandler ah;
+	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
+
+	Alerts::AlertHandler alertHandler;
 };
 

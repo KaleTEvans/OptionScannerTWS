@@ -15,7 +15,7 @@
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = true;
+constexpr bool runTests = false;
 
 // Main launcher for imformal tests
 void informalTests();
@@ -25,7 +25,6 @@ void testRealTimeBars(App* test);
 void candleFunctionality(App* test);
 void testStreamingAlerts(App* test);
 void testLowAndHighAccuracy(App* test);
-void testContractVolumes(App* test);
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
@@ -45,8 +44,8 @@ int main(void) {
 
         OptionScanner* opt = new OptionScanner(host, ticker);
 
-        //opt->streamOptionData();
-        opt->populateStrikes();
+        opt->streamOptionData();
+        //opt->populateStrikes();
 
         //delete opt;
     }
@@ -77,8 +76,6 @@ void informalTests() {
     constexpr bool showAlertFunctionality = false;
     // Test the accuracy of daily high/low attributes from ContractData
     constexpr bool showDailyLowHighAccuracy = false;
-    // Test the accuracy of the volume in a few contracts
-    constexpr bool testVolumeAccuracy = false;
 
     // Run tests here
     if (showWelcome) {
@@ -87,14 +84,13 @@ void informalTests() {
     }
 
     // Create a connection to TWS for use in all functions
-    App* test = new App("127.0.0.1", "SPY");
+    App* test = new App("127.0.0.1");
 
     if (showBasicRequest) basicHistoricalDataRequest(test);
     if (showRealTimeBarsTest) testRealTimeBars(test);
     if (showCandleFunctionality) candleFunctionality(test);
     if (showAlertFunctionality) testStreamingAlerts(test);
     if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);
-    if(testVolumeAccuracy) testContractVolumes(test);
 
     delete test;
 }
@@ -113,21 +109,33 @@ void basicHistoricalDataRequest(App* test) {
     test->useTestData = true;
 
     Contract C;
-    C.symbol = "AAPL";
-    C.secType = "STK";
+    C.symbol = "SPX";
+    C.secType = "OPT";
     C.currency = "USD";
     C.exchange = "SMART";
-    // C.primaryExchange = *Exchange::AMEX;
+    C.primaryExchange = *Exchange::CBOE;
+    C.lastTradeDateOrContractMonth = "20230710";
+    C.right = "CALL";
+    C.strike = 4445;
 
-    test->retreiveRecentData("5 secs", "3600 S", 10);
+    test->EC->reqHistoricalData
+    (10
+        , C
+        , "20230705 09:30:00 US/Central"
+        , "3600 S"
+        , "5 secs"
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+        , FormatDate::AsDate
+        , false
+    );
+
+    while (test->YW.notDone()) {
+        test->EC->checkMessages();
+        if (test->YW.Req == 10) break;
+    }
     
     cout << "Num test candles received: " << test->prices.size() << endl;
-
-    /*for (auto i : test->prices) {
-        fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
-            , (const  char*)i.date, i.open, i.high, i.low, i.close, i.volume);
-    }*/
-
 }
 
 //=================================================================
@@ -146,15 +154,15 @@ void testRealTimeBars(App* test) {
     C.symbol = "SPX";
     C.secType = "IND";
     C.currency = "USD";
-    C.exchange = "SMART";
+    //C.exchange = "SMART";
     C.primaryExchange = "CBOE";
 
     test->EC->reqRealTimeBars
     (20
         , C
         , 5
-        , *WhatToShow::MIDPOINT
-        , UseRTH::AllTradingData
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
     );
 
     // Let run for 15 secs
@@ -186,6 +194,7 @@ void candleFunctionality(App* test) {
     cout << "Retrieving data ..." << endl;
 
     test->useTestData = true;
+    test->createUnderlyingContract("SPY", false);
 
     test->retreiveRecentData("5 secs", "3600 S", 21);
 
@@ -250,6 +259,7 @@ void candleFunctionality(App* test) {
     cout << "One Minute candles matched correctly" << endl;
     for (size_t i = 0; i < test5Min.size(); i++) {
         if (!compareCandles(fiveMin[i], test5Min[i])) {
+            OPTIONSCANNER_ERROR("Error: 5 Minute candle comparison incorrect");
             return;
         }
     }
@@ -275,6 +285,7 @@ void testStreamingAlerts(App* test) {
     cout << "Retreiving Data ...." << endl;
 
     test->useTestData = true;
+    test->createUnderlyingContract("SPY");
 
     vector<Candle> fiveSecData;
     vector<Candle> testFiveSec;
@@ -309,6 +320,7 @@ void testLowAndHighAccuracy(App* test) {
     cout << "Retreiving data ...." << endl;
 
     test->useTestData = true;
+    test->createUnderlyingContract("SPY");
 
     test->retreiveRecentData("5 secs", "3600 S", 31);
     // Store the data
@@ -334,109 +346,12 @@ void testLowAndHighAccuracy(App* test) {
             (v[2]) ? cout << "near LL | " : cout << "not near LL | ";
             (v[3]) ? cout << "near LH | " : cout << "not near LH | ";
             cout << "Daily Low: " << testCon.getDailyLow() << " | Daily High: " << testCon.getDailyHigh() << endl;
-            cout << "Local Low: " << testCon.getLocalLow() << " | Local Low: " << testCon.getLocalLow() << endl;
+            cout << "Local Low: " << testCon.getLocalLow() << " | Local High: " << testCon.getLocalHigh() << endl;
             cout << "===================================================================" << endl;
         }
 
         testCon.updateData(fiveSec[i]);
     }
-}
-
-//============================================================
-//Test the accuracy of the volume in a few contracts
-//===========================================================
-
-void testContractVolumes(App* test) {
-    cout << "========================================================================" << endl;
-    cout << "Testing the accuracy of volume data in a contract " << endl;
-    cout << "========================================================================" << endl;
-    cout << "This test will gather data for a certain contract for a few minutes, " << endl;
-    cout << "and then make a historical request to check that the values match up" << endl;
-    cout << endl;
-    cout << "Retreiving data ...." << endl;
-
-    Contract C;
-    C.symbol = "SPX";
-    C.secType = *SecType::OPT;
-    C.currency = "USD";
-    C.exchange = *Exchange::IB_SMART;
-    C.primaryExchange = *Exchange::CBOE;
-    C.right = *ContractRight::CALL;
-
-    // Retrieve Date
-    test->getDateTime();
-    vector<int> date = test->getDateVector();
-
-    C.lastTradeDateOrContractMonth = EndDateTime(date[2], date[1], date[0]);
-
-    // Get the strike
-    test->populateStrikes(41);
-    int strike = test->strikes[4];
-
-    C.strike = strike;
-
-    test->EC->reqRealTimeBars
-    (42
-        , C
-        , 5
-        , *WhatToShow::MIDPOINT
-        , UseRTH::OnlyRegularTradingData
-    );
-
-    test->YW.singleRTBs = true;
-    // Initialize contract data
-    ContractData* testCon = nullptr;
-
-    bool firstCallback = true;
-
-    while (test->YW.notDone()) {
-        // Make sure only one instance of the ContractData is created
-        if (test->YW.underlyingRTBs.reqId == 42 && firstCallback) {
-            testCon = new ContractData(test->YW.underlyingRTBs.reqId, test->YW.underlyingRTBs, true);
-            firstCallback = false;
-        }
-        
-        // After 5 minutes, break the loop
-        if (testCon->getOneMinData().size() >= 5) break;
-
-        testCon->updateData(test->YW.underlyingRTBs);
-    }
-
-    // Now, we'll make a historical request of the last 5 mintues
-    std::time_t rawtime;
-    std::tm* timeinfo;
-    char queryTime[80];
-    std::time(&rawtime);
-    timeinfo = std::gmtime(&rawtime);
-    std::strftime(queryTime, 80, "%Y%m%d-%H:%M:%S", timeinfo);
-
-    test->EC->reqHistoricalData
-    (43
-        , C
-        , queryTime  
-        , "3600 S"
-        , "1 mins"
-        , *WhatToShow::TRADES
-        , UseRTH::OnlyRegularTradingData
-        , FormatDate::AsDate
-        , false
-        , TagValueListSPtr()
-    );
-
-    vector<Candle> histData = test->prices;
-    int volSum = 0;
-    // Get the last 5 candles
-    int j = 0; // For the contract vector
-    for (size_t i = histData.size() - 6; i < histData.size(); i++) {
-        cout << "1 Min volume from RTBs: " << testCon->getOneMinData()[j].volume << " at time: " << testCon->getOneMinData()[i].time <<
-            " 1 Min volume from historical request: " << histData[i].volume << " at time: " << histData[i].date << endl;
-
-        volSum += histData[i].volume;
-        j++;
-    }
-
-    // Now output the cumulative volume
-    cout << "Total vol for RTB data: " << testCon->getCumulativeVol() << " | Total vol for hist data: " << volSum << endl;
 }
 
 bool compareCandles(Candle c1, Candle c2) {
