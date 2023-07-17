@@ -4,6 +4,7 @@
 #include <ctime>
 #include <bitset>
 
+#include "Connections.h"
 #include "tWrapper.h"
 #include "App.h"
 #include "OptionScanner.h"
@@ -39,14 +40,14 @@ int main(void) {
         informalTests();
     }
     else {
-        const char* host = "127.0.0.1";
+        /*const char* host = "127.0.0.1";
         IBString ticker = "SPX";
 
         OptionScanner* opt = new OptionScanner(host, ticker);
 
-        opt->streamOptionData();
+        opt->streamOptionData();*/
         //opt->populateStrikes();
-
+        connectToDB();
         //delete opt;
     }
 

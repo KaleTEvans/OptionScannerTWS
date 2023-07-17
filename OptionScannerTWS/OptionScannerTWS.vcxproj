@@ -30,14 +30,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -106,7 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -150,6 +150,7 @@
     <ClCompile Include="AlertHandler.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="ContractData.cpp" />
+    <ClCompile Include="libs\nanodbc\nanodbc.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="OptionScanner.cpp" />
     <ClCompile Include="OptionScannerTWS.cpp" />
@@ -162,8 +163,10 @@
   <ItemGroup>
     <ClInclude Include="AlertHandler.h" />
     <ClInclude Include="App.h" />
+    <ClInclude Include="Connections.h" />
     <ClInclude Include="ContractData.h" />
     <ClInclude Include="Formulas.h" />
+    <ClInclude Include="libs\nanodbc\nanodbc.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="OptionScanner.h" />
     <ClInclude Include="tWrapper.h" />
