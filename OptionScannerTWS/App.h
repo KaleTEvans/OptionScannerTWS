@@ -1,6 +1,7 @@
 //=============================================================================
 // Functionality of the App class is to make customized data requests to the 
 // TWS client, as well as return some of the formatted data from the wrapper
+// App will also handle the db connections
 // ============================================================================
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -30,6 +31,9 @@ public:
 	void getDateTime();
 	void retreiveRecentData(string interval, string duration, TickerId reqId);
 	void populateStrikes(int multiple = 5, int reqId = 101);
+
+	// SQL Server Connections
+
 
 	// Accessors
 	vector<int> getDateVector() const { return todayDate; }

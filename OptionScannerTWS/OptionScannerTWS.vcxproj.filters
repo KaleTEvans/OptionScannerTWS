@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Unit Tests">
+      <UniqueIdentifier>{b0182796-8d1b-4c14-bdea-6afc101874cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OptionScannerTWS.cpp">
@@ -35,6 +38,18 @@
     </ClCompile>
     <ClCompile Include="libs\nanodbc\nanodbc.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SQLSchema.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Candle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MockWrapper.cpp">
+      <Filter>Unit Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,11 +74,17 @@
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Connections.h">
+    <ClInclude Include="SQLSchema.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="libs\nanodbc\nanodbc.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Candle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MockWrapper.h">
+      <Filter>Unit Tests</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

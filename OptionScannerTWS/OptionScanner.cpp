@@ -78,7 +78,7 @@ void OptionScanner::streamOptionData() {
 
 		if (elapsedTime >= interval) {
 			updateStrikes();
-			cout << "Buffer size currently at: " << YW.candleBuffer.buffer.size() << endl;
+			cout << "Buffer size currently at: " << YW.candleBuffer.getCurrentBufferLoad() << endl;
 			lastExecutionTime = currentTime; // Update the  last execution time
 		}
 
@@ -110,8 +110,8 @@ void OptionScanner::updateStrikes() {
 		contractsInScope.insert(i + 1);
 	}
 
-	if (contractsInBuffer > 18) YW.candleBuffer.capacity = contractsInBuffer;
-	OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.capacity);
+	if (contractsInBuffer > 18) YW.candleBuffer.setNewBufferCapacity(contractsInBuffer);
+	OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.checkBufferCapacity());
 
 	cout << "Option Strikes: ";
 	for (auto i : optionStrikes) cout << i << " ";

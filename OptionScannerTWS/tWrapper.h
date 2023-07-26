@@ -5,6 +5,7 @@
 * The TwsApiC++ library uses the same functions and object names as the actual TWS Api
 *=====================================
 */
+#define _CRT_SECURE_NO_WARNINGS
 
 #pragma once
 
@@ -13,6 +14,8 @@
 #include <chrono>
 #include <ctime>
 #include <unordered_set>
+
+#include <odb/core.hxx> // ORM library for SQL
 
 #include "Logger.h"
 
@@ -76,29 +79,24 @@ public:
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-template <typename T> 
 class CandleBuffer {
 public:
-    CandleBuffer(size_t capacity) : capacity(capacity) {}
+    CandleBuffer(size_t capacity);
 
-    void processBuffer(std::vector<T>& wrapperContainer) {
-        if (buffer.size() == capacity && bufferReqs.size() == capacity) {
-            // std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
-            // Append buffer contents to the target vector
-            wrapperContainer.clear();
-            wrapperContainer.insert(wrapperContainer.end(), buffer.begin(), buffer.end());
-            // Clear the buffer
-            buffer.clear();
-            // Clear the set
-            bufferReqs.clear();
-        }
-    }
+    void processBuffer(std::vector<Candle>& wrapperContainer);
 
-public:
+    size_t checkBufferCapacity();
+    size_t getCurrentBufferLoad();
+    void setNewBufferCapacity(int value);
+    void addToBuffer(Candle candle);
+    bool checkSet(int value);
+    void addToSet(int value);
+
+private:
     // bufferReqs will ensure we have all reqIds from the request list before emptying the buffer
     std::unordered_set<int> bufferReqs;
-    std::vector<T> buffer;
-    size_t capacity;
+    std::vector<Candle> buffer;
+    size_t capacity_;
 };
 
 // We can define our own eWrapper to implement only the functionality that we need to use
@@ -110,7 +108,6 @@ public:
 
     // Req will be used to track the request to the client, and used to return the correct information once received
     int Req = 0;
-    int barCount = 0;
 
     // Variables to show data request output
     bool showHistoricalData = false;
@@ -120,7 +117,7 @@ public:
     // Containers to be used for received data
     //========================================
     // 18 Candles for each option strikle
-    CandleBuffer<Candle> candleBuffer{ 18 };
+    CandleBuffer candleBuffer{ 18 };
 
     std::vector<Candle> underlyingCandles;
     std::vector<Candle> fiveSecCandles;
@@ -187,28 +184,7 @@ public:
 
     virtual void historicalData(TickerId reqId, const IBString& date
         , double open, double high, double low, double close
-        , int volume, int barCount, double WAP, int hasGaps) {
-
-        ///Easier: EWrapperL0 provides an extra method to check all data was retrieved
-        if (IsEndOfHistoricalData(date)) {
-            // m_Done = true;
-            // Set Req to the same value as reqId so we can retrieve the data once finished
-            Req = reqId;
-            std::cout << "Completed historical data request " << Req << std::endl;
-            return;
-        }
-
-        // Upon receiving the price request, populate candlestick data
-        Candle c(reqId, date, open, high, low, close, volume, barCount, WAP, hasGaps);
-        underlyingCandles.push_back(c);
-
-        if (showHistoricalData) {
-            fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
-                , (const  char*)date, open, high, low, close, volume);
-
-            m_Done = true;
-        }
-    }
+        , int volume, int barCount, double WAP, int hasGaps);
 
     // Retrieve real time bars, TWS Api currently only returns 5 second candles
     virtual void realtimeBar(TickerId reqId, long time, double open, double high,
@@ -229,10 +205,10 @@ public:
         }
         // Otherwise use the buffer for the option contracts
         else {
-            if (candleBuffer.bufferReqs.find(c.reqId) == candleBuffer.bufferReqs.end()) {
-                candleBuffer.buffer.push_back(c);
+            if (!candleBuffer.checkSet(c.reqId)) {
+                candleBuffer.addToBuffer(c);
 
-                candleBuffer.bufferReqs.insert(c.reqId);
+                candleBuffer.addToSet(c.reqId);
             }
             candleBuffer.processBuffer(fiveSecCandles);
         }

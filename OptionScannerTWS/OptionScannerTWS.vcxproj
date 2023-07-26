@@ -72,9 +72,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <ExecutablePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\bin;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0;C:\Users\kalet\source\libs\ODB\libodb-2.4.0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\lib;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <ExecutablePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\bin;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0;C:\Users\kalet\source\libs\ODB\libodb-2.4.0;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\lib;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -149,11 +155,15 @@
   <ItemGroup>
     <ClCompile Include="AlertHandler.cpp" />
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Candle.cpp" />
     <ClCompile Include="ContractData.cpp" />
     <ClCompile Include="libs\nanodbc\nanodbc.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="MockWrapper.cpp" />
     <ClCompile Include="OptionScanner.cpp" />
     <ClCompile Include="OptionScannerTWS.cpp" />
+    <ClCompile Include="SQLSchema.cpp" />
+    <ClCompile Include="tWrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\TwsApiCpp-master\TwsApiC++\_win32\TwsApi.vcxproj">
@@ -163,7 +173,9 @@
   <ItemGroup>
     <ClInclude Include="AlertHandler.h" />
     <ClInclude Include="App.h" />
-    <ClInclude Include="Connections.h" />
+    <ClInclude Include="Candle.h" />
+    <ClInclude Include="MockWrapper.h" />
+    <ClInclude Include="SQLSchema.h" />
     <ClInclude Include="ContractData.h" />
     <ClInclude Include="Formulas.h" />
     <ClInclude Include="libs\nanodbc\nanodbc.h" />

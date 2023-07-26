@@ -27,6 +27,8 @@ App::~App() {
 
 void App::createUnderlyingContract(IBString ticker, bool isIndex) {
     underlying.symbol = ticker;
+    underlying.currency = "USD";
+    underlying.exchange = *Exchange::IB_SMART;
 
     // Check if the symbol is an index or a security
     if (isIndex) {
@@ -37,9 +39,6 @@ void App::createUnderlyingContract(IBString ticker, bool isIndex) {
         underlying.secType = *SecType::STK;
         underlying.primaryExchange = *Exchange::IB_SMART;
     }
-
-    underlying.currency = "USD";
-    underlying.exchange = *Exchange::IB_SMART;
 }
 
 void App::getDateTime() {

@@ -1,10 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
-#include <ctime>
-#include <bitset>
+#include <memory>
 
-#include "Connections.h"
+//#include "SQLSchema.h"
 #include "tWrapper.h"
 #include "App.h"
 #include "OptionScanner.h"
@@ -21,11 +20,11 @@ constexpr bool runTests = false;
 // Main launcher for imformal tests
 void informalTests();
 // Tests
-void basicHistoricalDataRequest(App * test);
-void testRealTimeBars(App* test);
-void candleFunctionality(App* test);
-void testStreamingAlerts(App* test);
-void testLowAndHighAccuracy(App* test);
+void basicHistoricalDataRequest(std::unique_ptr<App>& test);
+void testRealTimeBars(std::unique_ptr<App>& test);
+void candleFunctionality(std::unique_ptr<App>& test);
+void testStreamingAlerts(std::unique_ptr<App>& test);
+void testLowAndHighAccuracy(std::unique_ptr<App>& test);
 // Test Helper Functions
 bool compareCandles(Candle c1, Candle c2);
 
@@ -40,15 +39,15 @@ int main(void) {
         informalTests();
     }
     else {
-        /*const char* host = "127.0.0.1";
+        const char* host = "127.0.0.1";
         IBString ticker = "SPX";
 
-        OptionScanner* opt = new OptionScanner(host, ticker);
+        //std::unique_ptr<OptionScanner> opt = std::make_unique<OptionScanner>(host, ticker);
+        App* opt = new App(host);
 
-        opt->streamOptionData();*/
-        //opt->populateStrikes();
-        connectToDB();
-        //delete opt;
+        // opt->streamOptionData();
+        opt->populateStrikes();
+        // delete opt;
     }
 
     Logger::Shutdown();
@@ -68,11 +67,11 @@ void informalTests() {
     constexpr bool showWelcome = true;
 
     // Test functionality of a basic historical data request
-    constexpr bool showBasicRequest = false;
+    constexpr bool showBasicRequest = true;
     // Test functionality of 5 second real time bars for 30 seconds
     constexpr bool showRealTimeBarsTest = false;
     // Test ability for ContractData to create functional candles in different time frames
-    constexpr bool showCandleFunctionality = true;
+    constexpr bool showCandleFunctionality = false;
     // Test ability to receive alerts from ContractData as callbacks
     constexpr bool showAlertFunctionality = false;
     // Test the accuracy of daily high/low attributes from ContractData
@@ -85,7 +84,8 @@ void informalTests() {
     }
 
     // Create a connection to TWS for use in all functions
-    App* test = new App("127.0.0.1");
+    //App* test = new App("127.0.0.1");
+    std::unique_ptr<App> test = std::make_unique<App>("127.0.0.1");
 
     if (showBasicRequest) basicHistoricalDataRequest(test);
     if (showRealTimeBarsTest) testRealTimeBars(test);
@@ -93,14 +93,14 @@ void informalTests() {
     if (showAlertFunctionality) testStreamingAlerts(test);
     if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);
 
-    delete test;
+    // delete test;
 }
 
 //=================================================================
 // Test functionality of a basic historical data request
 //=================================================================
 
-void basicHistoricalDataRequest(App* test) {
+void basicHistoricalDataRequest(std::unique_ptr<App>& test) {
     
     cout << "========================================================================" << endl;
     cout << "Testing Historical Data Functionality" << endl;
@@ -111,13 +111,13 @@ void basicHistoricalDataRequest(App* test) {
 
     Contract C;
     C.symbol = "SPX";
-    C.secType = "OPT";
+    C.secType = "IND";
     C.currency = "USD";
     C.exchange = "SMART";
     C.primaryExchange = *Exchange::CBOE;
-    C.lastTradeDateOrContractMonth = "20230710";
+    /*C.lastTradeDateOrContractMonth = "20230710";
     C.right = "CALL";
-    C.strike = 4445;
+    C.strike = 4445;*/
 
     test->EC->reqHistoricalData
     (10
@@ -143,7 +143,7 @@ void basicHistoricalDataRequest(App* test) {
 // Test functionality of 5 second real time bars for 30 seconds
 //=================================================================
 
-void testRealTimeBars(App* test) {
+void testRealTimeBars(std::unique_ptr<App>& test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing Real Time Bar Output" << endl;
@@ -182,7 +182,7 @@ void testRealTimeBars(App* test) {
 // Test ability for ContractData to create functional candles in different time frames
 //======================================================================================
 
-void candleFunctionality(App* test) {
+void candleFunctionality(std::unique_ptr<App>& test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing Candle Functionality" << endl;
@@ -273,7 +273,7 @@ void candleFunctionality(App* test) {
 // Test candle functionality when inputting real time bar data
 //==================================================================
 
-void testStreamingAlerts(App* test) {
+void testStreamingAlerts(std::unique_ptr<App>& test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing Alert Capabilities For Streaming Data" << endl;
@@ -309,7 +309,7 @@ void testStreamingAlerts(App* test) {
 // Test the accuracy of daily high/low attributes from ContractData
 //==================================================================
 
-void testLowAndHighAccuracy(App* test) {
+void testLowAndHighAccuracy(std::unique_ptr<App>& test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing the accuracy of the low and high booleans in ContractData" << endl;
