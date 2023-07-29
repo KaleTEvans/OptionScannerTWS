@@ -54,27 +54,3 @@ private:
     int hasGaps_;
     int count_;
 };
-
-//=======================================================================
-// This is a buffer to contain candlestick data and send to app when full
-//=======================================================================
-
-class CandleStickBuffer {
-public:
-    CandleStickBuffer(size_t capacity);
-
-    void processBuffer(std::vector<CandleStick>& wrapperContainer);
-
-    size_t checkBufferCapacity();
-    size_t getCurrentBufferLoad();
-    void setNewBufferCapacity(int value);
-    void addToBuffer(CandleStick candle);
-    bool checkSet(int value);
-    void addToSet(int value);
-
-private:
-    // bufferReqs will ensure we have all reqIds from the request list before emptying the buffer
-    std::unordered_set<int> bufferReqs;
-    std::vector<CandleStick> buffer;
-    size_t capacity_;
-};

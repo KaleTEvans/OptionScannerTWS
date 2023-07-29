@@ -41,7 +41,7 @@ namespace Alerts {
 		alertCodes.push_back(code);
 
 		//==================================================================
-		// Alert code termining how close to the money the option is
+		// Alert code determining how close to the money the option is
 		double difference = strike - underlyingPrice;
 		if (difference <= 5 && difference > 0) (optionType == "CALL") ? alertCodes.push_back(1210) : alertCodes.push_back(1110);
 		else if (difference <= 10 && difference > 5) (optionType == "CALL") ? alertCodes.push_back(1220) : alertCodes.push_back(1120);

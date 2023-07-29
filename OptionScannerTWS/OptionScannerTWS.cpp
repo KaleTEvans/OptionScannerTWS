@@ -15,7 +15,7 @@
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = false;
+constexpr bool runTests = true;
 
 // Main launcher for imformal tests
 void informalTests();

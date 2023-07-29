@@ -7,6 +7,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <memory>
 #include <unordered_set>
 
 ///Easier: Just one include statement for all functionality
@@ -16,25 +17,51 @@
 #include "TwsApiDefs.h"
 using namespace TwsApi; // for TwsApiDefs.h
 
-#include "tWrapper.h"
+#include "Candle.h"
+
+//=======================================================================
+// This is a buffer to contain candlestick data and send to app when full
+//=======================================================================
+
+class CandleStickBuffer {
+public:
+    CandleStickBuffer(size_t capacity);
+
+    void processBuffer(std::vector<std::unique_ptr<CandleStick>>& wrapperContainer);
+
+    size_t checkBufferCapacity();
+    size_t getCurrentBufferLoad();
+    void setNewBufferCapacity(int value);
+    void addToBuffer(std::unique_ptr<CandleStick> candle);
+    bool checkSet(int value);
+    void addToSet(int value);
+
+private:
+    // bufferReqs will ensure we have all reqIds from the request list before emptying the buffer
+    std::unordered_set<int> bufferReqs;
+    std::vector<std::unique_ptr<CandleStick>> buffer;
+    size_t capacity_;
+};
 
 class MockWrapper {
 public:
-   // 18 Candles for each option strikle
-    CandleBuffer candleBuffer{ 18 };
+    MockWrapper();  
+
+    long time_ = 0;
 
     // Candle to be used repeatedly for realtime bars
-    Candle underlyingRTBs;
-    // Boolean if only needing the single realtime bars
-    bool singleRTBs = false;
+    //CandleStick underlyingRTBs;
     
     int getReq();
-    std::vector<Candle> getUnderlyingCandles();
-    std::vector<Candle> getFiveSecCandles();
+    bool notDone(void);
+    double getSPXPrice(void);
+    std::vector<std::unique_ptr<CandleStick>> getHistoricCandles();
+    std::vector<std::unique_ptr<CandleStick>> getFiveSecCandles();
     
+    void setHistoricalDataVisibility(bool x);
+    void setRealTimeDataVisibility(bool x);
+    void setmDone(bool x);
 
-    virtual void connectionOpened();
-    virtual void connectionClosed();
     virtual void currentTime(long time);
 
     virtual void historicalData(TickerId reqId, const IBString& date
@@ -45,14 +72,18 @@ public:
         double low, double close, long volume, double wap, int count);
 
 private:
-    int Req = 0;
+    CandleStickBuffer candleBuffer;
 
-    std::vector<Candle> underlyingCandles;
-    std::vector<Candle> fiveSecCandles;
+    int Req = 0;
+    double SPXPrice = 0;
+
+    std::vector<std::unique_ptr<CandleStick>> historicCandles;
+    std::vector<std::unique_ptr<CandleStick>> fiveSecCandles;
 
     // Variables to show data request output
     bool showHistoricalData = false;
     bool showRealTimeData = false;
 
+    bool m_done;
 };
 

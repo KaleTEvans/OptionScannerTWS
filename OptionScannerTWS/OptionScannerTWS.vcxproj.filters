@@ -51,6 +51,12 @@
     <ClCompile Include="MockWrapper.cpp">
       <Filter>Unit Tests</Filter>
     </ClCompile>
+    <ClCompile Include="MockClient.cpp">
+      <Filter>Unit Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="test_client_wrapper.cpp">
+      <Filter>Unit Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tWrapper.h">
@@ -84,6 +90,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MockWrapper.h">
+      <Filter>Unit Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="MockClient.h">
       <Filter>Unit Tests</Filter>
     </ClInclude>
   </ItemGroup>
