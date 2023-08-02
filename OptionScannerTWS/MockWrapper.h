@@ -9,6 +9,7 @@
 #include <ctime>
 #include <memory>
 #include <unordered_set>
+#include <condition_variable>
 
 ///Easier: Just one include statement for all functionality
 #include "TwsApiL0.h"
@@ -27,10 +28,9 @@ class CandleStickBuffer {
 public:
     CandleStickBuffer(size_t capacity);
 
-    void processBuffer(std::vector<std::unique_ptr<CandleStick>>& wrapperContainer);
+    std::vector<std::unique_ptr<CandleStick>> processBuffer();
 
-    size_t checkBufferCapacity();
-    size_t getCurrentBufferLoad();
+    bool checkBufferFull(void);
     void setNewBufferCapacity(int value);
     void addToBuffer(std::unique_ptr<CandleStick> candle);
     bool checkSet(int value);
@@ -41,26 +41,33 @@ private:
     std::unordered_set<int> bufferReqs;
     std::vector<std::unique_ptr<CandleStick>> buffer;
     size_t capacity_;
+
+    std::mutex bufferMutex;
 };
 
 class MockWrapper {
 public:
     MockWrapper();  
 
-    long time_ = 0;
-
     // Candle to be used repeatedly for realtime bars
-    //CandleStick underlyingRTBs;
-    
-    int getReq();
     bool notDone(void);
+    long getCurrentTime(void);
     double getSPXPrice(void);
-    std::vector<std::unique_ptr<CandleStick>> getHistoricCandles();
-    std::vector<std::unique_ptr<CandleStick>> getFiveSecCandles();
+    std::vector<std::unique_ptr<CandleStick>> getHistoricCandles(void);
+    std::vector<std::unique_ptr<CandleStick>> getProcessedFiveSecCandles(void);
+
+    bool checkMockBufferFull(void);
+    //void waitForFullMockBuffer(void);
+    std::mutex& getWrapperMutex(void);
+    std::condition_variable& getWrapperConditional(void);
     
-    void setHistoricalDataVisibility(bool x);
-    void setRealTimeDataVisibility(bool x);
+    void showHistoricalDataOutput(void);
+    void hideHistoricalDataOutput(void);
+    void showRealTimeDataOutput(void);
+    void hideRealTimeDataOutput(void);
     void setmDone(bool x);
+    void setMockUnderlying(double x);
+    void setBufferCapacity(int x);
 
     virtual void currentTime(long time);
 
@@ -74,8 +81,11 @@ public:
 private:
     CandleStickBuffer candleBuffer;
 
-    int Req = 0;
-    double SPXPrice = 0;
+    // Mutex and conditional for buffer use
+    std::mutex wrapperMtx;
+    std::condition_variable cv;
+
+    double SPXPrice = 4581;
 
     std::vector<std::unique_ptr<CandleStick>> historicCandles;
     std::vector<std::unique_ptr<CandleStick>> fiveSecCandles;
@@ -85,5 +95,6 @@ private:
     bool showRealTimeData = false;
 
     bool m_done;
+    long time_ = 0;
 };
 

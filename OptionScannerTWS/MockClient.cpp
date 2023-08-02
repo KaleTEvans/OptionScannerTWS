@@ -25,7 +25,6 @@ void MockClient::reqHistoricalData(TickerId id, const Contract& contract,
     const IBString& whatToShow, int useRTH, int formatDate, bool keepUpToDate) {
 
     std::vector<std::string> dateTimes = generateDateTimeSeries(endDateTime, durationStr, barSizeSetting);
-    std::cout << dateTimes.size() << std::endl; 
 
     bool isOption;
     (contract.secType == "OPT") ? isOption = true : isOption = false;
@@ -40,7 +39,9 @@ void MockClient::reqHistoricalData(TickerId id, const Contract& contract,
             wrapper_.historicalData(id, i, c.open, c.high, c.low, c.close, c.volume, 0, 0, 0);
         }
         else {
-            MiniCandle c = generateRandomCandle(id, 300, isOption);
+            std::pair<double, long> optRefVals = calculateOptionRefValues(id, wrapper_.getSPXPrice());
+
+            MiniCandle c = generateRandomCandle(optRefVals.first, optRefVals.second, isOption);
             wrapper_.historicalData(id, i, c.open, c.high, c.low, c.close, c.volume, 0, 0, 0);
         }
     }
@@ -49,24 +50,62 @@ void MockClient::reqHistoricalData(TickerId id, const Contract& contract,
 }
 
 void MockClient::reqRealTimeBars(TickerId id, const Contract& contract, int barSize,
-    const IBString& whatToShow, bool useRTH, const TagValueListSPtr& realTimeBarsOptions) {
+    const IBString& whatToShow, bool useRTH) {
 
     bool isOption;
     (contract.secType == "OPT") ? isOption = true : isOption = false;
 
-    double optPrice = 0;
-    if (id != 1234) {
-        double strike = id;
-        std::string optionType;
-        double optRefPrice = 0;
+    // Get current unix time
+    reqCurrentTime();
+    long unixTime = wrapper_.getCurrentTime();
 
-        
-        double difference = strike - wrapper_.getSPXPrice();
-
-        
+    double refPrice = wrapper_.getSPXPrice();
+    long refVol = 50000000;
+    
+    if (isOption) {
+        std::pair<double, long> optVals = calculateOptionRefValues(id, wrapper_.getSPXPrice());
+        refPrice = optVals.first;
+        refVol = optVals.second;
     }
+
+    // Start the thread to stream data
+    threads_.emplace_back([&, id, unixTime, refPrice, refVol, isOption]() { 
+        streamRealTimeData(id, unixTime, refPrice, refVol, isOption);
+       });
+}
+
+void MockClient::cancelRealTimeBars() {
+    terminateStream = true;
+
+    // Join all the threads before clearing the map
+    for (auto& thread : threads_) {
+        if (thread.joinable()) {
+            thread.join();
+        }
     }
 
+    threads_.clear();
+
+    std::cout << "Terminating Stream" << std::endl;
+}
+
+void MockClient::setCandleInterval(int i) { candleInterval = i; }
+
+void MockClient::streamRealTimeData(const TickerId reqId, long unixTime, double refPrice, long refVol, bool isOption) {
+    //std::unique_lock<std::mutex> lock(wrapper_.getBufferMutex());
+
+    while (!terminateStream) {
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(candleInterval));
+        
+        MiniCandle mc = generateRandomCandle(refPrice, refVol, isOption);
+        wrapper_.realtimeBar(reqId, unixTime, mc.open, mc.high, mc.low, mc.close, mc.volume, 0, 0);
+
+        unixTime += 5;
+    }
+    std::cout << "Stream thread " << reqId << " is terminating..." << std::endl;
+}
+ 
 //======================================================
 // Helper Functions
 //======================================================
@@ -82,7 +121,7 @@ MiniCandle generateRandomCandle(double referencePrice, long referenceVolume, boo
     switch (opt)
     {
     case (true):
-        priceRange = 5.0;
+        priceRange = 0.5;
         volumeRange = 250;
         break;
     case (false):
@@ -150,7 +189,7 @@ std::vector<std::string> generateDateTimeSeries(const std::string& endDateTime, 
     return dateTimes;
 }
 
-double calculateOptionPrice(TickerId id, double underlyingPrice) {
+std::pair<double, long> calculateOptionRefValues(TickerId id, double underlyingPrice) {
     OptionType optionType;
     double optionStrike = id;
 
@@ -167,7 +206,7 @@ double calculateOptionPrice(TickerId id, double underlyingPrice) {
     double strikeIncrement = 5.0;
     // Calculate the number of strikes out of the money
     int strikesOutOfTheMoney = 0;
-    if (optionStrike != underlyingPrice) strikesOutOfTheMoney = static_cast<int>(std::round(priceDifference / strikeIncrement) + 1);
+    if (optionStrike != underlyingPrice) strikesOutOfTheMoney = static_cast<int>(std::ceil(priceDifference / strikeIncrement));
 
     bool ITM = false;
     if (optionType == OptionType::CALL) {
@@ -179,20 +218,27 @@ double calculateOptionPrice(TickerId id, double underlyingPrice) {
 
     if (!ITM) strikesOutOfTheMoney *= -1;
     
+    long optionVol = 0;
     double optionPrice = 0;
     if (strikesOutOfTheMoney > 0) {
         // ITM options start at 600
-        optionPrice = 500 + (100 * strikesOutOfTheMoney);
+        optionVol = 500 + (100 * strikesOutOfTheMoney);
+        optionPrice = optionVol / 100;
     }
     else if (strikesOutOfTheMoney < 0) {
         // OTM options start at 400
-        optionPrice = 500 - (100 * std::abs(strikesOutOfTheMoney));
-        if (optionPrice < 0) optionPrice = 0;
+        optionVol = 500 - (100 * std::abs(strikesOutOfTheMoney));
+        optionPrice = optionVol / 100;
+        if (optionPrice < 0) {
+            optionPrice = 0;
+            optionVol = 0;
+        }
     }
     else
     {
-        optionPrice = 500;
+        optionPrice = 5.0;
+        optionVol = 500;
     }
 
-    return optionPrice;
+    return { optionPrice, optionVol };
 }
