@@ -51,7 +51,7 @@ private:
 	std::vector<std::thread> threads_;
 	std::condition_variable cv_;
 
-	int candleInterval = 100;
+	int candleInterval = 25;
 };
 
 // Helper functions

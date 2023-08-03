@@ -9,7 +9,7 @@ CandleStickBuffer::CandleStickBuffer(size_t capacity) : capacity_(capacity) {}
 
 std::vector<std::unique_ptr<CandleStick>> CandleStickBuffer::processBuffer() {
     std::lock_guard<std::mutex> lock(bufferMutex);
-    std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
+    //std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
 
     std::vector<std::unique_ptr<CandleStick>> processedData;
 
@@ -49,7 +49,7 @@ void CandleStickBuffer::addToSet(int value) {
 // Mock Wrapper
 //=================================================================
 
-MockWrapper::MockWrapper() : candleBuffer{ 2 } { m_done = false; } // Size 19 for 8 calls, 8 puts, and one underlying
+MockWrapper::MockWrapper() : candleBuffer{ 19 } { m_done = false; } // Size 19 for 8 calls, 8 puts, and one underlying
 
 // Getters
 bool MockWrapper::notDone() { return !m_done; }
@@ -119,6 +119,4 @@ void MockWrapper::realtimeBar(TickerId reqId, long time, double open, double hig
         
     }
     cv.notify_one();
-
-    //if (candleBuffer.checkBufferFull()) std::vector<std::unique_ptr<CandleStick>> temp = candleBuffer.processBuffer();
 }

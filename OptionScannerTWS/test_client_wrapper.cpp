@@ -129,10 +129,15 @@ BOOST_AUTO_TEST_CASE(realTimeBars) {
 	con.symbol = "SPX";
 	con.secType = "OPT";
 
-	mWrapper.showRealTimeDataOutput();
+	//mWrapper.showRealTimeDataOutput();
 
 	mClient.reqRealTimeBars(4580, con, 0, "", true);
 	mClient.reqRealTimeBars(4581, con, 0, "", true);
+	mClient.reqRealTimeBars(4576, con, 0, "", true);
+	mClient.reqRealTimeBars(4590, con, 0, "", true);
+
+	mWrapper.setBufferCapacity(4);
+	mClient.setCandleInterval(10);
 
 	std::unordered_map<int, std::vector<std::unique_ptr<CandleStick>>> contracts;
 	int i = 0;
@@ -150,8 +155,16 @@ BOOST_AUTO_TEST_CASE(realTimeBars) {
 
 		i++;
 	}
-;
+
 	mClient.cancelRealTimeBars();
+
+	for (auto& it : contracts) {
+		std::vector<std::unique_ptr<CandleStick>> temp = std::move(it.second);
+		for (size_t i = 1; i < temp.size(); i++) {
+			BOOST_TEST(temp[i]->getTime() - temp[i - 1]->getTime() == 5);
+			BOOST_TEST(temp[i]->getHigh() >= temp[i]->getLow());
+		}
+	}
 	
 }
 
