@@ -4,9 +4,6 @@
 #define BOOST_TEST_MODULE client_wrapper_test
 #include <boost/test/included/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
-//#include <boost/test/data/monomorphic.hpp>
-//#include <boost/test/tools/assertion_result.hpp>
-//#include <boost/test/tools/floating_point_comparison.hpp>
 
 #include "MockClient.h"
 
@@ -15,6 +12,7 @@ namespace data = boost::unit_test::data;
 
 BOOST_AUTO_TEST_SUITE(ClientWrapperTests)
 
+// Test to ensure mock client returns correct time
 BOOST_AUTO_TEST_CASE(currentTime) {
 	MockWrapper mWrapper;
 	MockClient mClient(mWrapper);
@@ -34,6 +32,7 @@ const auto test_data_hist = data::make({
 	std::make_tuple("20230705 08:30:00", "43200 S", "60 secs")
 });
 
+// Check to ensure that historical data returns correct amount of candlesticks
 BOOST_DATA_TEST_CASE(historicalData, test_data_hist, endDateTime, durationStr, barSizeSetting) {
 	MockWrapper mWrapper;
 	MockClient mClient(mWrapper);
@@ -47,6 +46,7 @@ BOOST_DATA_TEST_CASE(historicalData, test_data_hist, endDateTime, durationStr, b
 	BOOST_TEST(mWrapper.getHistoricCandles().size() == 720);
 }
 
+// Test to ensure that the mock historical data is an accurate representation of candlesticks for underlying price
 BOOST_AUTO_TEST_CASE(historicalDataAccuracy) {
 	MockWrapper mWrapper;
 	MockClient mClient(mWrapper);
@@ -91,6 +91,7 @@ const auto test_data_options = data::make({
 	std::make_tuple(4571, 4600, 0.0) // 5 strikes OTM
 }); // Test pricing for one call and one put, SPX reference is set to 4581
 
+// Test to ensure that the mock historical data is an accurate representation of candlesticks for options
 BOOST_DATA_TEST_CASE(histOptionDataAccuracy, test_data_options, underlying, optPrice, refVol) {
 	MockWrapper mWrapper;
 	MockClient mClient(mWrapper);
@@ -121,6 +122,7 @@ BOOST_DATA_TEST_CASE(histOptionDataAccuracy, test_data_options, underlying, optP
 	}
 }
 
+// Test to ensure that the realTimeBars are being output in 5 second intervals for each request
 BOOST_AUTO_TEST_CASE(realTimeBars) {
 	MockWrapper mWrapper;
 	MockClient mClient(mWrapper);
@@ -149,6 +151,7 @@ BOOST_AUTO_TEST_CASE(realTimeBars) {
 		mWrapper.getWrapperConditional().wait(lock, [&] { return mWrapper.checkMockBufferFull(); });
 		std::vector<std::unique_ptr<CandleStick>> temp = mWrapper.getProcessedFiveSecCandles();
 		for (auto& i : temp) {
+			BOOST_TEST((i->getReqId() == 4580 || i->getReqId() == 4581 || i->getReqId() == 4576 || i->getReqId() == 4590));
 			contracts[i->getReqId()].push_back(std::move(i));
 		}
 		lock.unlock();
@@ -166,6 +169,45 @@ BOOST_AUTO_TEST_CASE(realTimeBars) {
 		}
 	}
 	
+}
+
+BOOST_AUTO_TEST_CASE(realTimeBarsEdgeCases) {
+	MockWrapper mWrapper;
+	MockClient mClient(mWrapper);
+
+	Contract con;
+	con.symbol = "SPX";
+	con.secType = "OPT";
+
+	//mWrapper.showRealTimeDataOutput();
+
+	mClient.reqRealTimeBars(4580, con, 0, "", true);
+	mClient.reqRealTimeBars(4590, con, 0, "", true); 
+
+	mWrapper.setBufferCapacity(4); // Intentionally set capacity higher
+	mClient.setCandleInterval(20);
+
+	std::unordered_map<int, std::vector<std::unique_ptr<CandleStick>>> contracts;
+	int i = 0;
+
+	while (i <= 50) {
+
+		std::unique_lock<std::mutex> lock(mWrapper.getWrapperMutex());
+		mWrapper.getWrapperConditional().wait(lock, [&] { return mWrapper.checkMockBufferFull(); });
+		std::vector<std::unique_ptr<CandleStick>> temp = mWrapper.getProcessedFiveSecCandles();
+		for (auto& i : temp) {
+			BOOST_TEST((i->getReqId() == 4580 || i->getReqId() == 4590));
+			contracts[i->getReqId()].push_back(std::move(i));
+		}
+		lock.unlock();
+
+		i++;
+	}
+
+	mClient.cancelRealTimeBars();
+
+	BOOST_TEST(contracts.size() == 2);
+	BOOST_TEST(contracts.size() == mWrapper.getBufferCapacity());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

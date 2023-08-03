@@ -48,13 +48,13 @@
     <ClCompile Include="tWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MockWrapper.cpp">
+    <ClCompile Include="tests\MockWrapper.cpp">
       <Filter>Unit Tests</Filter>
     </ClCompile>
-    <ClCompile Include="MockClient.cpp">
+    <ClCompile Include="tests\MockClient.cpp">
       <Filter>Unit Tests</Filter>
     </ClCompile>
-    <ClCompile Include="test_client_wrapper.cpp">
+    <ClCompile Include="tests\test_client_wrapper.cpp">
       <Filter>Unit Tests</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,10 +89,10 @@
     <ClInclude Include="Candle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MockWrapper.h">
+    <ClInclude Include="tests\MockWrapper.h">
       <Filter>Unit Tests</Filter>
     </ClInclude>
-    <ClInclude Include="MockClient.h">
+    <ClInclude Include="tests\MockClient.h">
       <Filter>Unit Tests</Filter>
     </ClInclude>
   </ItemGroup>

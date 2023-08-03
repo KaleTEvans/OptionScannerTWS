@@ -5,7 +5,9 @@
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-CandleStickBuffer::CandleStickBuffer(size_t capacity) : capacity_(capacity) {}
+CandleStickBuffer::CandleStickBuffer(size_t capacity) : capacity_(capacity) {
+    bufferTimePassed_ = std::chrono::steady_clock::now();
+}
 
 std::vector<std::unique_ptr<CandleStick>> CandleStickBuffer::processBuffer() {
     std::lock_guard<std::mutex> lock(bufferMutex);
@@ -19,13 +21,23 @@ std::vector<std::unique_ptr<CandleStick>> CandleStickBuffer::processBuffer() {
     // Clear the set
     bufferReqs.clear();
 
+    wasDataProcessed_ = true;
+
     return processedData;
 }
 
-bool CandleStickBuffer::checkBufferFull() { return buffer.size() >= capacity_ && bufferReqs.size() >= capacity_; }
+bool CandleStickBuffer::checkBufferFull() {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+    auto currentTime = std::chrono::steady_clock::now();
+    auto timePassed = currentTime - bufferTimePassed_;
+    if (timePassed > std::chrono::seconds(3)) checkBufferStatus();
+
+    return buffer.size() >= capacity_ && bufferReqs.size() >= capacity_;
+}
 
 void CandleStickBuffer::setNewBufferCapacity(int value) {
     capacity_ = value;
+    wasDataProcessed_ = false;
 }
 
 void CandleStickBuffer::addToBuffer(std::unique_ptr<CandleStick> candle) {
@@ -45,6 +57,23 @@ void CandleStickBuffer::addToSet(int value) {
     //std::cout << "Buffer Reqs: " << bufferReqs.size() << std::endl;
 }
 
+int CandleStickBuffer::getCapacity() { return capacity_; }
+
+void CandleStickBuffer::checkBufferStatus() {
+    if (!wasDataProcessed_) {
+        std::cout << "Error, buffer not processing data. Current Buffer Size: " << buffer.size() << 
+            " Current Buffer Capacity: " << capacity_ << std::endl;
+        std::cout << "Resetting buffer capacity to current size ..." << std::endl;
+        setNewBufferCapacity(buffer.size());
+    }
+
+    // Check if active wrapper requests outnumber current capacity
+    if (wrapperActiveReqs > capacity_) {
+        std::cout << "Warning, number of open requests outnumbers current capacity, updating capacity ..." << std::endl;
+        setNewBufferCapacity(wrapperActiveReqs);
+    }
+}
+
 //==================================================================
 // Mock Wrapper
 //=================================================================
@@ -55,9 +84,14 @@ MockWrapper::MockWrapper() : candleBuffer{ 19 } { m_done = false; } // Size 19 f
 bool MockWrapper::notDone() { return !m_done; }
 long MockWrapper::getCurrentTime() { return time_; }
 double MockWrapper::getSPXPrice() { return SPXPrice; }
+int MockWrapper::getBufferCapacity() { return candleBuffer.getCapacity(); }
 
 // Moving unique pointers will automatically clear the vectors
-std::vector<std::unique_ptr<CandleStick>> MockWrapper::getHistoricCandles() { return std::move(historicCandles); } 
+std::vector<std::unique_ptr<CandleStick>> MockWrapper::getHistoricCandles() {
+    return std::move(historicCandles);
+} 
+
+
 std::vector<std::unique_ptr<CandleStick>> MockWrapper::getProcessedFiveSecCandles() { return candleBuffer.processBuffer(); }
 
 bool MockWrapper::checkMockBufferFull() { return candleBuffer.checkBufferFull(); }
@@ -112,6 +146,9 @@ void MockWrapper::realtimeBar(TickerId reqId, long time, double open, double hig
     // ReqId 1234 will be used for the underlying contract
     // Along with the other option strike reqs to fill the buffer
     std::lock_guard<std::mutex> lock(wrapperMtx);
+    if (activeReqs.find(reqId) == activeReqs.end()) activeReqs.insert(reqId);
+    candleBuffer.wrapperActiveReqs = activeReqs.size();
+
     if (!candleBuffer.checkSet(c->getReqId())) {
         candleBuffer.addToSet(c->getReqId());
 

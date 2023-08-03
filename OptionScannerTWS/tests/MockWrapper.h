@@ -35,12 +35,20 @@ public:
     void addToBuffer(std::unique_ptr<CandleStick> candle);
     bool checkSet(int value);
     void addToSet(int value);
+    int getCapacity(void);
+
+    void checkBufferStatus(void);
+
+    size_t wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
 
 private:
     // bufferReqs will ensure we have all reqIds from the request list before emptying the buffer
     std::unordered_set<int> bufferReqs;
     std::vector<std::unique_ptr<CandleStick>> buffer;
     size_t capacity_;
+    std::chrono::time_point<std::chrono::steady_clock> bufferTimePassed_;
+
+    bool wasDataProcessed_ = false; // Periodically check to ensure buffer is processing and not in an unfilled state
 
     std::mutex bufferMutex;
 };
@@ -53,11 +61,11 @@ public:
     bool notDone(void);
     long getCurrentTime(void);
     double getSPXPrice(void);
+    int getBufferCapacity(void);
     std::vector<std::unique_ptr<CandleStick>> getHistoricCandles(void);
     std::vector<std::unique_ptr<CandleStick>> getProcessedFiveSecCandles(void);
 
     bool checkMockBufferFull(void);
-    //void waitForFullMockBuffer(void);
     std::mutex& getWrapperMutex(void);
     std::condition_variable& getWrapperConditional(void);
     
@@ -89,6 +97,8 @@ private:
 
     std::vector<std::unique_ptr<CandleStick>> historicCandles;
     std::vector<std::unique_ptr<CandleStick>> fiveSecCandles;
+
+    std::unordered_set<int> activeReqs;
 
     // Variables to show data request output
     bool showHistoricalData = false;
