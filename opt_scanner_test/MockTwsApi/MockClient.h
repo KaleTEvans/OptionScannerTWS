@@ -57,4 +57,4 @@ private:
 // Helper functions
 MiniCandle generateRandomCandle(double referencePrice, long referenceVolume, bool opt);
 std::vector<std::string> generateDateTimeSeries(const std::string& endDateTime, const std::string& durationString, const std::string& barSizeSetting);
-std::pair<double, long> calculateOptionRefValues (TickerId id, double underlyingPrice);
+std::pair<double, long> calculateOptionRefValues(TickerId id, double underlyingPrice);

@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_Test|Win32">
+      <Configuration>Debug_Test</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_Test|x64">
+      <Configuration>Debug_Test</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -15,14 +23,6 @@
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="UnitTests|Win32">
-      <Configuration>UnitTests</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="UnitTests|x64">
-      <Configuration>UnitTests</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -40,7 +40,7 @@
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -59,7 +59,7 @@
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
@@ -80,7 +80,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -89,7 +89,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -102,10 +102,10 @@
     <IncludePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0;C:\Users\kalet\source\libs\ODB\libodb-2.4.0;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\lib;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\bin;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\bin;$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0;C:\Users\kalet\source\libs\ODB\libodb-2.4.0;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\lib;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -117,7 +117,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,24 +136,31 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\TwsApiCpp-master\TwsApiC++\Api</AdditionalLibraryDirectories>
-      <AdditionalDependencies>TwsApi.lib;TwsApiD.lib;ws2_32.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
+      <AdditionalDependencies>TwsApiD.lib;ws2_32.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;BOOST_FILESYSTEM_NO_DEPRECATED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)OptionScannerTWS;C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\TwsApiCpp-master\TwsApiC++\Api</AdditionalLibraryDirectories>
-      <AdditionalDependencies>TwsApi.lib;TwsApiD.lib;ws2_32.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
+      <AdditionalDependencies>TwsApiD.lib;ws2_32.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -164,14 +171,14 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\TwsApiCpp-master\TwsApiC++\Api</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\TwsApiCpp-master\TwsApiC++\Api\</AdditionalLibraryDirectories>
       <AdditionalDependencies>TwsApi.lib;TwsApiD.lib;ws2_32.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -187,13 +194,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Test|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)OptionScannerTWS;C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -217,38 +223,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AlertHandler.cpp" />
-    <ClCompile Include="App.cpp" />
-    <ClCompile Include="Candle.cpp" />
-    <ClCompile Include="ContractData.cpp" />
+    <ClCompile Include="AlertHandler.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Candle.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="ContractData.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="libs\nanodbc\nanodbc.cpp" />
     <ClCompile Include="Logger.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="tests\MockClient.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'">..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    <ClCompile Include="OptionScanner.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="tests\MockWrapper.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">..\Candle.h;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'">..\Candle.h;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
-    <ClCompile Include="OptionScanner.cpp" />
     <ClCompile Include="OptionScannerTWS.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="SQLSchema.cpp" />
-    <ClCompile Include="tests\test_client_wrapper.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    <ClCompile Include="SQLSchema.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="tWrapper.cpp" />
+    <ClCompile Include="tWrapper.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\TwsApiCpp-master\TwsApiC++\_win32\TwsApi.vcxproj">
@@ -256,27 +258,34 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AlertHandler.h" />
-    <ClInclude Include="App.h" />
-    <ClInclude Include="Candle.h" />
-    <ClInclude Include="tests\MockClient.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
+    <ClInclude Include="AlertHandler.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="tests\MockWrapper.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    <ClInclude Include="App.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="SQLSchema.h" />
-    <ClInclude Include="ContractData.h" />
-    <ClInclude Include="Formulas.h" />
+    <ClInclude Include="Candle.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="SQLSchema.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="ContractData.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="Formulas.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="libs\nanodbc\nanodbc.h" />
     <ClInclude Include="Logger.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='UnitTests|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="OptionScanner.h" />
-    <ClInclude Include="tWrapper.h" />
+    <ClInclude Include="OptionScanner.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="tWrapper.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

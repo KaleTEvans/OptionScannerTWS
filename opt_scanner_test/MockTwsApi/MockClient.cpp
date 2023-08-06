@@ -1,5 +1,4 @@
 #include "MockClient.h"
-#include "Candle.h"
 #include "TwsApiDefs.h"
 
 #include <chrono>
@@ -61,7 +60,7 @@ void MockClient::reqRealTimeBars(TickerId id, const Contract& contract, int barS
 
     double refPrice = wrapper_.getSPXPrice();
     long refVol = 50000000;
-    
+
     if (isOption) {
         std::pair<double, long> optVals = calculateOptionRefValues(id, wrapper_.getSPXPrice());
         refPrice = optVals.first;
@@ -69,9 +68,9 @@ void MockClient::reqRealTimeBars(TickerId id, const Contract& contract, int barS
     }
 
     // Start the thread to stream data
-    threads_.emplace_back([&, id, unixTime, refPrice, refVol, isOption]() { 
+    threads_.emplace_back([&, id, unixTime, refPrice, refVol, isOption]() {
         streamRealTimeData(id, unixTime, refPrice, refVol, isOption);
-       });
+        });
 }
 
 void MockClient::cancelRealTimeBars() {
@@ -86,7 +85,7 @@ void MockClient::cancelRealTimeBars() {
 
     threads_.clear();
 
-    std::cout << "Terminating Stream" << std::endl;
+    //std::cout << "Terminating Stream" << std::endl;
 }
 
 void MockClient::setCandleInterval(int i) { candleInterval = i; }
@@ -97,15 +96,15 @@ void MockClient::streamRealTimeData(const TickerId reqId, long unixTime, double 
     while (!terminateStream) {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(candleInterval));
-        
+
         MiniCandle mc = generateRandomCandle(refPrice, refVol, isOption);
         wrapper_.realtimeBar(reqId, unixTime, mc.open, mc.high, mc.low, mc.close, mc.volume, 0, 0);
 
         unixTime += 5;
     }
-    std::cout << "Stream thread " << reqId << " is terminating..." << std::endl;
+    //std::cout << "Stream thread " << reqId << " is terminating..." << std::endl;
 }
- 
+
 //======================================================
 // Helper Functions
 //======================================================
@@ -217,7 +216,7 @@ std::pair<double, long> calculateOptionRefValues(TickerId id, double underlyingP
     }
 
     if (!ITM) strikesOutOfTheMoney *= -1;
-    
+
     long optionVol = 0;
     double optionPrice = 0;
     if (strikesOutOfTheMoney > 0) {

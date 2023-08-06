@@ -1,28 +1,30 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 //=====================================================================
-// Candlestick for stock data that will be used throughout the program
+// Candle for stock data that will be used throughout the program
 //=====================================================================
 
 #pragma once
 
 #include <unordered_set>
+#include <iostream>
+#include <mutex>
 
 #include "TwsApiL0.h"
 #include "TwsApiDefs.h"
 using namespace TwsApi; // for TwsApiDefs.h
 
-class CandleStick {
+class Candle {
 public:
     // Constructor for historical data
-    CandleStick(TickerId reqId, const IBString& date, double open, double high, double low, double close
+    Candle(TickerId reqId, const IBString& date, double open, double high, double low, double close
         , int volume, int barCount, double WAP, int hasGaps);
 
     // Constructor for 5 Second data
-    CandleStick(TickerId reqId, long time, double open, double high, double low, double close, long volume, double wap, int count);
+    Candle(TickerId reqId, long time, double open, double high, double low, double close, long volume, double wap, int count);
 
     // Constructor for other candles created from 5 sec
-    CandleStick(TickerId reqId, long time, double open, double high, double low, double close, long volume);
+    Candle(TickerId reqId, long time, double open, double high, double low, double close, long volume);
 
     TickerId getReqId() const;
     IBString getDate() const;
@@ -53,4 +55,6 @@ private:
     double WAP_;
     int hasGaps_;
     int count_;
+
+    std::mutex candleMutex;
 };

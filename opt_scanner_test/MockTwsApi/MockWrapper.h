@@ -9,6 +9,7 @@
 #include <ctime>
 #include <memory>
 #include <unordered_set>
+#include <unordered_map>
 #include <condition_variable>
 
 ///Easier: Just one include statement for all functionality
@@ -19,22 +20,21 @@
 using namespace TwsApi; // for TwsApiDefs.h
 
 #include "Candle.h"
+//#include "tWrapper.h"
 
 //=======================================================================
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-class CandleStickBuffer {
+class CandleBuffer {
 public:
-    CandleStickBuffer(size_t capacity);
+    CandleBuffer(size_t capacity);
 
-    std::vector<std::unique_ptr<CandleStick>> processBuffer();
+    std::vector<std::unique_ptr<Candle>> processBuffer();
 
     bool checkBufferFull(void);
     void setNewBufferCapacity(int value);
-    void addToBuffer(std::unique_ptr<CandleStick> candle);
-    bool checkSet(int value);
-    void addToSet(int value);
+    void updateBuffer(std::unique_ptr<Candle> candle);
     int getCapacity(void);
 
     void checkBufferStatus(void);
@@ -42,9 +42,8 @@ public:
     size_t wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
 
 private:
-    // bufferReqs will ensure we have all reqIds from the request list before emptying the buffer
-    std::unordered_set<int> bufferReqs;
-    std::vector<std::unique_ptr<CandleStick>> buffer;
+    // bufferMap will ensure we have all reqIds from the request list before emptying the buffer
+    std::unordered_map<int, std::unique_ptr<Candle>> bufferMap;
     size_t capacity_;
     std::chrono::time_point<std::chrono::steady_clock> bufferTimePassed_;
 
@@ -55,20 +54,20 @@ private:
 
 class MockWrapper {
 public:
-    MockWrapper();  
+    MockWrapper();
 
     // Candle to be used repeatedly for realtime bars
     bool notDone(void);
     long getCurrentTime(void);
     double getSPXPrice(void);
     int getBufferCapacity(void);
-    std::vector<std::unique_ptr<CandleStick>> getHistoricCandles(void);
-    std::vector<std::unique_ptr<CandleStick>> getProcessedFiveSecCandles(void);
+    std::vector<std::unique_ptr<Candle>> getHistoricCandles(void);
+    std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles(void);
 
     bool checkMockBufferFull(void);
     std::mutex& getWrapperMutex(void);
     std::condition_variable& getWrapperConditional(void);
-    
+
     void showHistoricalDataOutput(void);
     void hideHistoricalDataOutput(void);
     void showRealTimeDataOutput(void);
@@ -87,7 +86,7 @@ public:
         double low, double close, long volume, double wap, int count);
 
 private:
-    CandleStickBuffer candleBuffer;
+    CandleBuffer candleBuffer;
 
     // Mutex and conditional for buffer use
     std::mutex wrapperMtx;
@@ -95,8 +94,8 @@ private:
 
     double SPXPrice = 4581;
 
-    std::vector<std::unique_ptr<CandleStick>> historicCandles;
-    std::vector<std::unique_ptr<CandleStick>> fiveSecCandles;
+    std::vector<std::unique_ptr<Candle>> historicCandles;
+    std::vector<std::unique_ptr<Candle>> fiveSecCandles;
 
     std::unordered_set<int> activeReqs;
 
@@ -107,4 +106,3 @@ private:
     bool m_done;
     long time_ = 0;
 };
-
