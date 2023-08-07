@@ -1,3 +1,5 @@
+#define CRT_SECURE_NO_WARNINGS
+
 #include "pch.h"
 
 //#include "Candle.h"

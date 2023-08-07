@@ -40,11 +40,12 @@ public:
     int getCount() const;
 
     void convertDateToUnix();
-    void convertUnixToDate();
+    void convertUnixToDate() const; // Lazy conversion only upon request
     
 private:
     TickerId reqId_;
-    IBString date_;
+    mutable IBString date_;
+    mutable bool dateConverted_; // Marked false if a unix time is received in the constructor
     long time_;
     double open_;
     double close_;
@@ -55,6 +56,4 @@ private:
     double WAP_;
     int hasGaps_;
     int count_;
-
-    std::mutex candleMutex;
 };

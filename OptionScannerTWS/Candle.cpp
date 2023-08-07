@@ -11,6 +11,7 @@ Candle::Candle(TickerId reqId, const IBString& date, double open, double high, d
     low_(low), volume_(volume), barCount_(barCount), WAP_(WAP), hasGaps_(hasGaps), count_(0)
 {
     convertDateToUnix();
+    dateConverted_ = true;
 }
 
 // Constructor for 5 Second data
@@ -19,7 +20,7 @@ Candle::Candle(TickerId reqId, long time, double open, double high, double low,
     : reqId_(reqId), date_(""), time_(time), open_(open), close_(close), high_(high), 
     low_(low), volume_(volume), barCount_(0), WAP_(wap), hasGaps_(0), count_(count)
 {
-    convertUnixToDate();
+    dateConverted_ = false;
 }
 
 // Constructor for other candles created from 5 sec
@@ -28,12 +29,18 @@ Candle::Candle(TickerId reqId, long time, double open, double high,
     : reqId_(reqId), date_(""), time_(time), open_(open), close_(close), high_(high), 
     low_(low), volume_(volume), barCount_(0), WAP_(0.0), hasGaps_(0), count_(0)
 {
-    convertUnixToDate();
+    dateConverted_ = false;
 }
 
 // Getters
 TickerId Candle::getReqId() const { return reqId_; }
-IBString Candle::getDate() const { return date_; }
+IBString Candle::getDate() const {
+    if (!dateConverted_) {
+        convertUnixToDate();
+        dateConverted_ = true;
+    }
+    return date_;
+}
 long Candle::getTime() const { return time_; }
 double Candle::getOpen() const { return open_; }
 double Candle::getClose() const { return close_; }
@@ -55,15 +62,12 @@ void Candle::convertDateToUnix() {
     time_ = static_cast<long>(stime);
 }
 
-void Candle::convertUnixToDate() {
+void Candle::convertUnixToDate() const {
     struct tm* timeInfo;
     char buffer[80];
 
     time_t time = static_cast<time_t>(time_);
-
-    std::unique_lock<std::mutex> lock(candleMutex);
     timeInfo = localtime(&time);
-    lock.unlock();
 
     strftime(buffer, sizeof(buffer), "%Y%m%d %H:%M:%S", timeInfo);
     IBString date = buffer;

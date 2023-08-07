@@ -6,7 +6,7 @@
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-CandleBuffer::CandleBuffer(size_t capacity) : capacity_(capacity) {
+CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity) {
     bufferTimePassed_ = std::chrono::steady_clock::now();
 }
 
@@ -29,7 +29,7 @@ bool CandleBuffer::checkBufferFull() {
     if (timePassed > std::chrono::seconds(3)) checkBufferStatus();
 
     //return buffer.size() >= capacity_ && bufferReqs.size() >= capacity_;
-    return bufferMap.size() >= capacity_;
+    return static_cast<int>(bufferMap.size()) >= capacity_;
 }
 
 void CandleBuffer::setNewBufferCapacity(int value) {
@@ -46,6 +46,7 @@ int CandleBuffer::getCapacity() { return capacity_; }
 
 void CandleBuffer::checkBufferStatus() {
     if (!wasDataProcessed_) {
+        // ****** In real program, log an error each time this occurs *********
         //std::cout << "Error, buffer not processing data. Current Buffer Size: " << bufferMap.size() << 
         //    " Current Buffer Capacity: " << capacity_ << std::endl;
         //std::cout << "Resetting buffer capacity to current size ..." << std::endl;
@@ -116,22 +117,22 @@ void MockWrapper::historicalData(TickerId reqId, const IBString& date
 void MockWrapper::realtimeBar(TickerId reqId, long time, double open, double high,
     double low, double close, long volume, double wap, int count) {
 
-    // Upon receiving the price request, populate Candle data
-    std::unique_ptr<Candle> c = std::make_unique<Candle>(
-        reqId, time, open, high, low, close, volume, wap, count
-        );
+    // To imitate option pricing, we will need to update the client with each new 
+    // underlying price, ie SPX with reqId 1234
+    if (reqId == 1234) SPXPrice = close;
 
     if (showRealTimeData) {
         std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
     }
 
-    // To imitate option pricing, we will need to update the client with each new 
-    // underlying price, ie SPX with reqId 1234
-    if (reqId == 1234) SPXPrice = close;
-
     // ReqId 1234 will be used for the underlying contract
     // Along with the other option strike reqs to fill the buffer
     std::lock_guard<std::mutex> lock(wrapperMtx);
+    // Upon receiving the price request, populate Candle data
+    std::unique_ptr<Candle> c = std::make_unique<Candle>(
+        reqId, time, open, high, low, close, volume, wap, count
+    );
+
     if (activeReqs.find(reqId) == activeReqs.end()) activeReqs.insert(reqId);
 
     candleBuffer.wrapperActiveReqs = activeReqs.size();

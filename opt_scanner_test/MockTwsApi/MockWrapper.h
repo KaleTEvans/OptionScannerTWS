@@ -28,7 +28,7 @@ using namespace TwsApi; // for TwsApiDefs.h
 
 class CandleBuffer {
 public:
-    CandleBuffer(size_t capacity);
+    CandleBuffer(int capacity);
 
     std::vector<std::unique_ptr<Candle>> processBuffer();
 
@@ -37,14 +37,14 @@ public:
     void updateBuffer(std::unique_ptr<Candle> candle);
     int getCapacity(void);
 
-    void checkBufferStatus(void);
-
-    size_t wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
+    int wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
 
 private:
+    void checkBufferStatus(void);
+
     // bufferMap will ensure we have all reqIds from the request list before emptying the buffer
     std::unordered_map<int, std::unique_ptr<Candle>> bufferMap;
-    size_t capacity_;
+    int capacity_;
     std::chrono::time_point<std::chrono::steady_clock> bufferTimePassed_;
 
     bool wasDataProcessed_ = false; // Periodically check to ensure buffer is processing and not in an unfilled state

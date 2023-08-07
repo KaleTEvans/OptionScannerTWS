@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "gtest/gtest.h"
+#include "../pch.h"
+//#include "gtest/gtest.h"
 #include "Candle.h"
 
 TEST(CandleTest, ConvertDateToUnix) {
@@ -10,7 +11,7 @@ TEST(CandleTest, ConvertDateToUnix) {
     EXPECT_EQ(candle.getTime(), 1691347530);
 }
 
-TEST(CandleTest, ConvertUnixToData) {
+TEST(CandleTest, ConvertUnixToDate) {
     Candle candle(789, 1691347530, 120.0, 130.0, 115.0, 125.0, 2000, 125.0, 0);
 
     std::string date = "20230806 13:45:30"; // Updated expected date as a std::string
