@@ -76,10 +76,10 @@ TEST(ClientWrapperTest, historicalDataAccuracy) {
 }
 
 // Variables to use for option representation
-class HistOptionDataAccuracyTest : public ::testing::TestWithParam<std::tuple<int, int, double>> {};
+class ClientWrapperTest : public TestWithParam<std::tuple<int, int, double>> {};
 
-INSTANTIATE_TEST_SUITE_P(mockOptionData, HistOptionDataAccuracyTest,
-	::testing::Values(
+INSTANTIATE_TEST_CASE_P(SampleOptionData, ClientWrapperTest,
+	Values(
 		std::make_tuple(4581, 4590, 300.0), // 2 strikes OTM
 		std::make_tuple(4579, 4591, 800.0), // 3 strikes ITM
 		std::make_tuple(4570, 4570, 500.0), // ATM
@@ -88,7 +88,7 @@ INSTANTIATE_TEST_SUITE_P(mockOptionData, HistOptionDataAccuracyTest,
 	)
 );
 
-TEST_P(HistOptionDataAccuracyTest, TestHistOptionDataAccuracy) {
+TEST_P(ClientWrapperTest, TestHistOptionDataAccuracy) {
 	const auto& params = GetParam();
 	int underlying = std::get<0>(params);
 	int optPrice = std::get<1>(params);
@@ -121,4 +121,92 @@ TEST_P(HistOptionDataAccuracyTest, TestHistOptionDataAccuracy) {
 		ASSERT_TRUE(candle.getClose() >= (refPrice - priceRange) && candle.getClose() <= (refPrice + priceRange));
 		ASSERT_TRUE(candle.getVolume() >= (refVol - volumeRange) && candle.getVolume() <= (refVol + volumeRange));
 	}
+}
+
+
+// Test to ensure that the realTimeBars are being output in 5 second intervals for each request
+TEST(ClientWrapperTest, realTimeBarsOutput) {
+	MockWrapper mWrapper;
+	MockClient mClient(mWrapper);
+
+	Contract con;
+	con.symbol = "SPX";
+	con.secType = "OPT";
+
+	//mWrapper.showRealTimeDataOutput();
+
+	mClient.reqRealTimeBars(4580, con, 0, "", true);
+	mClient.reqRealTimeBars(4581, con, 0, "", true);
+	mClient.reqRealTimeBars(4576, con, 0, "", true);
+	mClient.reqRealTimeBars(4590, con, 0, "", true);
+
+	mWrapper.setBufferCapacity(4);
+	mClient.setCandleInterval(10);
+
+	std::unordered_map<int, std::vector<std::unique_ptr<Candle>>> contracts;
+	int i = 0;
+
+	while (i <= 50) {
+		std::unique_lock<std::mutex> lock(mWrapper.getWrapperMutex());
+		mWrapper.getWrapperConditional().wait(lock, [&] { return mWrapper.checkMockBufferFull(); });
+		std::vector<std::unique_ptr<Candle>> temp = mWrapper.getProcessedFiveSecCandles();
+		for (auto& i : temp) {
+			EXPECT_TRUE((i->getReqId() == 4580 || i->getReqId() == 4581 || i->getReqId() == 4576 || i->getReqId() == 4590));
+			contracts[i->getReqId()].push_back(std::move(i));
+		}
+		lock.unlock();
+
+		i++;
+	}
+
+	mClient.cancelRealTimeBars();
+
+	for (auto& it : contracts) {
+		std::vector<std::unique_ptr<Candle>> temp = std::move(it.second);
+		for (size_t i = 1; i < temp.size(); i++) {
+			EXPECT_TRUE(temp[i]->getTime() - temp[i - 1]->getTime() == 5);
+			EXPECT_TRUE(temp[i]->getHigh() >= temp[i]->getLow());
+		}
+	}
+}
+
+// Try intentionally setting the buffer size to be higher than the active requests
+TEST(ClientWrapperTest, realTimeBarsEdgeCase) {
+	MockWrapper mWrapper;
+	MockClient mClient(mWrapper);
+
+	Contract con;
+	con.symbol = "SPX";
+	con.secType = "OPT";
+
+	//mWrapper.showRealTimeDataOutput();
+
+	mClient.reqRealTimeBars(4580, con, 0, "", true);
+	mClient.reqRealTimeBars(4590, con, 0, "", true);
+
+	mWrapper.setBufferCapacity(4); // Intentionally set capacity higher
+	mClient.setCandleInterval(10); // 10 ms between candle generation
+
+	std::unordered_map<int, std::vector<std::unique_ptr<Candle>>> contracts;
+	int i = 0;
+
+	while (i <= 50) {
+
+		std::unique_lock<std::mutex> lock(mWrapper.getWrapperMutex());
+		mWrapper.getWrapperConditional().wait(lock, [&] { return mWrapper.checkMockBufferFull(); });
+		std::vector<std::unique_ptr<Candle>> temp = mWrapper.getProcessedFiveSecCandles();
+		for (auto& i : temp) {
+			EXPECT_TRUE((i->getReqId() == 4580 || i->getReqId() == 4590));
+			contracts[i->getReqId()].push_back(std::move(i));
+		}
+		lock.unlock();
+
+		i++;
+	}
+
+	mClient.cancelRealTimeBars();
+
+	EXPECT_EQ(contracts.size(), 2);
+	EXPECT_EQ(contracts.size(), mWrapper.getBufferCapacity());
+	EXPECT_TRUE(contracts[4580].size() > 10);
 }
