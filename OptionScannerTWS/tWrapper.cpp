@@ -1,53 +1,48 @@
 #include "tWrapper.h"
 
+//====================================================
+// Wrapper for TWS API
+//====================================================
 
-//=======================================================================
-// This is a buffer to contain candlestick data and send to app when full
-//=======================================================================
+tWrapper::tWrapper(bool runEReader = true) : EWrapperL0(runEReader), candleBuffer{ 19 } { // Size 19 for 8 calls, 8 puts, and one underlying
+    m_Done = false;
+    m_ErrorForRequest = false;
+}
 
-CandleBuffer::CandleBuffer(size_t capacity) : capacity_(capacity) {}
+//==================== Error Handling ========================
 
-void CandleBuffer::processBuffer(std::vector<Candle>& wrapperContainer) {
-    if (buffer.size() == capacity_ && bufferReqs.size() == capacity_) {
-        // std::cout << "Processing buffer with " << buffer.size() << " candles" << std::endl;
-        // Append buffer contents to the target vector
-        wrapperContainer.clear();
-        wrapperContainer.insert(wrapperContainer.end(), buffer.begin(), buffer.end());
-        // Clear the buffer
-        buffer.clear();
-        // Clear the set
-        bufferReqs.clear();
+///Methods winError & error print the errors reported by IB TWS
+void tWrapper::winError(const IBString& str, int lastError) {
+    fprintf(stderr, "WinError: %d = %s\n", lastError, (const char*)str);
+    m_ErrorForRequest = true;
+}
+
+void tWrapper::error(const int id, const int errorCode, const IBString errorString) {
+    if (errorCode != 2176) { // 2176 is a weird api error that claims to not allow use of fractional shares
+        fprintf(stderr, "Error for id=%d: %d = %s\n"
+            , id, errorCode, (const char*)errorString);
+        m_ErrorForRequest = (id > 0);    // id == -1 are 'system' messages, not for user requests
     }
 }
 
-size_t CandleBuffer::checkBufferCapacity() { 
-    return capacity_; 
+///Safer: uncatched exceptions are catched before they reach the IB library code.
+///       The Id is tickerId, orderId, or reqId, or -1 when no id known
+void tWrapper::OnCatch(const char* MethodName, const long Id) {
+    fprintf(stderr, "*** Catch in EWrapper::%s( Id=%ld, ...) \n", MethodName, Id);
 }
 
-size_t CandleBuffer::getCurrentBufferLoad() {
-    return buffer.size();
-}
+//======================== Connectivity =============================
 
-void CandleBuffer::setNewBufferCapacity(int value) {
-    capacity_ = value;
-}
+void tWrapper::connectionOpened() { std::cout << "Connected to TWS" << std::endl; }
+void tWrapper::connectionClosed() { std::cout << "Connection has been closed" << std::endl; }
 
-void CandleBuffer::addToBuffer(Candle candle) { 
-    buffer.push_back(candle); 
-}
+// Upon initial API connection, recieves a comma-separated string with the managed account IDs
+void tWrapper::managedAccounts(const IBString& accountsList) { std::cout << accountsList << std::endl; }
 
-bool CandleBuffer::checkSet(int value) {
-    if (bufferReqs.find(value) == bufferReqs.end()) return false;
-    else return true;
-}
 
-void CandleBuffer::addToSet(int value) {
-    bufferReqs.insert(value);
-}
+// ================== tWrapper callback functions =======================
 
-//============================================================
-// tWrapper callback functions
-//============================================================
+void tWrapper::currentTime(long time) { time_ = time; }
 
 void tWrapper::historicalData(TickerId reqId, const IBString& date
     , double open, double high, double low, double close
@@ -62,14 +57,120 @@ void tWrapper::historicalData(TickerId reqId, const IBString& date
         return;
     }
 
-    // Upon receiving the price request, populate candlestick data
-    Candle c(reqId, date, open, high, low, close, volume, barCount, WAP, hasGaps);
-    underlyingCandles.push_back(c);
+    long vol = static_cast<long>(volume);
+
+    // Upon receiving the price request, populate Candle data
+    std::unique_ptr<Candle> c = std::make_unique<Candle>(
+        reqId, date, open, high, low, close, vol, barCount, WAP, hasGaps
+        );
+    historicCandles.push_back(std::move(c));
 
     if (showHistoricalData) {
         fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
             , (const  char*)date, open, high, low, close, volume);
+    }
+}
 
-        m_Done = true;
+void tWrapper::realtimeBar(TickerId reqId, long time, double open, double high,
+    double low, double close, long volume, double wap, int count) {
+
+    if (showRealTimeData) {
+        std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
+    }
+
+    // ReqId 1234 will be used for the underlying contract
+    // Along with the other option strike reqs to fill the buffer
+    std::lock_guard<std::mutex> lock(wrapperMtx);
+    // Upon receiving the price request, populate Candle data
+    std::unique_ptr<Candle> c = std::make_unique<Candle>(
+        reqId, time, open, high, low, close, volume, wap, count
+        );
+
+    if (activeReqs.find(reqId) == activeReqs.end()) activeReqs.insert(reqId);
+
+    candleBuffer.wrapperActiveReqs = activeReqs.size();
+    candleBuffer.updateBuffer(std::move(c));
+
+    cv.notify_one();
+}
+
+// ========================= tWrapper Mutators ===========================
+
+void tWrapper::showHistoricalDataOutput() { showHistoricalData = true; }
+void tWrapper::hideHistoricalDataOutput() { showHistoricalData = false; }
+void tWrapper::showRealTimeDataOutput() { showRealTimeData = true; }
+void tWrapper::hideRealTimeDataOutput() { showRealTimeData = false; }
+void tWrapper::setBufferCapacity(const int x) { candleBuffer.setNewBufferCapacity(x); }
+
+// ========================= tWrapper Accsessors ============================
+
+int tWrapper::getReqId() { return Req; }
+long tWrapper::getCurrentTime() { return time_; }
+int tWrapper::getBufferCapacity() { return candleBuffer.getCapacity(); }
+bool tWrapper::checBufferFull() { return candleBuffer.checkBufferFull(); }
+
+std::vector<std::unique_ptr<Candle>> tWrapper::getHistoricCandles() { return std::move(historicCandles); }
+std::vector<std::unique_ptr<Candle>> tWrapper::getProcessedFiveSecCandles() { return candleBuffer.processBuffer(); }
+
+std::mutex& tWrapper::getWrapperMutex() { return wrapperMtx; }
+std::condition_variable& tWrapper::getWrapperConditional() { return cv; }
+
+
+//=======================================================================
+// This is a buffer to contain candlestick data and send to app when full
+//=======================================================================
+
+CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity) {
+    bufferTimePassed_ = std::chrono::steady_clock::now();
+}
+
+std::vector<std::unique_ptr<Candle>> CandleBuffer::processBuffer() {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+    std::vector<std::unique_ptr<Candle>> processedData;
+
+    for (auto& c : bufferMap) processedData.push_back(std::move(c.second));
+    bufferMap.clear();
+
+    wasDataProcessed_ = true;
+
+    return processedData;
+}
+
+bool CandleBuffer::checkBufferFull() {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+    auto currentTime = std::chrono::steady_clock::now();
+    auto timePassed = currentTime - bufferTimePassed_;
+    if (timePassed > std::chrono::seconds(3)) checkBufferStatus();
+
+    //return buffer.size() >= capacity_ && bufferReqs.size() >= capacity_;
+    return static_cast<int>(bufferMap.size()) >= capacity_;
+}
+
+void CandleBuffer::setNewBufferCapacity(int value) {
+    capacity_ = value;
+    wasDataProcessed_ = false;
+}
+
+void CandleBuffer::updateBuffer(std::unique_ptr<Candle> candle) {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+    bufferMap[candle->getReqId()] = std::move(candle);
+}
+
+int CandleBuffer::getCapacity() { return capacity_; }
+
+void CandleBuffer::checkBufferStatus() {
+    if (!wasDataProcessed_) {
+        // ****** In real program, log an error each time this occurs *********
+        //std::cout << "Error, buffer not processing data. Current Buffer Size: " << bufferMap.size() << 
+        //    " Current Buffer Capacity: " << capacity_ << std::endl;
+        //std::cout << "Resetting buffer capacity to current size ..." << std::endl;
+        setNewBufferCapacity(bufferMap.size());
+    }
+
+    // Check if active wrapper requests outnumber current capacity
+    if (wrapperActiveReqs > capacity_) {
+        //std::cout << "Warning, number of open requests outnumbers current capacity, updating capacity ..." << std::endl;
+        //std::cout << "Active Reqs: " << wrapperActiveReqs << " Capacity: " << capacity_ << std::endl;
+        setNewBufferCapacity(wrapperActiveReqs);
     }
 }

@@ -6,11 +6,11 @@
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity) {
+MockCandleBuffer::MockCandleBuffer(int capacity) : capacity_(capacity) {
     bufferTimePassed_ = std::chrono::steady_clock::now();
 }
 
-std::vector<std::unique_ptr<Candle>> CandleBuffer::processBuffer() {
+std::vector<std::unique_ptr<Candle>> MockCandleBuffer::processBuffer() {
     std::lock_guard<std::mutex> lock(bufferMutex);
     std::vector<std::unique_ptr<Candle>> processedData;
 
@@ -22,7 +22,7 @@ std::vector<std::unique_ptr<Candle>> CandleBuffer::processBuffer() {
     return processedData;
 }
 
-bool CandleBuffer::checkBufferFull() {
+bool MockCandleBuffer::checkBufferFull() {
     std::lock_guard<std::mutex> lock(bufferMutex);
     auto currentTime = std::chrono::steady_clock::now();
     auto timePassed = currentTime - bufferTimePassed_;
@@ -32,19 +32,19 @@ bool CandleBuffer::checkBufferFull() {
     return static_cast<int>(bufferMap.size()) >= capacity_;
 }
 
-void CandleBuffer::setNewBufferCapacity(int value) {
+void MockCandleBuffer::setNewBufferCapacity(int value) {
     capacity_ = value;
     wasDataProcessed_ = false;
 }
 
-void CandleBuffer::updateBuffer(std::unique_ptr<Candle> candle) {
+void MockCandleBuffer::updateBuffer(std::unique_ptr<Candle> candle) {
     std::lock_guard<std::mutex> lock(bufferMutex);
     bufferMap[candle->getReqId()] = std::move(candle);
 }
 
-int CandleBuffer::getCapacity() { return capacity_; }
+int MockCandleBuffer::getCapacity() { return capacity_; }
 
-void CandleBuffer::checkBufferStatus() {
+void MockCandleBuffer::checkBufferStatus() {
     if (!wasDataProcessed_) {
         // ****** In real program, log an error each time this occurs *********
         //std::cout << "Error, buffer not processing data. Current Buffer Size: " << bufferMap.size() << 
@@ -65,13 +65,13 @@ void CandleBuffer::checkBufferStatus() {
 // Mock Wrapper
 //=================================================================
 
-MockWrapper::MockWrapper() : candleBuffer{ 19 } { m_done = false; } // Size 19 for 8 calls, 8 puts, and one underlying
+MockWrapper::MockWrapper() : mcb{ 19 } { m_done = false; } // Size 19 for 8 calls, 8 puts, and one underlying
 
 // Getters
 bool MockWrapper::notDone() { return !m_done; }
 long MockWrapper::getCurrentTime() { return time_; }
 double MockWrapper::getSPXPrice() { return SPXPrice; }
-int MockWrapper::getBufferCapacity() { return candleBuffer.getCapacity(); }
+int MockWrapper::getBufferCapacity() { return mcb.getCapacity(); }
 
 // Moving unique pointers will automatically clear the vectors
 std::vector<std::unique_ptr<Candle>> MockWrapper::getHistoricCandles() {
@@ -79,9 +79,9 @@ std::vector<std::unique_ptr<Candle>> MockWrapper::getHistoricCandles() {
 }
 
 
-std::vector<std::unique_ptr<Candle>> MockWrapper::getProcessedFiveSecCandles() { return candleBuffer.processBuffer(); }
+std::vector<std::unique_ptr<Candle>> MockWrapper::getProcessedFiveSecCandles() { return mcb.processBuffer(); }
 
-bool MockWrapper::checkMockBufferFull() { return candleBuffer.checkBufferFull(); }
+bool MockWrapper::checkMockBufferFull() { return mcb.checkBufferFull(); }
 std::mutex& MockWrapper::getWrapperMutex() { return wrapperMtx; }
 std::condition_variable& MockWrapper::getWrapperConditional() { return cv; }
 
@@ -92,7 +92,7 @@ void MockWrapper::showRealTimeDataOutput() { showRealTimeData = true; }
 void MockWrapper::hideRealTimeDataOutput() { showRealTimeData = false; }
 void MockWrapper::setmDone(bool x) { m_done = x; }
 void MockWrapper::setMockUnderlying(double x) { SPXPrice = x; }
-void MockWrapper::setBufferCapacity(int x) { candleBuffer.setNewBufferCapacity(x); }
+void MockWrapper::setBufferCapacity(const int x) { mcb.setNewBufferCapacity(x); }
 
 void MockWrapper::currentTime(long time) { time_ = time; }
 
@@ -102,11 +102,34 @@ void MockWrapper::historicalData(TickerId reqId, const IBString& date
 
     long vol = static_cast<long>(volume);
 
-    // Upon receiving the price request, populate Candle data
-    std::unique_ptr<Candle> c = std::make_unique<Candle>(
+    // Will test different retrieval methods to measure speed
+    switch (candleBenchmarkSwitch)
+    {
+    case 1:
+    {   // Upon receiving the price request, populate Candle data
+        std::unique_ptr<Candle> c1 = std::make_unique<Candle>(
+            reqId, date, open, high, low, close, vol, barCount, WAP, hasGaps
+            );
+        historicCandles.push_back(std::move(c1));
+        break;
+    }
+    case 2:
+    {   std::unique_ptr<Candle> c2 = std::make_unique<Candle>(
         reqId, date, open, high, low, close, vol, barCount, WAP, hasGaps
         );
-    historicCandles.push_back(std::move(c));
+        movedCandleQueue.push(std::move(c2));
+        break;
+    }
+    case 3:
+    {   Candle c3(reqId, date, open, high, low, close, vol, barCount, WAP, hasGaps);
+        copiedCandleVector.push_back(c3);
+        break;
+    }
+    case 4:
+        Candle c4(reqId, date, open, high, low, close, vol, barCount, WAP, hasGaps);
+        copiedCandleQueue.push(c4);
+        break;
+    }
 
     if (showHistoricalData) {
         fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
@@ -135,8 +158,19 @@ void MockWrapper::realtimeBar(TickerId reqId, long time, double open, double hig
 
     if (activeReqs.find(reqId) == activeReqs.end()) activeReqs.insert(reqId);
 
-    candleBuffer.wrapperActiveReqs = activeReqs.size();
-    candleBuffer.updateBuffer(std::move(c));
+    mcb.wrapperActiveReqs = activeReqs.size();
+    mcb.updateBuffer(std::move(c));
 
     cv.notify_one();
+}
+
+std::vector<Candle> MockWrapper::getCopiedCandleVector() { return copiedCandleVector; }
+std::queue<Candle> MockWrapper::getCopiedCandleQueue() { return copiedCandleQueue; }
+std::queue<std::unique_ptr<Candle>> MockWrapper::getMovedCandleQueue() { return std::move(movedCandleQueue); }
+
+void MockWrapper::clearTestContainers() {
+    historicCandles.clear();
+    copiedCandleVector.clear();
+    copiedCandleQueue = {};
+    movedCandleQueue = {};
 }

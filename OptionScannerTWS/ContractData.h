@@ -20,7 +20,8 @@
 #include <ctime>
 #include <functional>
 
-#include "tWrapper.h"
+//#include "tWrapper.h"
+#include "Candle.h"
 #include "Formulas.h"
 
 using std::vector;

@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\OptionScannerTWS\Candle.cpp" />
+    <ClCompile Include="BenchmarkTests\benchmarks.cpp" />
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
     <ClCompile Include="UnitTests\buffer_mock_tests.cpp" />
     <ClCompile Include="UnitTests\candle_tests.cpp" />
@@ -67,6 +68,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_Test|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UnitTests\contract_data_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\TwsApiCpp-master\TwsApiC++\_win32\TwsApi.vcxproj">

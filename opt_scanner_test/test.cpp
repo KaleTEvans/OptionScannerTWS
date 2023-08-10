@@ -4,7 +4,11 @@
 
 //#include "Candle.h"
 
-TEST(TestCaseName, TestName) {
-  EXPECT_EQ(1, 1);
-  EXPECT_TRUE(true);
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+
+    // Isolate desired tests with this filter
+    ::testing::GTEST_FLAG(filter) = "BenchmarkTests*";
+
+    return RUN_ALL_TESTS();
 }

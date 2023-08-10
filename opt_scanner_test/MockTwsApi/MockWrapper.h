@@ -10,6 +10,7 @@
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
+#include <queue>
 #include <condition_variable>
 
 ///Easier: Just one include statement for all functionality
@@ -22,13 +23,15 @@ using namespace TwsApi; // for TwsApiDefs.h
 #include "Candle.h"
 //#include "tWrapper.h"
 
+class MockWrapper;
+
 //=======================================================================
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-class CandleBuffer {
+class MockCandleBuffer {
 public:
-    CandleBuffer(int capacity);
+    MockCandleBuffer(int capacity);
 
     std::vector<std::unique_ptr<Candle>> processBuffer();
 
@@ -74,7 +77,7 @@ public:
     void hideRealTimeDataOutput(void);
     void setmDone(bool x);
     void setMockUnderlying(double x);
-    void setBufferCapacity(int x);
+    void setBufferCapacity(const int x);
 
     virtual void currentTime(long time);
 
@@ -85,8 +88,16 @@ public:
     virtual void realtimeBar(TickerId reqId, long time, double open, double high,
         double low, double close, long volume, double wap, int count);
 
+    // Variables for other tests
+    int candleBenchmarkSwitch = 1; // 1 - smtptr vector, 2 - smtptr queue, 3 - copied vector, 4 - copied queue
+
+    std::vector<Candle> getCopiedCandleVector(void);
+    std::queue<Candle> getCopiedCandleQueue(void);
+    std::queue<std::unique_ptr<Candle>> getMovedCandleQueue(void);
+    void clearTestContainers(void);
+
 private:
-    CandleBuffer candleBuffer;
+    MockCandleBuffer mcb;
 
     // Mutex and conditional for buffer use
     std::mutex wrapperMtx;
@@ -105,4 +116,9 @@ private:
 
     bool m_done;
     long time_ = 0;
+
+    // Variables for other tests
+    std::vector<Candle> copiedCandleVector;
+    std::queue<Candle> copiedCandleQueue;
+    std::queue<std::unique_ptr<Candle>> movedCandleQueue;
 };

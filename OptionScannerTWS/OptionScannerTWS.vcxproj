@@ -274,7 +274,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Formulas.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="libs\nanodbc\nanodbc.h" />
     <ClInclude Include="Logger.h">

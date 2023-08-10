@@ -11,14 +11,14 @@ public:
     MockCandle(TickerId reqId) : Candle(reqId, 0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0) {}
 };
 
-TEST(CandleBufferTest, bufferInitialize) {
-    CandleBuffer cb{ 10 };
+TEST(MockCandleBufferTest, bufferInitialize) {
+    MockCandleBuffer cb{ 10 };
     EXPECT_EQ(cb.getCapacity(), 10);
     EXPECT_EQ(cb.checkBufferFull(), false);
 }
 
-TEST(CandleBufferTest, bufferCapacity) {
-    CandleBuffer cb{ 10 };
+TEST(MockCandleBufferTest, bufferCapacity) {
+    MockCandleBuffer cb{ 10 };
     EXPECT_EQ(cb.checkBufferFull(), false);
     for (size_t i = 0; i < 10; i++) {
         auto candle = std::make_unique<MockCandle>(i);
@@ -38,8 +38,8 @@ TEST(CandleBufferTest, bufferCapacity) {
     EXPECT_EQ(cb.getCapacity(), 10);
 }
 
-TEST(CandleBufferTest, bufferProcess) {
-    CandleBuffer cb{ 0 };
+TEST(MockCandleBufferTest, bufferProcess) {
+    MockCandleBuffer cb{ 0 };
     std::vector<std::unique_ptr<Candle>> buf = cb.processBuffer();
     EXPECT_EQ(buf.size(), 0);
     
