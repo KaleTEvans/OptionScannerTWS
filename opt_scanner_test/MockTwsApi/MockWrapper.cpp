@@ -39,7 +39,7 @@ void MockCandleBuffer::setNewBufferCapacity(int value) {
 
 void MockCandleBuffer::updateBuffer(std::unique_ptr<Candle> candle) {
     std::lock_guard<std::mutex> lock(bufferMutex);
-    bufferMap[candle->getReqId()] = std::move(candle);
+    bufferMap[candle->reqId()] = std::move(candle);
 }
 
 int MockCandleBuffer::getCapacity() { return capacity_; }

@@ -37,8 +37,8 @@ int main(void) {
     //Logger::Initialize();
     std::cout << "Hello" << std::endl;
     Candle candle(789, 1691347530, 120.0, 130.0, 115.0, 125.0, 2000, 125.0, 0);
-    std::cout << candle.getDate() << std::endl;
-    std::cout << candle.getOpen() << std::endl;
+    std::cout << candle.date() << std::endl;
+    std::cout << candle.open() << std::endl;
     //if (runTests) {
     //    informalTests();
     //}

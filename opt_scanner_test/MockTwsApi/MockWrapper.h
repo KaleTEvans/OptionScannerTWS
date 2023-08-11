@@ -23,7 +23,7 @@ using namespace TwsApi; // for TwsApiDefs.h
 #include "Candle.h"
 //#include "tWrapper.h"
 
-class MockWrapper;
+
 
 //=======================================================================
 // This is a buffer to contain candlestick data and send to app when full
@@ -60,21 +60,21 @@ public:
     MockWrapper();
 
     // Candle to be used repeatedly for realtime bars
-    bool notDone(void);
-    long getCurrentTime(void);
+    bool notDone();
+    long getCurrentTime();
     double getSPXPrice(void);
     int getBufferCapacity(void);
-    std::vector<std::unique_ptr<Candle>> getHistoricCandles(void);
-    std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles(void);
+    std::vector<std::unique_ptr<Candle>> getHistoricCandles();
+    std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles();
 
-    bool checkMockBufferFull(void);
-    std::mutex& getWrapperMutex(void);
-    std::condition_variable& getWrapperConditional(void);
+    bool checkMockBufferFull();
+    std::mutex& getWrapperMutex();
+    std::condition_variable& getWrapperConditional();
 
-    void showHistoricalDataOutput(void);
-    void hideHistoricalDataOutput(void);
-    void showRealTimeDataOutput(void);
-    void hideRealTimeDataOutput(void);
+    void showHistoricalDataOutput();
+    void hideHistoricalDataOutput();
+    void showRealTimeDataOutput();
+    void hideRealTimeDataOutput();
     void setmDone(bool x);
     void setMockUnderlying(double x);
     void setBufferCapacity(const int x);
@@ -91,9 +91,9 @@ public:
     // Variables for other tests
     int candleBenchmarkSwitch = 1; // 1 - smtptr vector, 2 - smtptr queue, 3 - copied vector, 4 - copied queue
 
-    std::vector<Candle> getCopiedCandleVector(void);
-    std::queue<Candle> getCopiedCandleQueue(void);
-    std::queue<std::unique_ptr<Candle>> getMovedCandleQueue(void);
+    std::vector<Candle> getCopiedCandleVector();
+    std::queue<Candle> getCopiedCandleQueue();
+    std::queue<std::unique_ptr<Candle>> getMovedCandleQueue();
     void clearTestContainers(void);
 
 private:

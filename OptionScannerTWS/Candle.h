@@ -8,7 +8,6 @@
 
 #include <unordered_set>
 #include <iostream>
-#include <mutex>
 
 #include "TwsApiL0.h"
 #include "TwsApiDefs.h"
@@ -26,18 +25,18 @@ public:
     // Constructor for other candles created from 5 sec
     Candle(TickerId reqId, long time, double open, double high, double low, double close, long volume);
 
-    TickerId getReqId() const;
-    IBString getDate() const;
-    long getTime() const;
-    double getOpen() const;
-    double getClose() const;
-    double getHigh() const;
-    double getLow() const;
-    long getVolume() const;
-    int getBarCount() const;
-    double getWAP() const;
-    int checkGaps() const;
-    int getCount() const;
+    TickerId reqId() const;
+    IBString date() const;
+    long time() const;
+    double open() const;
+    double close() const;
+    double high() const;
+    double low() const;
+    long volume() const;
+    int barCount() const;
+    double WAP() const;
+    int hasGaps() const;
+    int count() const;
 
     void convertDateToUnix();
     void convertUnixToDate() const; // Lazy conversion only upon request

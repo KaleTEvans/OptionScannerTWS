@@ -13,8 +13,10 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <memory>
 #include <unordered_set>
 #include <unordered_map>
+#include <condition_variable>
 
 //#include "Logger.h"
 #include "Candle.h"
@@ -132,10 +134,10 @@ public:
     // Mutators
     //========================================
 
-    void showHistoricalDataOutput(void);
-    void hideHistoricalDataOutput(void);
-    void showRealTimeDataOutput(void);
-    void hideRealTimeDataOutput(void);
+    void showHistoricalDataOutput();
+    void hideHistoricalDataOutput();
+    void showRealTimeDataOutput();
+    void hideRealTimeDataOutput();
     void setBufferCapacity(const int x);
 
     //=======================================
@@ -143,14 +145,14 @@ public:
     //=======================================
 
     int getReqId();
-    long getCurrentTime(void);
-    int getBufferCapacity(void);
-    bool checBufferFull(void);
-    std::vector<std::unique_ptr<Candle>> getHistoricCandles(void);
-    std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles(void);
+    long getCurrentTime();
+    int getBufferCapacity();
+    bool checBufferFull();
+    std::vector<std::unique_ptr<Candle>> getHistoricCandles();
+    std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles();
 
-    std::mutex& getWrapperMutex(void);
-    std::condition_variable& getWrapperConditional(void);
+    std::mutex& getWrapperMutex();
+    std::condition_variable& getWrapperConditional();
 
 private:
     CandleBuffer candleBuffer;
@@ -198,7 +200,7 @@ public:
     int wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
 
 private:
-    void checkBufferStatus(void);
+    void checkBufferStatus();
 
     // bufferMap will ensure we have all reqIds from the request list before emptying the buffer
     std::unordered_map<int, std::unique_ptr<Candle>> bufferMap;

@@ -67,11 +67,11 @@ TEST(ClientWrapperTest, historicalDataAccuracy) {
 	for (const auto& candlePtr : data) {
 		Candle& candle = *candlePtr;
 
-		EXPECT_TRUE((candle.getOpen() >= (spxRefPrice - priceRange) && candle.getOpen() <= (spxRefPrice + priceRange)));
-		EXPECT_TRUE((candle.getHigh() >= (spxRefPrice - priceRange) && candle.getHigh() <= (spxRefPrice + priceRange)));
-		EXPECT_TRUE((candle.getLow() >= (spxRefPrice - priceRange) && candle.getLow() <= (spxRefPrice + priceRange)));
-		EXPECT_TRUE((candle.getClose() >= (spxRefPrice - priceRange) && candle.getClose() <= (spxRefPrice + priceRange)));
-		EXPECT_TRUE((candle.getVolume() >= (spxRefVol - volumeRange) && candle.getVolume() <= (spxRefVol + volumeRange)));
+		EXPECT_TRUE((candle.open() >= (spxRefPrice - priceRange) && candle.open() <= (spxRefPrice + priceRange)));
+		EXPECT_TRUE((candle.high() >= (spxRefPrice - priceRange) && candle.high() <= (spxRefPrice + priceRange)));
+		EXPECT_TRUE((candle.low() >= (spxRefPrice - priceRange) && candle.low() <= (spxRefPrice + priceRange)));
+		EXPECT_TRUE((candle.close() >= (spxRefPrice - priceRange) && candle.close() <= (spxRefPrice + priceRange)));
+		EXPECT_TRUE((candle.volume() >= (spxRefVol - volumeRange) && candle.volume() <= (spxRefVol + volumeRange)));
 	}
 }
 
@@ -115,11 +115,11 @@ TEST_P(ClientWrapperTest, TestHistOptionDataAccuracy) {
 	for (const auto& candlePtr : data) {
 		Candle& candle = *candlePtr;
 
-		ASSERT_TRUE(candle.getOpen() >= (refPrice - priceRange) && candle.getOpen() <= (refPrice + priceRange));
-		ASSERT_TRUE(candle.getHigh() >= (refPrice - priceRange) && candle.getHigh() <= (refPrice + priceRange));
-		ASSERT_TRUE(candle.getLow() >= (refPrice - priceRange) && candle.getLow() <= (refPrice + priceRange));
-		ASSERT_TRUE(candle.getClose() >= (refPrice - priceRange) && candle.getClose() <= (refPrice + priceRange));
-		ASSERT_TRUE(candle.getVolume() >= (refVol - volumeRange) && candle.getVolume() <= (refVol + volumeRange));
+		ASSERT_TRUE(candle.open() >= (refPrice - priceRange) && candle.open() <= (refPrice + priceRange));
+		ASSERT_TRUE(candle.high() >= (refPrice - priceRange) && candle.high() <= (refPrice + priceRange));
+		ASSERT_TRUE(candle.low() >= (refPrice - priceRange) && candle.low() <= (refPrice + priceRange));
+		ASSERT_TRUE(candle.close() >= (refPrice - priceRange) && candle.close() <= (refPrice + priceRange));
+		ASSERT_TRUE(candle.volume() >= (refVol - volumeRange) && candle.volume() <= (refVol + volumeRange));
 	}
 }
 
@@ -151,8 +151,8 @@ TEST(ClientWrapperTest, realTimeBarsOutput) {
 		mWrapper.getWrapperConditional().wait(lock, [&] { return mWrapper.checkMockBufferFull(); });
 		std::vector<std::unique_ptr<Candle>> temp = mWrapper.getProcessedFiveSecCandles();
 		for (auto& i : temp) {
-			EXPECT_TRUE((i->getReqId() == 4580 || i->getReqId() == 4581 || i->getReqId() == 4576 || i->getReqId() == 4590));
-			contracts[i->getReqId()].push_back(std::move(i));
+			EXPECT_TRUE((i->reqId() == 4580 || i->reqId() == 4581 || i->reqId() == 4576 || i->reqId() == 4590));
+			contracts[i->reqId()].push_back(std::move(i));
 		}
 		lock.unlock();
 
@@ -164,8 +164,8 @@ TEST(ClientWrapperTest, realTimeBarsOutput) {
 	for (auto& it : contracts) {
 		std::vector<std::unique_ptr<Candle>> temp = std::move(it.second);
 		for (size_t i = 1; i < temp.size(); i++) {
-			EXPECT_TRUE(temp[i]->getTime() - temp[i - 1]->getTime() == 5);
-			EXPECT_TRUE(temp[i]->getHigh() >= temp[i]->getLow());
+			EXPECT_TRUE(temp[i]->time() - temp[i - 1]->time() == 5);
+			EXPECT_TRUE(temp[i]->high() >= temp[i]->low());
 		}
 	}
 }
@@ -196,8 +196,8 @@ TEST(ClientWrapperTest, realTimeBarsEdgeCase) {
 		mWrapper.getWrapperConditional().wait(lock, [&] { return mWrapper.checkMockBufferFull(); });
 		std::vector<std::unique_ptr<Candle>> temp = mWrapper.getProcessedFiveSecCandles();
 		for (auto& i : temp) {
-			EXPECT_TRUE((i->getReqId() == 4580 || i->getReqId() == 4590));
-			contracts[i->getReqId()].push_back(std::move(i));
+			EXPECT_TRUE((i->reqId() == 4580 || i->reqId() == 4590));
+			contracts[i->reqId()].push_back(std::move(i));
 		}
 		lock.unlock();
 

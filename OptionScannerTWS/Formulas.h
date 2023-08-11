@@ -12,29 +12,29 @@
 class StandardDeviation {
 private:
 	int n;
-	double sum;
-	double sumSquared;
-	double mean;
-	double variance;
-	double stdDev;
+	double sum_;
+	double sumSquared_;
+	double mean_;
+	double variance_;
+	double stdDev_;
 
 public:
-	StandardDeviation() : n(0), sum(0.0), sumSquared(0.0), mean(0.0), variance(0.0), stdDev(0.0) {}
+	StandardDeviation() : n(0), sum_(0.0), sumSquared_(0.0), mean_(0.0), variance_(0.0), stdDev_(0.0) {}
 
     void addValue(double x) {
         n++;
-        sum += x;
-        sumSquared += x * x;
-        mean = sum / n;
-        variance = (sumSquared - (sum * sum) / n) / n;
-        stdDev = std::sqrt(variance);
+        sum_ += x;
+        sumSquared_ += x * x;
+        mean_ = sum_ / n;
+        variance_ = (sumSquared_ - (sum_ * sum_) / n) / n;
+        stdDev_ = std::sqrt(variance_);
     }
 
-    double getTotal() const { return n; }
-    double getStDev() const { return stdDev; }
-    double getMean() const { return mean; }
-    bool checkDeviation(double val, double n) const { return val > ((n * stdDev) + mean); }
-    double numStDev(double val) { return ((val - mean) / stdDev); }
+    double sum() const { return n; }
+    double stDev() const { return stdDev_; }
+    double mean() const { return mean_; }
+    bool checkDeviation(double val, double n) const { return val > ((n * stdDev_) + mean_); }
+    double numStDev(double val) { return ((val - mean_) / stdDev_); }
 };
 
 template <typename T>

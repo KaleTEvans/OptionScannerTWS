@@ -33,24 +33,25 @@ Candle::Candle(TickerId reqId, long time, double open, double high,
 }
 
 // Getters
-TickerId Candle::getReqId() const { return reqId_; }
-IBString Candle::getDate() const {
+TickerId Candle::reqId() const { return reqId_; }
+long Candle::time() const { return time_; }
+double Candle::open() const { return open_; }
+double Candle::close() const { return close_; }
+double Candle::high() const { return high_; }
+double Candle::low() const { return low_; }
+long Candle::volume() const { return volume_; }
+int Candle::barCount() const { return barCount_; }
+double Candle::WAP() const { return WAP_; }
+int Candle::hasGaps() const { return hasGaps_; }
+int Candle::count() const { return count_; }
+
+IBString Candle::date() const {
     if (!dateConverted_) {
         convertUnixToDate();
         dateConverted_ = true;
     }
     return date_;
 }
-long Candle::getTime() const { return time_; }
-double Candle::getOpen() const { return open_; }
-double Candle::getClose() const { return close_; }
-double Candle::getHigh() const { return high_; }
-double Candle::getLow() const { return low_; }
-long Candle::getVolume() const { return volume_; }
-int Candle::getBarCount() const { return barCount_; }
-double Candle::getWAP() const { return WAP_; }
-int Candle::checkGaps() const { return hasGaps_; }
-int Candle::getCount() const { return count_; }
 
 void Candle::convertDateToUnix() {
     // Convert time string to unix values

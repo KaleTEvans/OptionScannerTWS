@@ -19,6 +19,7 @@
 #include <chrono>
 #include <ctime>
 #include <functional>
+#include <memory>
 
 //#include "tWrapper.h"
 #include "Candle.h"
@@ -30,50 +31,53 @@ using std::max;
 using std::min;
 using std::pair;
 
+// Time frame enums
+enum class TimeFrame {
+	FiveSecs,
+	ThirtySecs,
+	OneMin,
+	FiveMin
+};
+
 class ContractData {
 public:
-	ContractData(TickerId reqId, Candle initData, bool isUnderlying = false);
+	ContractData(TickerId reqId, std::unique_ptr<Candle> initData);
 
 	// With each incoming candle, we will need to update the vectors for each time frame
 	// This will also update stDevs for each time series
-	void updateData(Candle c);
+	void updateData(std::unique_ptr<Candle> c);
+
+	// Accessors
+	TickerId contractId() const;
 
 	// Time series accessors
-	vector<Candle> getFiveSecData() const { return fiveSecCandles; }
-	vector<Candle> getThirtySecData() const { return thirtySecCandles; }
-	vector<Candle> getOneMinData() const { return oneMinCandles; }
-	vector<Candle> getFiveMinData() const { return fiveMinCandles; }
+	vector<std::shared_ptr<Candle>> fiveSecData() const;
+	vector<std::shared_ptr<Candle>> thirtySecData() const;
+	vector<std::shared_ptr<Candle>> oneMinData() const;
+	vector<std::shared_ptr<Candle>> fiveMinData() const;
 
 	// Other data acessors
-	double getCurrentPrice() const { return fiveSecCandles.back().close; }
-	double getDailyHigh() const { return dailyHigh; }
-	double getDailyLow() const { return dailyLow; }
-	double getLocalHigh() const { return localHigh; }
-	double getLocalLow() const { return localLow; }
-	long getCumulativeVol() const { return cumulativeVolume.back().second; }
+	double currentPrice() const;
+	double dailyHigh() const;
+	double dailyLow() const;
+	double localHigh() const;
+	double localLow() const;
+	long cumulativeVol() const;
 
-	pair<StandardDeviation, StandardDeviation> get5SecStDev() const { return { sd5Sec, sdVol5Sec }; }
-	pair<StandardDeviation, StandardDeviation> get30SecStDev() const { return { sd30Sec, sdVol30Sec }; }
-	pair<StandardDeviation, StandardDeviation> get1MinStDev() const { return { sd1Min, sdVol1Min }; }
-	pair<StandardDeviation, StandardDeviation> get5MinStDev() const { return { sd5Min, sdVol5Min }; }
+	pair<StandardDeviation, StandardDeviation> get5SecStDev() const;
+	pair<StandardDeviation, StandardDeviation> get30SecStDev() const;
+	pair<StandardDeviation, StandardDeviation> get1MinStDev() const;
+	pair<StandardDeviation, StandardDeviation> get5MinStDev() const;
 
-	vector<bool> getHighLowComparisons() const {
-		vector<bool> comparisons;
-		comparisons.push_back(nearDailyLow);
-		comparisons.push_back(nearDailyHigh);
-		comparisons.push_back(nearLocalLow);
-		comparisons.push_back(nearLocalHigh);
-
-		return comparisons;
-	}
-
-	TickerId contractId = 0; 
+	vector<bool> highLowComparisons() const;
 
 private:
-	vector<Candle> fiveSecCandles;
-	vector<Candle> thirtySecCandles;
-	vector<Candle> oneMinCandles;
-	vector<Candle> fiveMinCandles;
+	TickerId contractId_ = 0;
+
+	vector<std::shared_ptr<Candle>> fiveSecCandles;
+	vector<std::shared_ptr<Candle>> thirtySecCandles;
+	vector<std::shared_ptr<Candle>> oneMinCandles;
+	vector<std::shared_ptr<Candle>> fiveMinCandles;
 
 	// Statistic Variables
 	StandardDeviation sd5Sec;
@@ -86,14 +90,14 @@ private:
 	StandardDeviation sdVol1Min;
 	StandardDeviation sdVol5Min;
 
-	double dailyHigh = 0;
-	double dailyLow = 10000;
+	double dailyHigh_ = 0;
+	double dailyLow_= 10000;
 
 	// To be used for local high and low in 30 minute frames
-	double localHigh = 0;
-	double localLow = 10000;
-	double tempHigh = 0;
-	double tempLow = 10000;
+	double localHigh_ = 0;
+	double localLow_ = 10000;
+	double tempHigh_ = 0;
+	double tempLow_= 10000;
 
 	// Data retrieval to compare and add to alerts
 	bool nearDailyHigh = false;
@@ -105,17 +109,17 @@ private:
 	void updateComparisons();
 
 	// For data keeping purposes
-	vector<std::pair<long, long>> cumulativeVolume;
+	vector<std::pair<long, long>> cumulativeVolume_;
 
 	// We will also need to keep a connection open for the underlying price
 	// Will cancel all alerts when an underlying security is being passed through
-	bool isUnderlying = false;
+	bool isUnderlying_ = false;
 
 //=========================================
 // Callback Functionality for Alerts
 //=========================================
 public:
-	using AlertFunction = std::function<void(int, StandardDeviation, StandardDeviation, Candle)>;
+	using AlertFunction = std::function<void(TimeFrame tf, StandardDeviation, StandardDeviation, std::shared_ptr<Candle> candle)>;
 	void registerAlert(AlertFunction alert) { alert_ = std::move(alert); }
 
 private:
