@@ -25,27 +25,25 @@ std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::s
 ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : contractId_(reqId) {
 	// Push the first candle only in the 5 sec array
 	std::shared_ptr<Candle> initCandle{ std::move(initData) };
-	fiveSecCandles.push_back(initCandle);
+	fiveSecCandles_.push_back(initCandle);
 	// Update the standard deviation class for the first 5 sec candle
-	sd5Sec.addValue(initCandle->high() - initCandle->low());
-	sdVol5Sec.addValue(initCandle->volume());
+	sdPrice5Sec_.addValue(initCandle->high() - initCandle->low());
+	sdVol5Sec_.addValue(initCandle->volume());
 
 	// If reqId is 1234, mark as underlying
 	if (initCandle->reqId() == 1234) isUnderlying_ = true;
 }
 
 // The input data function will be called each time a new candle is received, and will be where we 
-// update each time series vector, stdev and mean. This will also be where we send out alerts
-// if any anomalies are found
+// update each time series vector, stdev and mean. The chaining of if statements ensures that
+// each vector has enough values to fill the next timeframe
 void ContractData::updateData(std::unique_ptr<Candle> c) {
+	//============================================================
+	// 5 Second Candle Options
+	// ===========================================================
 	// Switch to shared pointer
 	std::shared_ptr<Candle> fiveSec{ std::move(c) };
-	// Always push to the 5 sec array
-	fiveSecCandles.push_back(fiveSec);
-
-	// Update stdev values for 5 sec array
-	sd5Sec.addValue(fiveSec->high() - fiveSec->low());
-	sdVol5Sec.addValue(fiveSec->volume());
+	updateContainers(fiveSec, TimeFrame::FiveSecs);
 
 	// Update daily high and low values to check relative price
 	dailyHigh_ = max(dailyHigh_, fiveSec->high());
@@ -53,96 +51,51 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 
 	updateComparisons();
 
-	//==============================================
-	// 5 Second Timeframe Alert Options
-	//==============================================
-	if (sdVol5Sec.checkDeviation(fiveSec->volume(), 2) && sdVol5Sec.sum() > 9 && !isUnderlying_) {
-		if (alert_) alert_(TimeFrame::FiveSecs, sd5Sec, sdVol5Sec, fiveSec);
+	///////////////////////// 5 Second Alert Options ///////////////////////////////
+	if (sdVol5Sec_.checkDeviation(fiveSec->volume(), 2) && sdVol5Sec_.sum() > 9 && !isUnderlying_) {
+		if (alert_) alert_(TimeFrame::FiveSecs, sdPrice5Sec_, sdVol5Sec_, fiveSec);
 	}
 
-	// Using the length of the 5 sec array, we will determine if any new candles should be added to the other arrays
-	// 6 increments for the 30 sec
-	if (fiveSecCandles.size() % 6 == 0) {
-		std::shared_ptr<Candle> thirtySec{ createNewBars(contractId_, 6, fiveSecCandles) };
-		thirtySecCandles.push_back(thirtySec);
+	//=============================================================
+	// 30 Second Candle Options
+	//=============================================================
 
-		// Update stdev values for 30 sec array
-		sd30Sec.addValue(thirtySec->high() - thirtySec->low());
-		sdVol30Sec.addValue(thirtySec->volume());
+	if (fiveSecCandles_.size() % 6 == 0 && fiveSecCandles_.size() > 0) {
+		std::shared_ptr<Candle> thirtySec{ createNewBars(contractId_, 6, fiveSecCandles_) };
+		updateContainers(thirtySec, TimeFrame::ThirtySecs);
 
-		//==============================================
-		// 30 Second Timeframe Alert Options
-		//==============================================
-		if (sdVol30Sec.checkDeviation(thirtySec->volume(), 1.5) && sdVol30Sec.sum() > 9 && !isUnderlying_) {
-			if (alert_) alert_(TimeFrame::ThirtySecs, sd30Sec, sdVol30Sec, thirtySec);
+		///////////////////////// 30 Second Alert Options ///////////////////////////////
+		if (sdVol30Sec_.checkDeviation(thirtySec->volume(), 1.5) && sdVol30Sec_.sum() > 9 && !isUnderlying_) {
+			if (alert_) alert_(TimeFrame::ThirtySecs, sdPrice30Sec_, sdVol30Sec_, thirtySec);
 		}
 
-		// Now we'll reference the 30 sec array for the 1min, so we only need to use increments of 2
-		if (thirtySecCandles.size() > 0 && thirtySecCandles.size() % 2 == 0) {
-			//std::cout << thirtySecCandles.size() << " " << oneMinCandles.size() << std::endl;
-			std::shared_ptr<Candle> oneMin{ createNewBars(contractId_, 2, thirtySecCandles) };
-			oneMinCandles.push_back(oneMin);
+		//=================================================================
+		// 1 Minute Candle Options
+		//=================================================================
 
-			// Update stdev values for 1 min array
-			sd1Min.addValue(oneMin->high() - oneMin->low());
-			sdVol1Min.addValue(oneMin->volume());
+		if (thirtySecCandles_.size() > 0 && thirtySecCandles_.size() % 2 == 0) {
+			std::shared_ptr<Candle> oneMin{ createNewBars(contractId_, 2, thirtySecCandles_) };
+			updateCumulativeVolume(oneMin);
+			updateContainers(oneMin, TimeFrame::OneMin);
 
-			///////////////// Update cumulative volume for historical records///////////////
-			if (cumulativeVolume_.empty()) {
-				std::pair<long, long> p = { oneMin->time(), oneMin->volume() };
-				cumulativeVolume_.push_back(p);
-			}
-			else {
-				int totalVol = oneMin->volume() + cumulativeVolume_.back().second;
-				std::pair<long, long> p{ oneMin->time(), totalVol };
-				cumulativeVolume_.push_back(p);
+			///////////////////////// 1 minute Alert Options ///////////////////////////////
+			if (sdVol1Min_.checkDeviation(oneMin->volume(), 1) && sdVol1Min_.sum() > 9 && !isUnderlying_) {
+				if (alert_) alert_(TimeFrame::OneMin, sdPrice1Min_, sdVol1Min_, oneMin);
 			}
 
-			/*OPTIONSCANNER_DEBUG("{} Contract: {}, Cumulative Volume: {}", cumulativeVolume.back().first, contractId,
-				cumulativeVolume.back().second);*/
+			//====================================================================
+			// 5 Minute Candle Options
+			//====================================================================
 
-			/*if (oneMinCandles.size() % 5 == 0) {
-				OPTIONSCANNER_DEBUG("Local variables updatd for {} | Local High: {} | Local Low: {} ", contractId, localHigh, localLow);
-				OPTIONSCANNER_DEBUG("Daily high: {} | Daily Low: {} | Current Price: {}", dailyHigh, dailyLow, getCurrentPrice());
-			}*/
+			if (oneMinCandles_.size() > 0 && oneMinCandles_.size() % 5 == 0) {
+				std::shared_ptr<Candle> fiveMin{ createNewBars(contractId_, 5, oneMinCandles_) };
+				// Every 30 minutes, update the local high and low.
+				updateLocalMinMax(fiveMin);
+				updateContainers(fiveMin, TimeFrame::FiveMin);
 
-			//==============================================
-			// 1 Minute Timeframe Alert Options
-			//==============================================
-			if (sdVol1Min.checkDeviation(oneMin->volume(), 1) && sdVol1Min.sum() > 9 && !isUnderlying_) {
-				if (alert_) alert_(TimeFrame::OneMin, sd1Min, sdVol1Min, oneMin);
-			}
-
-			// Referencing the 1 min for the 5min array we can use increments of 5
-			if (oneMinCandles.size() > 0 && oneMinCandles.size() % 5 == 0) {
-				std::shared_ptr<Candle> fiveMin{ createNewBars(contractId_, 5, oneMinCandles) };
-				fiveMinCandles.push_back(fiveMin);
-
-				// Update stdev values for 5 minute array
-				sd5Min.addValue(fiveMin->high() - fiveMin->low());
-				sdVol5Min.addValue(fiveMin->volume());
-
-				//==============================================
-				// 5 Minute Timeframe Alert Options
-				//==============================================
-				if (sdVol5Min.checkDeviation(fiveMin->volume(), 1) && sdVol5Min.sum() > 4 && !isUnderlying_) {
-					if (alert_) alert_(TimeFrame::FiveMin, sd5Sec, sdVol5Sec, fiveMin);
-				}
-
-				// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between
-				tempHigh_ = max(tempHigh_, fiveMin->high());
-				tempLow_ = min(tempLow_, fiveMin->low());
-
-				if (fiveMinCandles.size() % 6 == 0) {
-					localHigh_ = tempHigh_;
-					localLow_ = tempLow_;
-					tempHigh_ = 0;
-					tempLow_ = 10000;
-
-					std::cout << "6 five min candles created" << std::endl;
-
-					/*OPTIONSCANNER_DEBUG("Local variables updatd for {} | Local High: {} | Local Low: {} ", contractId, localHigh, localLow);
-					OPTIONSCANNER_DEBUG("Daily high: {} | Daily Low: {} | Current Price: {}", dailyHigh, dailyLow, getCurrentPrice());*/
+				///////////////////////// 5 Minute Alert Options ///////////////////////////////
+				if (sdVol5Min_.checkDeviation(fiveMin->volume(), 1) && sdVol5Min_.sum() > 4 && !isUnderlying_) {
+					if (alert_) alert_(TimeFrame::FiveMin, sdPrice5Sec_, sdVol5Sec_, fiveMin);
 				}
 			}
 		}
@@ -158,33 +111,110 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 TickerId ContractData::contractId() const { return contractId_; }
 
 // Time series accessors
-vector<std::shared_ptr<Candle>> ContractData::fiveSecData() const { return fiveSecCandles; }
-vector<std::shared_ptr<Candle>> ContractData::thirtySecData() const { return thirtySecCandles; }
-vector<std::shared_ptr<Candle>> ContractData::oneMinData() const { return oneMinCandles; }
-vector<std::shared_ptr<Candle>> ContractData::fiveMinData() const { return fiveMinCandles; }
+vector<std::shared_ptr<Candle>> ContractData::fiveSecData() const { return fiveSecCandles_; }
+vector<std::shared_ptr<Candle>> ContractData::thirtySecData() const { return thirtySecCandles_; }
+vector<std::shared_ptr<Candle>> ContractData::oneMinData() const { return oneMinCandles_; }
+vector<std::shared_ptr<Candle>> ContractData::fiveMinData() const { return fiveMinCandles_; }
 
 // Other data acessors
-double ContractData::currentPrice() const { return fiveSecCandles.back()->close(); }
+double ContractData::currentPrice() const { return fiveSecCandles_.back()->close(); }
 double ContractData::dailyHigh() const { return dailyHigh_; }
 double ContractData::dailyLow() const { return dailyLow_; }
 double ContractData::localHigh() const { return localHigh_; }
 double ContractData::localLow() const { return localLow_; }
-long ContractData::cumulativeVol() const { return cumulativeVolume_.back().second; }
+long long ContractData::totalVol() const { return cumulativeVolume_.back().second; }
 
-pair<StandardDeviation, StandardDeviation> ContractData::get5SecStDev() const { return { sd5Sec, sdVol5Sec }; }
-pair<StandardDeviation, StandardDeviation> ContractData::get30SecStDev() const { return { sd30Sec, sdVol30Sec }; }
-pair<StandardDeviation, StandardDeviation> ContractData::get1MinStDev() const { return { sd1Min, sdVol1Min }; }
-pair<StandardDeviation, StandardDeviation> ContractData::get5MinStDev() const { return { sd5Min, sdVol5Min }; }
-
+vector<std::pair<long, long long>> ContractData::volOverTime() const { return cumulativeVolume_; }
 vector<bool> ContractData::highLowComparisons() const { return { nearDailyLow, nearDailyHigh, nearLocalLow, nearLocalHigh }; }
+
+StandardDeviation ContractData::priceStDev(TimeFrame tf) {
+	switch (tf)
+	{
+	case TimeFrame::FiveSecs:
+		return sdPrice5Sec_;
+		break;
+	case TimeFrame::ThirtySecs:
+		return sdPrice30Sec_;
+		break;
+	case TimeFrame::OneMin:
+		return sdPrice1Min_;
+		break;
+	case TimeFrame::FiveMin:
+		return sdPrice5Min_;
+		break;
+	}
+
+	return {};
+}
+
+StandardDeviation ContractData::volStDev(TimeFrame tf) {
+	switch (tf)
+	{
+	case TimeFrame::FiveSecs:
+		return sdVol5Sec_;
+		break;
+	case TimeFrame::ThirtySecs:
+		return sdVol30Sec_;
+		break;
+	case TimeFrame::OneMin:
+		return sdVol1Min_;
+		break;
+	case TimeFrame::FiveMin:
+		return sdVol5Min_;
+		break;
+	}
+
+	return {};
+}
 
 //==============================================
 // Helper Functions
 //==============================================
 
+void ContractData::updateContainers(std::shared_ptr<Candle> c, TimeFrame tf) {
+	switch (tf)
+	{
+	case TimeFrame::FiveSecs:
+		fiveSecCandles_.push_back(c);
+		sdPrice5Sec_.addValue(c->high() - c->low());
+		sdVol5Sec_.addValue(c->volume());
+		break;
+	case TimeFrame::ThirtySecs:
+		thirtySecCandles_.push_back(c);
+		sdPrice30Sec_.addValue(c->high() - c->low());
+		sdVol30Sec_.addValue(c->volume());
+		break;
+	case TimeFrame::OneMin:
+		oneMinCandles_.push_back(c);
+		sdPrice1Min_.addValue(c->high() - c->low());
+		sdVol1Min_.addValue(c->volume());
+		break;
+	case TimeFrame::FiveMin:
+		fiveMinCandles_.push_back(c);
+		sdPrice5Min_.addValue(c->high() - c->low());
+		sdVol5Min_.addValue(c->volume());
+		break;
+	}
+}
+
+void ContractData::updateCumulativeVolume(std::shared_ptr<Candle> c) {
+	long long vol = static_cast<long long>(c->volume());
+	long time = c->time();
+
+	if (cumulativeVolume_.empty()) {
+		std::pair<long, long long> p = { time, vol };
+		cumulativeVolume_.push_back(p);
+	}
+	else {
+		long long totalVol = vol + cumulativeVolume_.back().second;
+		std::pair<long, long long> p{ time, totalVol };
+		cumulativeVolume_.push_back(p);
+	}
+}
+
 void ContractData::updateComparisons() {
 	// Update underlying information
-	double lastPrice = fiveSecCandles.back()->close();
+	double lastPrice = fiveSecCandles_.back()->close();
 	double percentDiff = 0.1;
 
 	// Check values against the underlying price, will use 0.1% difference
@@ -199,4 +229,17 @@ void ContractData::updateComparisons() {
 
 	if (isWithinXPercent(lastPrice, localLow_, percentDiff) || lastPrice < localLow_) nearLocalLow = true;
 	else nearLocalLow = false;
+}
+
+void ContractData::updateLocalMinMax(std::shared_ptr<Candle> c) {
+	// Every 30 minutes, update the local high and low. Temp high and low will serve to track these values in between
+	tempHigh_ = max(tempHigh_, c->high());
+	tempLow_ = min(tempLow_, c->low());
+
+	if (fiveMinCandles_.size() % 6 == 0 && fiveMinCandles_.size() > 0) {
+		localHigh_ = tempHigh_;
+		localLow_ = tempLow_;
+		tempHigh_ = 0;
+		tempLow_ = 10000;
+	}
 }

@@ -39,6 +39,9 @@ enum class TimeFrame {
 	FiveMin
 };
 
+// Helper function for combining candles
+std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::shared_ptr<Candle>> data);
+
 class ContractData {
 public:
 	ContractData(TickerId reqId, std::unique_ptr<Candle> initData);
@@ -62,42 +65,41 @@ public:
 	double dailyLow() const;
 	double localHigh() const;
 	double localLow() const;
-	long cumulativeVol() const;
+	long long totalVol() const;
 
-	pair<StandardDeviation, StandardDeviation> get5SecStDev() const;
-	pair<StandardDeviation, StandardDeviation> get30SecStDev() const;
-	pair<StandardDeviation, StandardDeviation> get1MinStDev() const;
-	pair<StandardDeviation, StandardDeviation> get5MinStDev() const;
-
+	vector<std::pair<long, long long>> volOverTime() const;
 	vector<bool> highLowComparisons() const;
+
+	StandardDeviation priceStDev(TimeFrame tf);
+	StandardDeviation volStDev(TimeFrame tf);
 
 private:
 	TickerId contractId_ = 0;
 
-	vector<std::shared_ptr<Candle>> fiveSecCandles;
-	vector<std::shared_ptr<Candle>> thirtySecCandles;
-	vector<std::shared_ptr<Candle>> oneMinCandles;
-	vector<std::shared_ptr<Candle>> fiveMinCandles;
+	vector<std::shared_ptr<Candle>> fiveSecCandles_;
+	vector<std::shared_ptr<Candle>> thirtySecCandles_;
+	vector<std::shared_ptr<Candle>> oneMinCandles_;
+	vector<std::shared_ptr<Candle>> fiveMinCandles_;
 
 	// Statistic Variables
-	StandardDeviation sd5Sec;
-	StandardDeviation sd30Sec;
-	StandardDeviation sd1Min;
-	StandardDeviation sd5Min;
+	StandardDeviation sdPrice5Sec_;
+	StandardDeviation sdPrice30Sec_;
+	StandardDeviation sdPrice1Min_;
+	StandardDeviation sdPrice5Min_;
 
-	StandardDeviation sdVol5Sec;
-	StandardDeviation sdVol30Sec;
-	StandardDeviation sdVol1Min;
-	StandardDeviation sdVol5Min;
+	StandardDeviation sdVol5Sec_;
+	StandardDeviation sdVol30Sec_;
+	StandardDeviation sdVol1Min_;
+	StandardDeviation sdVol5Min_;
 
 	double dailyHigh_ = 0;
 	double dailyLow_= 10000;
 
 	// To be used for local high and low in 30 minute frames
 	double localHigh_ = 0;
-	double localLow_ = 10000;
+	double localLow_ = 100000;
 	double tempHigh_ = 0;
-	double tempLow_= 10000;
+	double tempLow_= 100000;
 
 	// Data retrieval to compare and add to alerts
 	bool nearDailyHigh = false;
@@ -105,11 +107,15 @@ private:
 	bool nearLocalHigh = false;
 	bool nearLocalLow = false;
 
-	// Function to update the comparison values
+	// Update various trackers
+	// Update respective containers with new candles and stdev values
+	void updateContainers(std::shared_ptr<Candle> c, TimeFrame tf);
+	void updateCumulativeVolume(std::shared_ptr<Candle> c);
 	void updateComparisons();
+	void updateLocalMinMax(std::shared_ptr<Candle> c);
 
 	// For data keeping purposes
-	vector<std::pair<long, long>> cumulativeVolume_;
+	vector<std::pair<long, long long>> cumulativeVolume_;
 
 	// We will also need to keep a connection open for the underlying price
 	// Will cancel all alerts when an underlying security is being passed through
