@@ -1,24 +1,17 @@
 #include "OptionScanner.h"
 
 OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker), alertHandler() {
-	// Start a request for realtime bars for the underlying
-	// With SPX and other indexes, we only set the primary exchange to CBOE
-	Contract rtbSPX;
-	rtbSPX.symbol = ticker;
-	rtbSPX.secType = *SecType::IND;
-	rtbSPX.currency = "USD";
-	rtbSPX.primaryExchange = *Exchange::CBOE;
+	// Request last quote for SPX upon class initiation to get closest option strikes
+	Contract SPX;
+	SPX.symbol = ticker;
+	SPX.secType = *SecType::IND;
+	SPX.currency = "USD";
+	SPX.primaryExchange = *Exchange::CBOE;
 
-	EC->reqRealTimeBars
-	(1234
-		, rtbSPX
-		, 5
-		, *WhatToShow::TRADES
-		, UseRTH::OnlyRegularTradingData
-	);
+	EC->reqMktData(111, SPX, "", true);
+	while (YW.getReqId() != 111) EC->checkMessages();
 
-	while (YW.underlyingRTBs.reqId != 1234) EC->checkMessages();
-	SPXBars = new ContractData(YW.underlyingRTBs.reqId, YW.underlyingRTBs, true);
+	
 }
 
 //============================================================
@@ -85,6 +78,25 @@ void OptionScanner::streamOptionData() {
 	}
 }
 
+void OptionScanner::populateStrikes(double price) {
+
+	int multiple = 5; // SPX Strikes are in increments of 5
+	// Round the price down to nearest increment
+	int roundedPrice = int(price + (multiple / 2));
+	roundedPrice -= roundedPrice % multiple;
+	int strikePrice = roundedPrice - (multiple * 4);
+
+	// This will give us 9 strikes in total
+	while (strikePrice <= roundedPrice + (multiple * 4)) {
+		strikes.push_back(strikePrice);
+		strikePrice += multiple;
+	}
+
+	for (auto i : strikes) cout << i << " ";
+	cout << endl;
+
+}
+
 void OptionScanner::updateStrikes() {
 	// Clear out the strikes vector for each use
 	optionStrikes.clear();
@@ -111,7 +123,7 @@ void OptionScanner::updateStrikes() {
 	}
 
 	if (contractsInBuffer > 18) YW.candleBuffer.setNewBufferCapacity(contractsInBuffer);
-	OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.checkBufferCapacity());
+	//OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.checkBufferCapacity());
 
 	cout << "Option Strikes: ";
 	for (auto i : optionStrikes) cout << i << " ";

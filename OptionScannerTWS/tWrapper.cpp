@@ -4,7 +4,7 @@
 // Wrapper for TWS API
 //====================================================
 
-tWrapper::tWrapper(bool runEReader = true) : EWrapperL0(runEReader), candleBuffer{ 19 } { // Size 19 for 8 calls, 8 puts, and one underlying
+tWrapper::tWrapper(bool runEReader) : EWrapperL0(runEReader), candleBuffer_{ 19 } { // Size 19 for 8 calls, 8 puts, and one underlying
     m_Done = false;
     m_ErrorForRequest = false;
 }
@@ -44,6 +44,31 @@ void tWrapper::managedAccounts(const IBString& accountsList) { std::cout << acco
 
 void tWrapper::currentTime(long time) { time_ = time; }
 
+void tWrapper::tickPrice(TickerId tickerId, TickType field, double price, int canAutoExecute) {
+    if (field == TickType::LAST) tickPriceLast_ = price;
+    // std::cout << "Field: " << field << " Price: " << price << std::endl;
+}
+
+void tWrapper::tickGeneric(TickerId tickerId, TickType tickType, double value) {
+    // std::cout << "Tick Type: " << tickType << " Value: " << value << std::endl;
+}
+
+void tWrapper::tickSize(TickerId tickerId, TickType field, int size) {
+    //std::cout << "Tick Size: " << size << std::endl;
+}
+
+void tWrapper::marketDataType(TickerId reqId, int marketDataType) {
+    //std::cout << "Market data type: " << marketDataType << std::endl;
+}
+
+void tWrapper::tickString(TickerId tickerId, TickType tickType, const IBString& value) {
+    // std::cout << "Value: " << value << std::endl;
+}
+
+void tWrapper::tickSnapshotEnd(int reqId) {
+    Req_ = reqId;
+}
+
 void tWrapper::historicalData(TickerId reqId, const IBString& date
     , double open, double high, double low, double close
     , int volume, int barCount, double WAP, int hasGaps) {
@@ -52,8 +77,8 @@ void tWrapper::historicalData(TickerId reqId, const IBString& date
     if (IsEndOfHistoricalData(date)) {
         // m_Done = true;
         // Set Req to the same value as reqId so we can retrieve the data once finished
-        Req = reqId;
-        std::cout << "Completed historical data request " << Req << std::endl;
+        Req_ = reqId;
+        std::cout << "Completed historical data request " << Req_ << std::endl;
         return;
     }
 
@@ -63,9 +88,9 @@ void tWrapper::historicalData(TickerId reqId, const IBString& date
     std::unique_ptr<Candle> c = std::make_unique<Candle>(
         reqId, date, open, high, low, close, vol, barCount, WAP, hasGaps
         );
-    historicCandles.push_back(std::move(c));
+    historicCandles_.push_back(std::move(c));
 
-    if (showHistoricalData) {
+    if (showHistoricalData_) {
         fprintf(stdout, "%10s, %5.3f, %5.3f, %5.3f, %5.3f, %7d\n"
             , (const  char*)date, open, high, low, close, volume);
     }
@@ -74,46 +99,47 @@ void tWrapper::historicalData(TickerId reqId, const IBString& date
 void tWrapper::realtimeBar(TickerId reqId, long time, double open, double high,
     double low, double close, long volume, double wap, int count) {
 
-    if (showRealTimeData) {
+    if (showRealTimeData_) {
         std::cout << reqId << " " << time << " " << "high: " << high << " low: " << low << " volume: " << volume << std::endl;
     }
 
     // ReqId 1234 will be used for the underlying contract
     // Along with the other option strike reqs to fill the buffer
-    std::lock_guard<std::mutex> lock(wrapperMtx);
+    std::lock_guard<std::mutex> lock(wrapperMtx_);
     // Upon receiving the price request, populate Candle data
     std::unique_ptr<Candle> c = std::make_unique<Candle>(
         reqId, time, open, high, low, close, volume, wap, count
         );
 
-    if (activeReqs.find(reqId) == activeReqs.end()) activeReqs.insert(reqId);
+    if (activeReqs_.find(reqId) == activeReqs_.end()) activeReqs_.insert(reqId);
 
-    candleBuffer.wrapperActiveReqs = activeReqs.size();
-    candleBuffer.updateBuffer(std::move(c));
+    candleBuffer_.wrapperActiveReqs = activeReqs_.size();
+    candleBuffer_.updateBuffer(std::move(c));
 
-    cv.notify_one();
+    cv_.notify_one();
 }
 
 // ========================= tWrapper Mutators ===========================
 
-void tWrapper::showHistoricalDataOutput() { showHistoricalData = true; }
-void tWrapper::hideHistoricalDataOutput() { showHistoricalData = false; }
-void tWrapper::showRealTimeDataOutput() { showRealTimeData = true; }
-void tWrapper::hideRealTimeDataOutput() { showRealTimeData = false; }
-void tWrapper::setBufferCapacity(const int x) { candleBuffer.setNewBufferCapacity(x); }
+void tWrapper::showHistoricalDataOutput() { showHistoricalData_ = true; }
+void tWrapper::hideHistoricalDataOutput() { showHistoricalData_ = false; }
+void tWrapper::showRealTimeDataOutput() { showRealTimeData_ = true; }
+void tWrapper::hideRealTimeDataOutput() { showRealTimeData_ = false; }
+void tWrapper::setBufferCapacity(const int x) { candleBuffer_.setNewBufferCapacity(x); }
 
 // ========================= tWrapper Accsessors ============================
 
-int tWrapper::getReqId() { return Req; }
+int tWrapper::getReqId() { return Req_; }
 long tWrapper::getCurrentTime() { return time_; }
-int tWrapper::getBufferCapacity() { return candleBuffer.getCapacity(); }
-bool tWrapper::checBufferFull() { return candleBuffer.checkBufferFull(); }
+double tWrapper::lastTickPrice() { return tickPriceLast_; }
+int tWrapper::bufferCapacity() { return candleBuffer_.getCapacity(); }
+bool tWrapper::checkBufferFull() { return candleBuffer_.checkBufferFull(); }
 
-std::vector<std::unique_ptr<Candle>> tWrapper::getHistoricCandles() { return std::move(historicCandles); }
-std::vector<std::unique_ptr<Candle>> tWrapper::getProcessedFiveSecCandles() { return candleBuffer.processBuffer(); }
+std::vector<std::unique_ptr<Candle>> tWrapper::historicCandles() { return std::move(historicCandles_); }
+std::vector<std::unique_ptr<Candle>> tWrapper::processedFiveSecCandles() { return candleBuffer_.processBuffer(); }
 
-std::mutex& tWrapper::getWrapperMutex() { return wrapperMtx; }
-std::condition_variable& tWrapper::getWrapperConditional() { return cv; }
+std::mutex& tWrapper::wrapperMutex() { return wrapperMtx_; }
+std::condition_variable& tWrapper::wrapperConditional() { return cv_; }
 
 
 //=======================================================================
@@ -153,7 +179,7 @@ void CandleBuffer::setNewBufferCapacity(int value) {
 
 void CandleBuffer::updateBuffer(std::unique_ptr<Candle> candle) {
     std::lock_guard<std::mutex> lock(bufferMutex);
-    bufferMap[candle->getReqId()] = std::move(candle);
+    bufferMap[candle->reqId()] = std::move(candle);
 }
 
 int CandleBuffer::getCapacity() { return capacity_; }

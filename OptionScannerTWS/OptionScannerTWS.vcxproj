@@ -225,31 +225,36 @@
   <ItemGroup>
     <ClCompile Include="AlertHandler.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="App.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="Candle.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="ContractData.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="libs\nanodbc\nanodbc.cpp" />
     <ClCompile Include="Logger.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="OptionScanner.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="OptionScannerTWS.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Security.cpp" />
     <ClCompile Include="SQLSchema.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="tWrapper.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -260,18 +265,21 @@
   <ItemGroup>
     <ClInclude Include="AlertHandler.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="App.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Candle.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Security.h" />
     <ClInclude Include="SQLSchema.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="ContractData.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="Formulas.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
@@ -279,12 +287,14 @@
     <ClInclude Include="libs\nanodbc\nanodbc.h" />
     <ClInclude Include="Logger.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="OptionScanner.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="tWrapper.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

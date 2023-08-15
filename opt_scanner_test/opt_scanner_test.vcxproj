@@ -54,6 +54,7 @@
     <ClCompile Include="..\OptionScannerTWS\ContractData.cpp" />
     <ClCompile Include="BenchmarkTests\benchmarks.cpp" />
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
+    <ClCompile Include="IntegrationTests\option_scanner_tests.cpp" />
     <ClCompile Include="UnitTests\buffer_mock_tests.cpp" />
     <ClCompile Include="UnitTests\candle_tests.cpp" />
     <ClCompile Include="MockTwsApi\MockClient.cpp" />

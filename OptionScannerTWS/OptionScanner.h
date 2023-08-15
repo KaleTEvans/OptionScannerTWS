@@ -38,6 +38,8 @@ public:
 private:
 	IBString ticker;
 
+	// Populate strikes, 9 calls and 9 puts
+	void populateStrikes(double price);
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes();
 

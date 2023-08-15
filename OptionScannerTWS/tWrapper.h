@@ -28,56 +28,35 @@
 #include "TwsApiDefs.h"
 using namespace TwsApi; // for TwsApiDefs.h
 
-//================================================
-// Use this definition for candlesticks
-//================================================
+//=======================================================================
+// This is a buffer to contain candlestick data and send to app when full
+//=======================================================================
 
-//class Candle {
-//public:
-//    // Constructor for historical data
-//    Candle(TickerId reqId, const IBString& date
-//        , double open, double high, double low, double close
-//        , int volume, int barCount, double WAP, int hasGaps) :
-//        reqId(reqId), date(date), open(open), high(high), low(low),
-//        close(close), volume(volume), barCount(barCount), WAP(WAP), hasGaps(hasGaps) {}
-//
-//    // Constructor for 5 Second data
-//    Candle(TickerId reqId, long time, double open, double high,
-//        double low, double close, long volume, double wap, int count) :
-//        reqId(reqId), time(time), open(open), high(high), low(low),
-//        close(close), volume(volume), WAP(wap), count(count) {}
-//
-//    // Constructor for other candles created from 5 sec
-//    Candle(TickerId reqId, long time, double open, double high,
-//        double low, double close, long volume) :
-//        reqId(reqId), time(time), open(open), high(high), low(low),
-//        close(close), volume(volume) {}
-//
-//    // Default Constructor
-//    Candle() {
-//        reqId = 0;
-//        open = 0;
-//        close = 0;
-//        high = 0;
-//        low = 0;
-//        volume = 0;
-//    }
-//    
-//    TickerId reqId;
-//    IBString date = "";
-//    long time = 0;
-//    double open;
-//    double close;
-//    double high;
-//    double low;
-//    long volume;
-//    int barCount = 0;
-//    double WAP = 0;
-//    int hasGaps = 0;
-//    int count = 0;
-//};
+class CandleBuffer {
+public:
+    CandleBuffer(int capacity);
 
-class CandleBuffer;
+    std::vector<std::unique_ptr<Candle>> processBuffer();
+
+    bool checkBufferFull(void);
+    void setNewBufferCapacity(int value);
+    void updateBuffer(std::unique_ptr<Candle> candle);
+    int getCapacity(void);
+
+    int wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
+
+private:
+    void checkBufferStatus();
+
+    // bufferMap will ensure we have all reqIds from the request list before emptying the buffer
+    std::unordered_map<int, std::unique_ptr<Candle>> bufferMap;
+    int capacity_;
+    std::chrono::time_point<std::chrono::steady_clock> bufferTimePassed_;
+
+    bool wasDataProcessed_ = false; // Periodically check to ensure buffer is processing and not in an unfilled state
+
+    std::mutex bufferMutex;
+};
 
 // We can define our own eWrapper to implement only the functionality that we need to use
 class tWrapper : public EWrapperL0 {
@@ -118,6 +97,14 @@ public:
 
     virtual void currentTime(long time);
 
+    /////// Tick Options /////////
+    virtual void tickPrice(TickerId tickerId, TickType field, double price, int canAutoExecute);
+    virtual void tickGeneric(TickerId tickerId, TickType tickType, double value);
+    virtual void tickSize(TickerId tickerId, TickType field, int size);
+    virtual void marketDataType(TickerId reqId, int marketDataType);
+    virtual void tickString(TickerId tickerId, TickType tickType, const IBString& value);
+    virtual void tickSnapshotEnd(int reqId);
+
     virtual void historicalData(TickerId reqId, const IBString& date
         , double open, double high, double low, double close
         , int volume, int barCount, double WAP, int hasGaps);
@@ -146,68 +133,42 @@ public:
 
     int getReqId();
     long getCurrentTime();
-    int getBufferCapacity();
-    bool checBufferFull();
-    std::vector<std::unique_ptr<Candle>> getHistoricCandles();
-    std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles();
+    double lastTickPrice();
+    int bufferCapacity();
+    bool checkBufferFull();
+    std::vector<std::unique_ptr<Candle>> historicCandles();
+    std::vector<std::unique_ptr<Candle>> processedFiveSecCandles();
 
-    std::mutex& getWrapperMutex();
-    std::condition_variable& getWrapperConditional();
+    std::mutex& wrapperMutex();
+    std::condition_variable& wrapperConditional();
 
 private:
-    CandleBuffer candleBuffer;
+    CandleBuffer candleBuffer_;
 
     // Mutex and conditional for buffer use
-    std::mutex wrapperMtx;
-    std::condition_variable cv;
+    std::mutex wrapperMtx_;
+    std::condition_variable cv_;
 
     //========================================
     // Containers to be used for received data
     //========================================
    
     // Vectors of unique pointers will automatically be cleared when data is passed
-    std::vector<std::unique_ptr<Candle>> historicCandles;
-    std::vector<std::unique_ptr<Candle>> fiveSecCandles;
+    std::vector<std::unique_ptr<Candle>> historicCandles_;
+    std::vector<std::unique_ptr<Candle>> fiveSecCandles_;
 
-    std::unordered_set<int> activeReqs;
+    std::unordered_set<int> activeReqs_;
 
     // Variables to show data request output
-    bool showHistoricalData = false;
-    bool showRealTimeData = false;
+    bool showHistoricalData_ = false;
+    bool showRealTimeData_ = false;
 
-    bool m_done;
     long time_ = 0;
+    // Last tick price for requested contract
+    double tickPriceLast_ = 0;
 
     // Req will be used to track the request to the client, and used to return the correct information once received
-    int Req = 0;
+    int Req_ = 0;
 };
 
-//=======================================================================
-// This is a buffer to contain candlestick data and send to app when full
-//=======================================================================
 
-class CandleBuffer {
-public:
-    CandleBuffer(int capacity);
-
-    std::vector<std::unique_ptr<Candle>> processBuffer();
-
-    bool checkBufferFull(void);
-    void setNewBufferCapacity(int value);
-    void updateBuffer(std::unique_ptr<Candle> candle);
-    int getCapacity(void);
-
-    int wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
-
-private:
-    void checkBufferStatus();
-
-    // bufferMap will ensure we have all reqIds from the request list before emptying the buffer
-    std::unordered_map<int, std::unique_ptr<Candle>> bufferMap;
-    int capacity_;
-    std::chrono::time_point<std::chrono::steady_clock> bufferTimePassed_;
-
-    bool wasDataProcessed_ = false; // Periodically check to ensure buffer is processing and not in an unfilled state
-
-    std::mutex bufferMutex;
-};
