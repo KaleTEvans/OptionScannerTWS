@@ -2,8 +2,8 @@
 
 #include "../pch.h"
 
-#include "../MockTwsApi/MockWrapper.h"
-#include "../MockTwsApi/MockClient.h"
+#include "../MockClasses/MockWrapper.h"
+#include "../MockClasses/MockClient.h"
 
 using namespace testing;
 

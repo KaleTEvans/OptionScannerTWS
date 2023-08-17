@@ -6,6 +6,7 @@
 // the end of the day, OptionScanner will also be responsible for packaging and
 // sending all contract data to the db
 //===============================================================================
+#define _CRT_SECURE_NO_WARNINGS
 
 #pragma once
 
@@ -15,6 +16,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <queue>
 #include <chrono>
 #include <thread>
 #include <algorithm>
@@ -24,44 +26,43 @@ class OptionScanner : public App {
 public:
 	// Option scanner will share the same constructor and destructor as App
 	OptionScanner(const char* host, IBString ticker);
+
+	// Called each market open
+	// void prepForOpen();
 	
 	// This function will use several functions provided in App to begin streaming contract data
 	void streamOptionData();
 
 	// Alert Callback Functions
-	void registerAlertCallback(ContractData * cd);
+	// void registerAlertCallback(std::shared_ptr<ContractData> cd);
 	// void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
 
 	// Functions for storing data after market close
 	void prepareContractData();
 
 private:
+	Contract SPX; // Contract to be monitored
 	IBString ticker;
 
-	// Populate strikes, 9 calls and 9 puts
-	void populateStrikes(double price);
+	IBString todayDate; // Updated each day
+	
 	// We will update the strikes periodically to ensure that they are close to the underlying
-	void updateStrikes();
+	void updateStrikes(double price);
 
 	// Debugging
 	// This will output the options chain to the screen for debugging purposes
-	void outputChain();
+	// void outputChain();
 
 	// This map will hold all of the contracts and will be updated repeatedly
-	std::unordered_map<int, ContractData*> contracts;
+	std::unordered_map<int, std::shared_ptr<ContractData>> contracts;
 
-	// Contains data for the underlying
-	ContractData* SPXBars = nullptr;
-
-	// Historical data requests need to be incremented
-	int historicalReq = 8000; // 8000 to avoid conflict with SPX price, be sure to update next bull market
-
-	vector<int> optionStrikes;
-	int contractsInBuffer = 0;
-	vector<int> sortedContractStrikes;
-
+	std::queue<Contract> contractReqQueue; // Holds new contracts to request data
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
+	vector<int> addedContracts; // Keep track of all currently requested contracts
 
 	Alerts::AlertHandler alertHandler;
+
+	std::mutex optScanMutex_;
 };
 
+vector<int> populateStrikes(double price); // Helper function to return vector of strikes
