@@ -1,6 +1,6 @@
 #include "OptionScanner.h"
 
-OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker), alertHandler() {
+OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker) {
 	// Request last quote for SPX upon class initiation to get closest option strikes
 	SPX.symbol = ticker;
 	SPX.secType = *SecType::IND;
@@ -31,6 +31,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 void OptionScanner::streamOptionData() {
 
 	// Begin by requesting a market quote, and update strikes to send out requests
+	SPX.exchange = *Exchange::IB_SMART;
 	EC->reqMktData(111, SPX, "", true);
 	while (YW.getReqId() != 111) EC->checkMessages();
 
@@ -55,43 +56,42 @@ void OptionScanner::streamOptionData() {
 		// Use the wrapper conditional to check buffer
 		std::unique_lock<std::mutex> lock(YW.wrapperMutex());
 		YW.wrapperConditional().wait(lock, [&] { return YW.checkBufferFull(); });
+		std::cout << "Current Buffer Capacity: " << YW.bufferCapacity() << std::endl;
 
 		for (auto& candle : YW.processedFiveSecCandles()) {
 
 			int req = candle->reqId();
 
-			if (contracts.find(req) == contracts.end()) {
-				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
-				// registerAlertCallback(cd);
-				contracts[req] = cd;
+			if (contractChain_.find(req) != contractChain_.end()) {
+				contractChain_[req]->updateData(std::move(candle));
 			}
 			else {
-				contracts[req]->updateData(std::move(candle));
+				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
+				// registerAlertCallback(cd);
+				contractChain_[req] = cd;
 			}
 		}
 
+		strikesUpdated_ = true;
+
+		updateStrikes(contractChain_[1234]->currentPrice());
+		cout << "Buffer size currently at: " << YW.bufferCapacity() << endl;
+
 		lock.unlock();
+		optScanCV_.notify_one();
+	}
+}
 
-		// std::this_thread::sleep_for(std::chrono::seconds(5));
+// Accessors
+std::condition_variable& OptionScanner::optScanCV() { return optScanCV_; }
+std::mutex& OptionScanner::optScanMtx() { return optScanMutex_; }
 
-		// Every 1 minute, update the strikes
-		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-		std::chrono::minutes elapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - lastExecutionTime);
+bool OptionScanner::strikesUpdated() { return strikesUpdated_; }
+void OptionScanner::changeStrikesUpdated() { strikesUpdated_ = false; }
 
-		// Get the current time, and check with market close (3pm cst) to determine when to end the connection
-		/*getDateTime();
-
-		if (getDateVector()[0] == 15 && getDateVector()[5] >= 0) {
-			prepareContractData();
-			break;
-		}*/
-
-		if (elapsedTime >= interval) {
-			updateStrikes(contracts[1234]->currentPrice());
-			cout << "Buffer size currently at: " << YW.bufferCapacity() << endl;
-			lastExecutionTime = currentTime; // Update the  last execution time
-		}
-
+void OptionScanner::outputChainData() {
+	for (auto& i : contractChain_) {
+		std::cout << "Strike: " << i.first << " Price: " << i.second->currentPrice() << std::endl;
 	}
 }
 
@@ -106,7 +106,7 @@ void OptionScanner::updateStrikes(double price) {
 
 	for (auto i : strikes) {
 		// If the contracts map doesn't already contain the strike, then a new one has come into scope
-		if (contracts.find(i) == contracts.end()) {
+		if (contractChain_.find(i) == contractChain_.end()) {
 
 			// Create new contracts if not in map and add to queue for requests
 			Contract con;
@@ -138,7 +138,7 @@ void OptionScanner::updateStrikes(double price) {
 
 		int req = 0; // Ends in 0 or 5 if call, 1 or 6 for puts
 		if (con.right == *ContractRight::CALL) req = static_cast<int>(con.strike);
-		if (con.right == *ContractRight::PUT) req = static_cast<int>(con.strike + 1);
+		else if (con.right == *ContractRight::PUT) req = static_cast<int>(con.strike + 1);
 
 		// Now create the request
 		EC->reqRealTimeBars
@@ -169,38 +169,6 @@ void OptionScanner::updateStrikes(double price) {
 //
 //		// Make sure contract is in scope
 //		if (contractsInScope.find(c.reqId) != contractsInScope.end()) {
-//			vector<bool> v1 = cd->getHighLowComparisons();
-//			vector<bool> v2 = SPXBars->getHighLowComparisons();
-//			int compCode = Alerts::getComparisonCode(v1, v2);
-//
-//			StandardDeviation uSdPrice;
-//			StandardDeviation uSdVol;
-//			Candle uBars;
-//
-//			// Determine which timeframe of underlying data to send
-//			switch (data)
-//			{
-//			case 1001:
-//				uSdPrice = SPXBars->get5SecStDev().first;
-//				uSdVol = SPXBars->get5SecStDev().second;
-//				uBars = SPXBars->getFiveSecData().back();
-//				break;
-//			case 1002:
-//				uSdPrice = SPXBars->get30SecStDev().first;
-//				uSdVol = SPXBars->get30SecStDev().second;
-//				uBars = SPXBars->getThirtySecData().back();
-//				break;
-//			case 1003:
-//				uSdPrice = SPXBars->get1MinStDev().first;
-//				uSdVol = SPXBars->get1MinStDev().second;
-//				uBars = SPXBars->getOneMinData().back();
-//				break;
-//			case 1004:
-//				uSdPrice = SPXBars->get5MinStDev().first;
-//				uSdVol = SPXBars->get5MinStDev().second;
-//				uBars = SPXBars->getFiveMinData().back();
-//				break;
-//			}
 //
 //			Alerts::AlertData* a = new Alerts::AlertData(c, data, sdVol, sdPrice, uSdVol, uSdPrice, uBars, compCode);
 //			alertHandler.inputAlert(a);
@@ -220,7 +188,7 @@ void OptionScanner::updateStrikes(double price) {
 void OptionScanner::prepareContractData() {
 	std::cout << "Market closed, ending realTimeBar connection" << std::endl;
 	
-	for (auto i : contracts) EC->cancelRealTimeBars(i.first);
+	for (auto i : contractChain_) EC->cancelRealTimeBars(i.first);
 	EC->cancelRealTimeBars(1234);
 }
 

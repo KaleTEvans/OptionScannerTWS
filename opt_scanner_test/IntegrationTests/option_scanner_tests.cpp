@@ -52,12 +52,24 @@ TEST(MockOptionScannerTests, SPXPriceUpdateTest) {
 
 		// Reset strikesUpdated and wait for next update
 		mos.strikesUpdated = false;
+
 		lock.unlock();
+
+		if (i == 9) {
+			mos.YW.setmDone(true);
+			t.join();
+		}
 	}
 
+	EXPECT_EQ(mos.YW.getBufferCapacity(), mos.YW.checkActiveReqs());
+	EXPECT_EQ(mos.YW.getBufferCapacity(), mos.finalContractCt().size());
 
-	mos.YW.setmDone(true);
-	t.join();
+	std::unordered_set<int> optScanReqs = mos.finalContractCt();
+	std::unordered_set<int> wrapperReqs = mos.YW.getActiveReqs();
+
+	for (auto i : optScanReqs) {
+		EXPECT_TRUE(wrapperReqs.find(i) != wrapperReqs.end());
+	}
 }
 
 

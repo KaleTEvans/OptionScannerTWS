@@ -8,8 +8,8 @@
 #include "tWrapper.h"
 //#include "SQLSchema.h"
 //#include "tWrapper.h"
-//#include "App.h"
-//#include "OptionScanner.h"
+#include "App.h"
+#include "OptionScanner.h"
 //#include "ContractData.h"
 //#include "AlertHandler.h"
 
@@ -21,39 +21,13 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = true;
-
-// Simple class to initiate client wrapper connection for testing
-class TestConnections {
-public:
-    TestConnections(const char* host) : host_(host), YW(false, 19) {
-        // Initialize connection
-        EC = EClientL0::New(&YW);
-        // Connect to TWS
-        EC->eConnect(host, 7496, 0);
-
-        EC->reqCurrentTime();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        EC->checkMessages();
-    }
-
-    ~TestConnections() {
-        EC->eDisconnect();
-        delete EC;
-    }
-
-    EClientL0* EC;
-    tWrapper YW;
-
-private:
-    const char* host_;
-};
+constexpr bool runTests = false;
 
 // Main launcher for imformal tests
 void informalTests();
 // Tests
-void basicHistoricalDataRequest(std::unique_ptr<TestConnections>& test);
-void testMktDataRequest(std::unique_ptr<TestConnections>& test);
+void basicHistoricalDataRequest(std::unique_ptr<App>& test);
+void testMktDataRequest(std::unique_ptr<App>& test);
 //void testRealTimeBars(std::unique_ptr<TestConnections>& test);
 //void candleFunctionality(std::unique_ptr<TestConnections>& test);
 //void testStreamingAlerts(std::unique_ptr<TestConnections>& test);
@@ -69,21 +43,35 @@ int main(void) {
 
     //Logger::Initialize();
     // 
-    /*if (runTests) {
+    if (runTests) {
         informalTests();
-    }*/
+    }
 
-    //else {
-    //    const char* host = "127.0.0.1";
-    //    IBString ticker = "SPX";
+    else {
+        const char* host = "127.0.0.1";
+        IBString ticker = "SPX";
 
-    //    //std::unique_ptr<OptionScanner> opt = std::make_unique<OptionScanner>(host, ticker);
-    //    App* opt = new App(host);
+        //std::unique_ptr<OptionScanner> opt = std::make_unique<OptionScanner>(host, ticker);
+        OptionScanner* opt = new OptionScanner(host, ticker);
+        opt->streamOptionData();
 
-    //    // opt->streamOptionData();
-    //    opt->populateStrikes();
-    //    // delete opt;
-    //}
+       /* std::thread t([&] {
+            opt->streamOptionData();
+        });
+
+        std::this_thread::sleep_for(std::chrono::seconds(30));
+        t.join();*/
+
+        /*while (true) {
+            std::unique_lock<std::mutex> lock(opt->optScanMtx());
+            opt->optScanCV().wait(lock, [&] { return opt->strikesUpdated(); });
+
+            opt->outputChainData();
+            opt->changeStrikesUpdated();
+
+            lock.unlock();
+        }*/
+    }
 
     //Logger::Shutdown();
 
@@ -122,7 +110,7 @@ void informalTests() {
 
     // Create a connection to TWS for use in all functions
     //App* test = new App("127.0.0.1");
-    std::unique_ptr<TestConnections> test = std::make_unique<TestConnections>("127.0.0.1");
+    std::unique_ptr<App> test = std::make_unique<App>("127.0.0.1");
     cout << "Current Time: " << test->YW.getCurrentTime() << endl;
 
     if (showBasicRequest) basicHistoricalDataRequest(test);
@@ -139,7 +127,7 @@ void informalTests() {
 //// Test functionality of a basic historical data request
 ////=================================================================
 
-void basicHistoricalDataRequest(std::unique_ptr<TestConnections>& test) {
+void basicHistoricalDataRequest(std::unique_ptr<App>& test) {
     
     cout << "========================================================================" << endl;
     cout << "Testing Historical Data Functionality" << endl;
@@ -181,7 +169,7 @@ void basicHistoricalDataRequest(std::unique_ptr<TestConnections>& test) {
 // Test functionality of a market data request
 //=================================================================
 
-void testMktDataRequest(std::unique_ptr<TestConnections>& test) {
+void testMktDataRequest(std::unique_ptr<App>& test) {
 
     cout << "========================================================================" << endl;
     cout << "Testing Market Data Output" << endl;

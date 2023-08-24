@@ -12,7 +12,7 @@
 
 #include "App.h"
 #include "ContractData.h"
-#include "AlertHandler.h"
+// #include "AlertHandler.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -40,6 +40,13 @@ public:
 	// Functions for storing data after market close
 	void prepareContractData();
 
+	// Accessors
+	std::condition_variable& optScanCV();
+	std::mutex& optScanMtx();
+	bool strikesUpdated();
+	void changeStrikesUpdated();
+	void outputChainData();
+
 private:
 	Contract SPX; // Contract to be monitored
 	IBString ticker;
@@ -48,21 +55,23 @@ private:
 	
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes(double price);
+	bool strikesUpdated_{ false };
 
 	// Debugging
 	// This will output the options chain to the screen for debugging purposes
 	// void outputChain();
 
 	// This map will hold all of the contracts and will be updated repeatedly
-	std::unordered_map<int, std::shared_ptr<ContractData>> contracts;
+	std::unordered_map<int, std::shared_ptr<ContractData>> contractChain_;
 
 	std::queue<Contract> contractReqQueue; // Holds new contracts to request data
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
 	vector<int> addedContracts; // Keep track of all currently requested contracts
 
-	Alerts::AlertHandler alertHandler;
+	// Alerts::AlertHandler alertHandler;
 
 	std::mutex optScanMutex_;
+	std::condition_variable optScanCV_;
 };
 
 vector<int> populateStrikes(double price); // Helper function to return vector of strikes
