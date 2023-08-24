@@ -22,32 +22,40 @@ public:
 	// Functions for storing data after market close
 	// void prepareContractData();
 
-	double currentSPX; // Monitor SPX price to ensure that when the contract map is updated it is because it is out of range
+	double diffSPX();
+	int diffChainSize();
 
 	MockClient EC;
 	MockWrapper YW;
 
+	bool strikesUpdated{ false };
+	std::mutex optScanMutex_;
+	std::condition_variable mosCnditional;
+
 private:
 	Contract SPX; // Contract to be monitored
+
 	IBString ticker;
 
 	int delay_; // Set the delay for client candle generation
 
 	IBString todayDate; // Updated each day
 
+	double currentSPX_{ 0 }; // Monitor SPX price to ensure that when the contract map is updated it is because it is out of range
+	double prevSPX_{ 0 };
+	int curChainSize_{ 0 };
+	int prevChainSize_{ 0 };
+
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes(double price);
 
-	// This map will hold all of the contracts and will be updated repeatedly
-	std::unordered_map<int, std::shared_ptr<ContractData>> contracts;
+	std::unordered_map<int, std::shared_ptr<ContractData>> contractChain_;
 
 	std::queue<Contract> contractReqQueue; // Holds new contracts to request data
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
-	std::vector<int> addedContracts; // Keep track of all currently requested contracts
+	std::unordered_set<int> addedContracts; // Keep track of all currently requested contracts
 
 	// Alerts::AlertHandler alertHandler;
-
-	std::mutex optScanMutex_;
 };
 
 vector<int> populateStrikes(double price); // Helper function to return vector of strikes

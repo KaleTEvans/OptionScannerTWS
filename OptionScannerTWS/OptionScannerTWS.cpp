@@ -26,7 +26,7 @@ constexpr bool runTests = true;
 // Simple class to initiate client wrapper connection for testing
 class TestConnections {
 public:
-    TestConnections(const char* host) : host_(host), YW(false) {
+    TestConnections(const char* host) : host_(host), YW(false, 19) {
         // Initialize connection
         EC = EClientL0::New(&YW);
         // Connect to TWS
@@ -64,6 +64,7 @@ void testMktDataRequest(std::unique_ptr<TestConnections>& test);
 //========================================================================
 // main entry
 //========================================================================
+
 int main(void) {
 
     //Logger::Initialize();

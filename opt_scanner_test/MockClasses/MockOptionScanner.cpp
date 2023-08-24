@@ -18,10 +18,16 @@ MockOptionScanner::MockOptionScanner(int delay) : delay_(delay), EC(YW) {
 		, ""
 		, true
 	);
+
+	// Add SPX to the added contracts set
+	addedContracts.insert(1234);
 }
 
-// Test function
-int MockOptionScanner::checkContractMap() { return contracts.size(); }
+// Test function Accessors
+int MockOptionScanner::checkContractMap() { return contractChain_.size(); }
+double MockOptionScanner::diffSPX() { return (currentSPX_ - prevSPX_); }
+int MockOptionScanner::diffChainSize() { return (curChainSize_ - prevChainSize_); }
+
 
 //============================================================
 // Open Market Data Processing Funtions
@@ -29,14 +35,11 @@ int MockOptionScanner::checkContractMap() { return contracts.size(); }
 
 void MockOptionScanner::streamOptionData() {
 
-	updateStrikes(YW.getSPXPrice());
-	currentSPX = YW.getSPXPrice();
+	currentSPX_ = YW.getSPXPrice();
+	updateStrikes(currentSPX_);
 
-	// This functionality will keep track of the time in order to update the strikes periodically
-	constexpr int intervalMiliSeconds = 100;
-	const std::chrono::milliseconds interval(intervalMiliSeconds);
-
-	std::chrono::steady_clock::time_point lastExecutionTime = std::chrono::steady_clock::now();
+	// Add temporary comparison value for Chain
+	curChainSize_ = 19;
 
 
 	//==========================================================================
@@ -51,45 +54,34 @@ void MockOptionScanner::streamOptionData() {
 		std::unique_lock<std::mutex> lock(YW.getWrapperMutex());
 		YW.getWrapperConditional().wait(lock, [&] { return YW.checkMockBufferFull(); });
 
+		// Update test variables
+		prevChainSize_ = curChainSize_;
+		prevSPX_ = currentSPX_;
+
 		for (auto& candle : YW.getProcessedFiveSecCandles()) {
 
 			int req = candle->reqId();
 
-			if (contracts.find(req) == contracts.end()) {
-				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
-				// registerAlertCallback(cd);
-				contracts[req] = cd;
+			if (contractChain_.find(req) != contractChain_.end()) {
+				contractChain_[req]->updateData(std::move(candle));
+				
 			}
 			else {
-				contracts[req]->updateData(std::move(candle));
+				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
+				// registerAlertCallback(cd);
+				contractChain_[req] = cd;
 			}
 		}
 
-		// Update currentSPX
-		currentSPX = contracts[1234]->currentPrice();
+		// Update test variables
+		curChainSize_ = contractChain_.size();
+		currentSPX_ = contractChain_[1234]->currentPrice();
+
+		updateStrikes(contractChain_[1234]->currentPrice());
+		std::cout << "Buffer size currently at: " << YW.getBufferCapacity() << std::endl;
 
 		lock.unlock();
-
-		// std::this_thread::sleep_for(std::chrono::seconds(5));
-
-		// Every 1 minute, update the strikes
-		std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-		std::chrono::milliseconds elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastExecutionTime);
-
-		// Get the current time, and check with market close (3pm cst) to determine when to end the connection
-		/*getDateTime();
-
-		if (getDateVector()[0] == 15 && getDateVector()[5] >= 0) {
-			prepareContractData();
-			break;
-		}*/
-
-		if (elapsedTime >= interval) {
-			updateStrikes(contracts[1234]->currentPrice());
-			std::cout << "Buffer size currently at: " << YW.getBufferCapacity() << std::endl;
-			lastExecutionTime = currentTime; // Update the  last execution time
-		}
-
+		mosCnditional.notify_one();
 	}
 
 	if (!YW.notDone()) {
@@ -109,7 +101,7 @@ void MockOptionScanner::updateStrikes(double price) {
 
 	for (auto i : strikes) {
 		// If the contracts map doesn't already contain the strike, then a new one has come into scope
-		if (contracts.find(i) == contracts.end()) {
+		if (contractChain_.find(i) == contractChain_.end()) {
 
 			// Create new contracts if not in map and add to queue for requests
 			Contract con;
@@ -154,7 +146,7 @@ void MockOptionScanner::updateStrikes(double price) {
 		);
 
 		// Update contract request vector
-		addedContracts.push_back(req);
+		addedContracts.insert(req);
 
 		contractReqQueue.pop();
 	}
@@ -162,6 +154,7 @@ void MockOptionScanner::updateStrikes(double price) {
 	// If addedContracts vector exceeds current buffer size, update the buffer
 	if (static_cast<int>(addedContracts.size()) > YW.getBufferCapacity()) YW.setBufferCapacity(static_cast<int>(addedContracts.size()));
 	//OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.checkBufferCapacity());
+	strikesUpdated = true;
 }
 
 //=====================================================

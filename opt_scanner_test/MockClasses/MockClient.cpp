@@ -110,6 +110,7 @@ void MockClient::streamRealTimeData(const TickerId reqId, long unixTime, double 
 //======================================================
 
 MiniCandle generateRandomCandle(double referencePrice, long referenceVolume, bool opt) {
+
     std::random_device rd;
     std::mt19937 gen(rd());
 

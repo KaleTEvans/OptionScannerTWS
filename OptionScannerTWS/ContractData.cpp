@@ -22,7 +22,10 @@ std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::s
 	return candle;
 }
 
-ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : contractId_(reqId) {
+ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : contractId_{reqId},
+	dailyHigh_{ 0 }, dailyLow_{ 10000 }, localHigh_{ 0 }, localLow_{ 10000 }, tempHigh_{ 0 }, tempLow_{ 10000 },
+	nearDailyHigh{ false }, nearDailyLow{ false }, nearLocalHigh{ false }, nearLocalLow{ false }	
+{
 	// Push the first candle only in the 5 sec array
 	std::shared_ptr<Candle> initCandle{ std::move(initData) };
 	fiveSecCandles_.push_back(initCandle);

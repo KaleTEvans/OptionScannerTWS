@@ -43,7 +43,7 @@ public:
     void updateBuffer(std::unique_ptr<Candle> candle);
     int getCapacity(void);
 
-    int wrapperActiveReqs = 0; // Will ensure buffer capacity is the same as all wrapper open requests
+    int wrapperActiveReqs; // Will ensure buffer capacity is the same as all wrapper open requests
 
 private:
     void checkBufferStatus();
@@ -53,7 +53,7 @@ private:
     int capacity_;
     std::chrono::time_point<std::chrono::steady_clock> bufferTimePassed_;
 
-    bool wasDataProcessed_ = false; // Periodically check to ensure buffer is processing and not in an unfilled state
+    bool wasDataProcessed_{ false }; // Periodically check to ensure buffer is processing and not in an unfilled state
 
     std::mutex bufferMutex;
 };
@@ -63,7 +63,7 @@ class tWrapper : public EWrapperL0 {
 
 public:
     ///Easier: The EReader calls all methods automatically(optional)
-    tWrapper(bool runEReader = true);
+    tWrapper(int initBufferSize, bool runEReader = true);
 
     // Public variables to determine completion of certain wrapper requests
     bool m_Done, m_ErrorForRequest;
@@ -160,15 +160,15 @@ private:
     std::unordered_set<int> activeReqs_;
 
     // Variables to show data request output
-    bool showHistoricalData_ = false;
-    bool showRealTimeData_ = false;
+    bool showHistoricalData_{ false };
+    bool showRealTimeData_{ false };
 
-    long time_ = 0;
+    long time_{ 0 };
     // Last tick price for requested contract
-    double tickPriceLast_ = 0;
+    double tickPriceLast_{ 0 };
 
     // Req will be used to track the request to the client, and used to return the correct information once received
-    int Req_ = 0;
+    int Req_{ 0 };
 };
 
 

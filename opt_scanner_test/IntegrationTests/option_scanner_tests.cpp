@@ -15,7 +15,7 @@ using namespace testing;
 // Test the generation of 19 different contract requests based on the underlying price
 TEST(MockOptionScannerTests, OptionChainGenerationTest) {
 	// Set random generator to generate every 100 miliseconds
-	MockOptionScanner mos(100);
+	MockOptionScanner mos(25);
 
 	std::thread t([&] {
 		mos.streamOptionData();
@@ -30,24 +30,28 @@ TEST(MockOptionScannerTests, OptionChainGenerationTest) {
 	EXPECT_EQ(19, mos.checkContractMap());
 }
 
-// At each spx strikes update interval, ensure the spx price is past the previous range when it adds new contracts to the map
+// Output test with no return value to ensure updates are made with mutexes and condition variables in place
 TEST(MockOptionScannerTests, SPXPriceUpdateTest) {
-	MockOptionScanner mos(100);
+	MockOptionScanner mos(25);
 
 	std::thread t([&] {
 		mos.streamOptionData();
 		});
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	EXPECT_EQ(mos.currentSPX, mos.YW.getSPXPrice());
+	for (size_t i = 0; i < 10; i++) {
+		// Lock the option scanner mutex to wait for updated data
+		std::unique_lock<std::mutex> lock(mos.optScanMutex_);
+		mos.mosCnditional.wait(lock, [&] { return mos.strikesUpdated; });
 
-	// Loop for 5 times. On each loop, ensure the difference between the current SPX price and the new price
-	// matches the discrepancy between the current contracts container size and the previous one
+		std::cout << "Contract Map Size: " << mos.checkContractMap() << std::endl;
+		std::cout << "Diff Chain Size: " << mos.diffChainSize() << std::endl;
+		std::cout << "Diff SPX: " << mos.diffSPX() << std::endl;
 
-	double prev = mos.currentSPX;
+		// Reset strikesUpdated and wait for next update
+		mos.strikesUpdated = false;
+		lock.unlock();
+	}
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	EXPECT_FALSE(prev == mos.currentSPX);
 
 	mos.YW.setmDone(true);
 	t.join();

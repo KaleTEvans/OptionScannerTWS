@@ -4,7 +4,7 @@
 // Wrapper for TWS API
 //====================================================
 
-tWrapper::tWrapper(bool runEReader) : EWrapperL0(runEReader), candleBuffer_{ 19 } { // Size 19 for 8 calls, 8 puts, and one underlying
+tWrapper::tWrapper(int initBufferSize, bool runEReader) : EWrapperL0(runEReader), candleBuffer_{ initBufferSize } { // Size 19 for 8 calls, 8 puts, and one underlying
     m_Done = false;
     m_ErrorForRequest = false;
 }
@@ -146,7 +146,7 @@ std::condition_variable& tWrapper::wrapperConditional() { return cv_; }
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity) {
+CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity), wrapperActiveReqs{ 0 } {
     bufferTimePassed_ = std::chrono::steady_clock::now();
 }
 
