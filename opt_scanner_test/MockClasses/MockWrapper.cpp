@@ -59,6 +59,9 @@ void MockCandleBuffer::checkBufferStatus() {
         //std::cout << "Active Reqs: " << wrapperActiveReqs << " Capacity: " << capacity_ << std::endl;
         setNewBufferCapacity(wrapperActiveReqs);
     }
+
+    // Update new time passed
+    bufferTimePassed_ = std::chrono::steady_clock::now();
 }
 
 //==================================================================
@@ -72,6 +75,9 @@ bool MockWrapper::notDone() { return !m_done; }
 long MockWrapper::getCurrentTime() { return time_; }
 double MockWrapper::getSPXPrice() { return SPXPrice; }
 int MockWrapper::getBufferCapacity() { return mcb.getCapacity(); }
+int MockWrapper::checkActiveReqs() { return activeReqs.size(); }
+std::unordered_set<int> MockWrapper::getActiveReqs() { return activeReqs;
+}
 
 // Moving unique pointers will automatically clear the vectors
 std::vector<std::unique_ptr<Candle>> MockWrapper::getHistoricCandles() {

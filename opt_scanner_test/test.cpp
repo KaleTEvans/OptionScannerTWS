@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
     // Isolate desired tests with this filter
-    // ::testing::GTEST_FLAG(filter) = "ContractDataTests*";
+    ::testing::GTEST_FLAG(filter) = "MockOptionScannerTests*";
 
     // Exclude tests here
     //::testing::GTEST_FLAG(filter) = "-BenchmarkTests*";

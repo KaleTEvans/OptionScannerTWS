@@ -74,7 +74,7 @@ public:
 	StandardDeviation volStDev(TimeFrame tf);
 
 private:
-	TickerId contractId_ = 0;
+	const TickerId contractId_;
 
 	vector<std::shared_ptr<Candle>> fiveSecCandles_;
 	vector<std::shared_ptr<Candle>> thirtySecCandles_;
@@ -92,20 +92,20 @@ private:
 	StandardDeviation sdVol1Min_;
 	StandardDeviation sdVol5Min_;
 
-	double dailyHigh_ = 0;
-	double dailyLow_= 10000;
+	double dailyHigh_;
+	double dailyLow_;
 
 	// To be used for local high and low in 30 minute frames
-	double localHigh_ = 0;
-	double localLow_ = 100000;
-	double tempHigh_ = 0;
-	double tempLow_= 100000;
+	double localHigh_;
+	double localLow_;
+	double tempHigh_;
+	double tempLow_;
 
 	// Data retrieval to compare and add to alerts
-	bool nearDailyHigh = false;
-	bool nearDailyLow = false;
-	bool nearLocalHigh = false;
-	bool nearLocalLow = false;
+	bool nearDailyHigh;
+	bool nearDailyLow;
+	bool nearLocalHigh;
+	bool nearLocalLow;
 
 	// Update various trackers
 	// Update respective containers with new candles and stdev values
@@ -119,13 +119,13 @@ private:
 
 	// We will also need to keep a connection open for the underlying price
 	// Will cancel all alerts when an underlying security is being passed through
-	bool isUnderlying_ = false;
+	bool isUnderlying_{ false };
 
 //=========================================
 // Callback Functionality for Alerts
 //=========================================
 public:
-	using AlertFunction = std::function<void(TimeFrame tf, StandardDeviation, StandardDeviation, std::shared_ptr<Candle> candle)>;
+	using AlertFunction = std::function<void(TimeFrame tf, std::shared_ptr<Candle> candle)>;
 	void registerAlert(AlertFunction alert) { alert_ = std::move(alert); }
 
 private:

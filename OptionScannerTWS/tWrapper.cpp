@@ -4,7 +4,7 @@
 // Wrapper for TWS API
 //====================================================
 
-tWrapper::tWrapper(bool runEReader) : EWrapperL0(runEReader), candleBuffer_{ 19 } { // Size 19 for 8 calls, 8 puts, and one underlying
+tWrapper::tWrapper(int initBufferSize, bool runEReader) : candleBuffer_{ initBufferSize }, EWrapperL0(runEReader) { // Size 19 for 8 calls, 8 puts, and one underlying
     m_Done = false;
     m_ErrorForRequest = false;
 }
@@ -112,6 +112,7 @@ void tWrapper::realtimeBar(TickerId reqId, long time, double open, double high,
         );
 
     if (activeReqs_.find(reqId) == activeReqs_.end()) activeReqs_.insert(reqId);
+    std::cout << "Current Active Reqs: " << activeReqs_.size() << std::endl;
 
     candleBuffer_.wrapperActiveReqs = activeReqs_.size();
     candleBuffer_.updateBuffer(std::move(c));
@@ -146,7 +147,7 @@ std::condition_variable& tWrapper::wrapperConditional() { return cv_; }
 // This is a buffer to contain candlestick data and send to app when full
 //=======================================================================
 
-CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity) {
+CandleBuffer::CandleBuffer(int capacity) : capacity_(capacity), wrapperActiveReqs{ 0 } {
     bufferTimePassed_ = std::chrono::steady_clock::now();
 }
 
@@ -166,7 +167,7 @@ bool CandleBuffer::checkBufferFull() {
     std::lock_guard<std::mutex> lock(bufferMutex);
     auto currentTime = std::chrono::steady_clock::now();
     auto timePassed = currentTime - bufferTimePassed_;
-    if (timePassed > std::chrono::seconds(3)) checkBufferStatus();
+    if (timePassed > std::chrono::seconds(30)) checkBufferStatus();
 
     //return buffer.size() >= capacity_ && bufferReqs.size() >= capacity_;
     return static_cast<int>(bufferMap.size()) >= capacity_;

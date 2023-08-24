@@ -45,8 +45,9 @@
     <VcpkgConfiguration>Release</VcpkgConfiguration>
   </PropertyGroup>
   <ItemGroup>
-    <ClInclude Include="MockTwsApi\MockClient.h" />
-    <ClInclude Include="MockTwsApi\MockWrapper.h" />
+    <ClInclude Include="MockClasses\MockClient.h" />
+    <ClInclude Include="MockClasses\MockWrapper.h" />
+    <ClInclude Include="MockClasses\MockOptionScanner.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -55,10 +56,11 @@
     <ClCompile Include="BenchmarkTests\benchmarks.cpp" />
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
     <ClCompile Include="IntegrationTests\option_scanner_tests.cpp" />
+    <ClCompile Include="MockClasses\MockOptionScanner.cpp" />
     <ClCompile Include="UnitTests\buffer_mock_tests.cpp" />
     <ClCompile Include="UnitTests\candle_tests.cpp" />
-    <ClCompile Include="MockTwsApi\MockClient.cpp" />
-    <ClCompile Include="MockTwsApi\MockWrapper.cpp">
+    <ClCompile Include="MockClasses\MockClient.cpp" />
+    <ClCompile Include="MockClasses\MockWrapper.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDIr)\OptionScannerTWS\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="test.cpp" />

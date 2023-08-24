@@ -2,8 +2,8 @@
 
 #include "../pch.h"
 
-#include "../MockTwsApi/MockClient.h"
-#include "../MockTwsApi/MockWrapper.h"
+#include "../MockClasses/MockClient.h"
+#include "../MockClasses/MockWrapper.h"
 #include "ContractData.h"
 
 using namespace testing;
@@ -89,9 +89,9 @@ TEST(ContractDataTests, AlertSystemTest) {
 
 	// Register the alert
 	cd.registerAlert([&]
-	(TimeFrame tf, StandardDeviation sdPrice, StandardDeviation sdVol, std::shared_ptr<Candle> candle) {
+	(TimeFrame tf, std::shared_ptr<Candle> candle) {
 			volume = static_cast<double>(candle->volume());
-			testStDev = sdVol.numStDev(volume);
+			testStDev = cd.volStDev(tf).numStDev(volume);
 			testTF = tf;
 			vTests.push_back(std::make_tuple(tf, volume, testStDev));
 			alertCount++;

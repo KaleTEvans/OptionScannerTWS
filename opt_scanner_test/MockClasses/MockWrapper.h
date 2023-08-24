@@ -64,6 +64,8 @@ public:
     long getCurrentTime();
     double getSPXPrice(void);
     int getBufferCapacity(void);
+    int checkActiveReqs();
+    std::unordered_set<int> getActiveReqs();
     std::vector<std::unique_ptr<Candle>> getHistoricCandles();
     std::vector<std::unique_ptr<Candle>> getProcessedFiveSecCandles();
 
