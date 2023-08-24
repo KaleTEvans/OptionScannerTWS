@@ -25,8 +25,10 @@ MockOptionScanner::MockOptionScanner(int delay) : delay_(delay), EC(YW) {
 
 // Test function Accessors
 int MockOptionScanner::checkContractMap() { return contractChain_.size(); }
-double MockOptionScanner::diffSPX() { return (currentSPX_ - prevSPX_); }
+double MockOptionScanner::currentSPX() { return (currentSPX_); }
 int MockOptionScanner::diffChainSize() { return (curChainSize_ - prevChainSize_); }
+int MockOptionScanner::prevBufferCapacity() { return prevBufferCapacity_; }
+std::unordered_set<int> MockOptionScanner::finalContractCt() { return addedContracts; }
 
 
 //============================================================
@@ -39,7 +41,7 @@ void MockOptionScanner::streamOptionData() {
 	updateStrikes(currentSPX_);
 
 	// Add temporary comparison value for Chain
-	curChainSize_ = 19;
+	prevChainSize_ = 19;
 
 
 	//==========================================================================
@@ -55,8 +57,7 @@ void MockOptionScanner::streamOptionData() {
 		YW.getWrapperConditional().wait(lock, [&] { return YW.checkMockBufferFull(); });
 
 		// Update test variables
-		prevChainSize_ = curChainSize_;
-		prevSPX_ = currentSPX_;
+		prevBufferCapacity_ = YW.getBufferCapacity();
 
 		for (auto& candle : YW.getProcessedFiveSecCandles()) {
 
@@ -68,7 +69,7 @@ void MockOptionScanner::streamOptionData() {
 			}
 			else {
 				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
-				// registerAlertCallback(cd);
+				registerAlertCallback(cd);
 				contractChain_[req] = cd;
 			}
 		}
@@ -78,7 +79,7 @@ void MockOptionScanner::streamOptionData() {
 		currentSPX_ = contractChain_[1234]->currentPrice();
 
 		updateStrikes(contractChain_[1234]->currentPrice());
-		std::cout << "Buffer size currently at: " << YW.getBufferCapacity() << std::endl;
+		// std::cout << "Buffer size currently at: " << YW.getBufferCapacity() << std::endl;
 
 		lock.unlock();
 		mosCnditional.notify_one();
@@ -89,6 +90,27 @@ void MockOptionScanner::streamOptionData() {
 		EC.cancelRealTimeBars();
 	}
 }
+
+//==============================================================
+// Alert Functions
+//==============================================================
+
+void MockOptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
+	cd->registerAlert([this, cd](TimeFrame tf, std::shared_ptr<Candle> candle) {
+		
+		// For the purpose of the mock testing, we will just add these instances to a queue
+		Alert a;
+		a.tf = tf;
+		a.cd = cd;
+		a.candle = candle;
+
+		alertQueue.push(a);
+	});
+}
+
+//==============================================================
+// Option Chain Update Helper Functions
+//==============================================================
 
 void MockOptionScanner::updateStrikes(double price) {
 
@@ -123,8 +145,6 @@ void MockOptionScanner::updateStrikes(double price) {
 		contractsInScope.insert(i);
 		contractsInScope.insert(i + 1);
 	}
-
-	//if (contractReqQueue.size() > 0 && currentSPX != YW.getSPXPrice()) currentSPX = contracts[1234]->currentPrice();
 
 	// Empty queue and create the requests
 	while (!contractReqQueue.empty()) {
@@ -176,8 +196,8 @@ vector<int> populateStrikes(double price) {
 		strikePrice += multiple;
 	}
 
-	for (auto i : strikes) std::cout << i << " ";
-	std::cout << std::endl;
+	// for (auto i : strikes) std::cout << i << " ";
+	// std::cout << std::endl;
 
 	return strikes;
 }

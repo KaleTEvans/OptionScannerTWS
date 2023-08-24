@@ -125,7 +125,7 @@ private:
 // Callback Functionality for Alerts
 //=========================================
 public:
-	using AlertFunction = std::function<void(TimeFrame tf, StandardDeviation, StandardDeviation, std::shared_ptr<Candle> candle)>;
+	using AlertFunction = std::function<void(TimeFrame tf, std::shared_ptr<Candle> candle)>;
 	void registerAlert(AlertFunction alert) { alert_ = std::move(alert); }
 
 private:

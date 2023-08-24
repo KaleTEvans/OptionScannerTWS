@@ -6,6 +6,15 @@
 #include "MockClient.h"
 #include "ContractData.h"
 
+#include <queue>
+
+// Alert Container for tests
+struct Alert {
+	TimeFrame tf;
+	std::shared_ptr<ContractData> cd;
+	std::shared_ptr<Candle> candle;
+};
+
 class MockOptionScanner {
 public:
 	// Option scanner will share the same constructor and destructor as App
@@ -17,13 +26,16 @@ public:
 	void streamOptionData();
 
 	// Alert Callback Functions
-	// void registerAlertCallback(std::shared_ptr<ContractData> cd);
+	void registerAlertCallback(std::shared_ptr<ContractData> cd);
 
 	// Functions for storing data after market close
 	// void prepareContractData();
 
-	double diffSPX();
+	// Test accessors
+	double currentSPX();
 	int diffChainSize();
+	int prevBufferCapacity();
+	std::unordered_set<int> finalContractCt();
 
 	MockClient EC;
 	MockWrapper YW;
@@ -31,6 +43,8 @@ public:
 	bool strikesUpdated{ false };
 	std::mutex optScanMutex_;
 	std::condition_variable mosCnditional;
+
+	std::queue<Alert> alertQueue;
 
 private:
 	Contract SPX; // Contract to be monitored
@@ -45,6 +59,7 @@ private:
 	double prevSPX_{ 0 };
 	int curChainSize_{ 0 };
 	int prevChainSize_{ 0 };
+	int prevBufferCapacity_{ 0 };
 
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes(double price);

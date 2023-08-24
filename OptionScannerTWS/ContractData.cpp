@@ -29,6 +29,7 @@ ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : c
 	// Push the first candle only in the 5 sec array
 	std::shared_ptr<Candle> initCandle{ std::move(initData) };
 	fiveSecCandles_.push_back(initCandle);
+
 	// Update the standard deviation class for the first 5 sec candle
 	sdPrice5Sec_.addValue(initCandle->high() - initCandle->low());
 	sdVol5Sec_.addValue(initCandle->volume());
@@ -56,7 +57,7 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 
 	///////////////////////// 5 Second Alert Options ///////////////////////////////
 	if (sdVol5Sec_.checkDeviation(fiveSec->volume(), 2) && sdVol5Sec_.sum() > 9 && !isUnderlying_) {
-		if (alert_) alert_(TimeFrame::FiveSecs, sdPrice5Sec_, sdVol5Sec_, fiveSec);
+		if (alert_) alert_(TimeFrame::FiveSecs, fiveSec);
 	}
 
 	//=============================================================
@@ -69,7 +70,7 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 
 		///////////////////////// 30 Second Alert Options ///////////////////////////////
 		if (sdVol30Sec_.checkDeviation(thirtySec->volume(), 1.5) && sdVol30Sec_.sum() > 9 && !isUnderlying_) {
-			if (alert_) alert_(TimeFrame::ThirtySecs, sdPrice30Sec_, sdVol30Sec_, thirtySec);
+			if (alert_) alert_(TimeFrame::ThirtySecs, thirtySec);
 		}
 
 		//=================================================================
@@ -83,7 +84,7 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 
 			///////////////////////// 1 minute Alert Options ///////////////////////////////
 			if (sdVol1Min_.checkDeviation(oneMin->volume(), 1) && sdVol1Min_.sum() > 9 && !isUnderlying_) {
-				if (alert_) alert_(TimeFrame::OneMin, sdPrice1Min_, sdVol1Min_, oneMin);
+				if (alert_) alert_(TimeFrame::OneMin, oneMin);
 			}
 
 			//====================================================================
@@ -98,7 +99,7 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 
 				///////////////////////// 5 Minute Alert Options ///////////////////////////////
 				if (sdVol5Min_.checkDeviation(fiveMin->volume(), 1) && sdVol5Min_.sum() > 4 && !isUnderlying_) {
-					if (alert_) alert_(TimeFrame::FiveMin, sdPrice5Sec_, sdVol5Sec_, fiveMin);
+					if (alert_) alert_(TimeFrame::FiveMin, fiveMin);
 				}
 			}
 		}
