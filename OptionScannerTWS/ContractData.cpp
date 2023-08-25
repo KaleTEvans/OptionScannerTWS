@@ -1,4 +1,5 @@
 #include "ContractData.h"
+#include "Logger.h"
 
 // Helper function to create new candles from time increments
 std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::shared_ptr<Candle>> data) {
@@ -67,6 +68,9 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 	if (fiveSecCandles_.size() % 6 == 0 && fiveSecCandles_.size() > 0) {
 		std::shared_ptr<Candle> thirtySec{ createNewBars(contractId_, 6, fiveSecCandles_) };
 		updateContainers(thirtySec, TimeFrame::ThirtySecs);
+
+		OPTIONSCANNER_DEBUG("30 Second candle created for {}, Open: {}, Close: {}, volume{}",
+			contractId_, thirtySecCandles_.back()->open(), thirtySecCandles_.back()->close(), thirtySecCandles_.back()->volume());
 
 		///////////////////////// 30 Second Alert Options ///////////////////////////////
 		if (sdVol30Sec_.checkDeviation(thirtySec->volume(), 1.5) && sdVol30Sec_.sum() > 9 && !isUnderlying_) {

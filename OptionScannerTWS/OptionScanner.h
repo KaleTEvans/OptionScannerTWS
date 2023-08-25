@@ -27,6 +27,9 @@ public:
 	// Option scanner will share the same constructor and destructor as App
 	OptionScanner(const char* host, IBString ticker);
 
+	// Run EC->checkMessages on its own thread
+	void checkClientMessages();
+
 	// Called each market open
 	// void prepForOpen();
 	
@@ -52,6 +55,9 @@ private:
 	IBString ticker;
 
 	IBString todayDate; // Updated each day
+
+	std::thread messageThread_; // Used to continuously check messages
+	bool closeEClienthread{ false };
 	
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes(double price);

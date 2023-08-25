@@ -1,6 +1,11 @@
 #include "OptionScanner.h"
+#include "Logger.h"
 
 OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker) {
+
+	// Start the checkMessages thread
+	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
+
 	// Request last quote for SPX upon class initiation to get closest option strikes
 	SPX.symbol = ticker;
 	SPX.secType = *SecType::IND;
@@ -15,6 +20,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 	todayDate = EndDateTime(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 
 	// Create RTB request for SPX underlying **This will not be accessible until buffer is processed
+	YW.showRealTimeDataOutput();
 	EC->reqRealTimeBars
 	(1234
 		, SPX
@@ -22,6 +28,14 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 		, *WhatToShow::TRADES
 		, UseRTH::OnlyRegularTradingData
 	);
+
+	OPTIONSCANNER_DEBUG("Initializing scanner ... Request 1234 sent to client");
+}
+
+void OptionScanner::checkClientMessages() {
+	while (!closeEClienthread) {
+		EC->checkMessages();
+	}
 }
 
 //============================================================
@@ -33,16 +47,13 @@ void OptionScanner::streamOptionData() {
 	// Begin by requesting a market quote, and update strikes to send out requests
 	SPX.exchange = *Exchange::IB_SMART;
 	EC->reqMktData(111, SPX, "", true);
-	while (YW.getReqId() != 111) EC->checkMessages();
+
+	// Wait for request
+	while (YW.getReqId() != 111) continue;
+	
+	OPTIONSCANNER_DEBUG("Market data request received, last tick price: {}", YW.lastTickPrice());
 
 	updateStrikes(YW.lastTickPrice());
-
-	// This functionality will keep track of the time in order to update the strikes periodically
-	constexpr int intervalMinutes = 1;
-	const std::chrono::minutes interval(intervalMinutes);
-
-	std::chrono::steady_clock::time_point lastExecutionTime = std::chrono::steady_clock::now();
-
 
 	//==========================================================================
 	// This while loop is important, as it will be open the entire day, and 
@@ -51,12 +62,11 @@ void OptionScanner::streamOptionData() {
 	//==========================================================================
 
 	while (YW.notDone()) {
-		EC->checkMessages();
 
 		// Use the wrapper conditional to check buffer
 		std::unique_lock<std::mutex> lock(YW.wrapperMutex());
 		YW.wrapperConditional().wait(lock, [&] { return YW.checkBufferFull(); });
-		std::cout << "Current Buffer Capacity: " << YW.bufferCapacity() << std::endl;
+		OPTIONSCANNER_INFO("Buffer full, current capacity: {}", YW.bufferCapacity());
 
 		for (auto& candle : YW.processedFiveSecCandles()) {
 
@@ -74,11 +84,11 @@ void OptionScanner::streamOptionData() {
 
 		strikesUpdated_ = true;
 
-		updateStrikes(contractChain_[1234]->currentPrice());
-		cout << "Buffer size currently at: " << YW.bufferCapacity() << endl;
-
 		lock.unlock();
 		optScanCV_.notify_one();
+
+		updateStrikes(contractChain_[1234]->currentPrice());
+		OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
 	}
 }
 
@@ -132,6 +142,8 @@ void OptionScanner::updateStrikes(double price) {
 		contractsInScope.insert(i + 1);
 	}
 
+	OPTIONSCANNER_DEBUG("New contracts added to request queue");
+
 	// Empty queue and create the requests
 	while (!contractReqQueue.empty()) {
 		Contract con = contractReqQueue.front();
@@ -155,9 +167,13 @@ void OptionScanner::updateStrikes(double price) {
 		contractReqQueue.pop();
 	}
 
+	OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
+
 	// If addedContracts vector exceeds current buffer size, update the buffer
-	if (static_cast<int>(addedContracts.size()) > YW.bufferCapacity()) YW.setBufferCapacity(static_cast<int>(addedContracts.size()));
-	//OPTIONSCANNER_DEBUG("Buffer capacity updated. Now at {}", YW.candleBuffer.checkBufferCapacity());
+	if (static_cast<int>(addedContracts.size()) > YW.bufferCapacity()) {
+		YW.setBufferCapacity(static_cast<int>(addedContracts.size()));
+		OPTIONSCANNER_INFO("Current requests higher than buffer capacity... updating to size: {}", addedContracts.size());
+	}
 }
 
 //===================================================

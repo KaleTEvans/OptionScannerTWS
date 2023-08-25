@@ -4,8 +4,11 @@
 #include <memory>
 #include <ctime>
 
+#define DEBUG_LOGS
+
 //#include "Candle.h"
 #include "tWrapper.h"
+#include "Logger.h"
 //#include "SQLSchema.h"
 //#include "tWrapper.h"
 #include "App.h"
@@ -28,7 +31,7 @@ void informalTests();
 // Tests
 void basicHistoricalDataRequest(std::unique_ptr<App>& test);
 void testMktDataRequest(std::unique_ptr<App>& test);
-//void testRealTimeBars(std::unique_ptr<TestConnections>& test);
+void testRealTimeBars(std::unique_ptr<App>& test);
 //void candleFunctionality(std::unique_ptr<TestConnections>& test);
 //void testStreamingAlerts(std::unique_ptr<TestConnections>& test);
 //void testLowAndHighAccuracy(std::unique_ptr<TestConnections>& test);
@@ -41,7 +44,7 @@ void testMktDataRequest(std::unique_ptr<App>& test);
 
 int main(void) {
 
-    //Logger::Initialize();
+    Logger::Initialize();
     // 
     if (runTests) {
         informalTests();
@@ -73,7 +76,7 @@ int main(void) {
         }*/
     }
 
-    //Logger::Shutdown();
+    Logger::Shutdown();
 
     //return 0;
 }
@@ -90,11 +93,11 @@ void informalTests() {
     constexpr bool showWelcome = true;
 
     // Test functionality of a basic historical data request
-    constexpr bool showBasicRequest = true;
+    constexpr bool showBasicRequest = false;
     // Test different outputs of a market data request
     constexpr bool showMktDataRequest = true;
     // Test functionality of 5 second real time bars for 30 seconds
-    constexpr bool showRealTimeBarsTest = false;
+    constexpr bool showRealTimeBarsTest = true;
     // Test ability for ContractData to create functional candles in different time frames
     constexpr bool showCandleFunctionality = false;
     // Test ability to receive alerts from ContractData as callbacks
@@ -115,10 +118,10 @@ void informalTests() {
 
     if (showBasicRequest) basicHistoricalDataRequest(test);
     if (showMktDataRequest) testMktDataRequest(test);
-    /*if (showRealTimeBarsTest) testRealTimeBars(test);
-    if (showCandleFunctionality) candleFunctionality(test);
-    if (showAlertFunctionality) testStreamingAlerts(test);
-    if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);*/
+    if (showRealTimeBarsTest) testRealTimeBars(test);
+    //if (showCandleFunctionality) candleFunctionality(test);
+    //if (showAlertFunctionality) testStreamingAlerts(test);
+    //if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);
 
     // delete test;
 }
@@ -195,41 +198,41 @@ void testMktDataRequest(std::unique_ptr<App>& test) {
 //// Test functionality of 5 second real time bars for 30 seconds
 ////=================================================================
 //
-//void testRealTimeBars(std::unique_ptr<App>& test) {
-//
-//    cout << "========================================================================" << endl;
-//    cout << "Testing Real Time Bar Output" << endl;
-//    cout << "========================================================================" << endl;
-//
-//    test->YW.showRealTimeData = true;
-//
-//    Contract C;
-//    C.symbol = "SPX";
-//    C.secType = "IND";
-//    C.currency = "USD";
-//    //C.exchange = "SMART";
-//    C.primaryExchange = "CBOE";
-//
-//    test->EC->reqRealTimeBars
-//    (20
-//        , C
-//        , 5
-//        , *WhatToShow::TRADES
-//        , UseRTH::OnlyRegularTradingData
-//    );
-//
-//    // Let run for 15 secs
-//    int timer = 15;
-//
-//    while (test->YW.notDone()) {
-//        if (timer <= 0) break;
-//        test->EC->checkMessages();
-//
-//        Sleep(1000);
-//        timer -= 1;
-//    }
-//}
-//
+void testRealTimeBars(std::unique_ptr<App>& test) {
+
+    cout << "========================================================================" << endl;
+    cout << "Testing Real Time Bar Output" << endl;
+    cout << "========================================================================" << endl;
+
+    test->YW.showRealTimeDataOutput();
+
+    Contract C;
+    C.symbol = "SPX";
+    C.secType = "IND";
+    C.currency = "USD";
+    //C.exchange = "SMART";
+    C.primaryExchange = "CBOE";
+
+    test->EC->reqRealTimeBars
+    (20
+        , C
+        , 5
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+    );
+
+    // Let run for 15 secs
+    int timer = 15;
+
+    while (test->YW.notDone()) {
+        if (timer <= 0) break;
+        test->EC->checkMessages();
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        timer -= 1;
+    }
+}
+
 ////======================================================================================
 //// Test ability for ContractData to create functional candles in different time frames
 ////======================================================================================

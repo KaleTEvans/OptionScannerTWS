@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning( disable : 4275 )
 
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 

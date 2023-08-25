@@ -1,4 +1,5 @@
 #include "tWrapper.h"
+#include "Logger.h"
 
 //====================================================
 // Wrapper for TWS API
@@ -181,6 +182,7 @@ void CandleBuffer::setNewBufferCapacity(int value) {
 void CandleBuffer::updateBuffer(std::unique_ptr<Candle> candle) {
     std::lock_guard<std::mutex> lock(bufferMutex);
     bufferMap[candle->reqId()] = std::move(candle);
+    // OPTIONSCANNER_DEBUG("Candle added to buffer, current size: {}", bufferMap.size());
 }
 
 int CandleBuffer::getCapacity() { return capacity_; }
