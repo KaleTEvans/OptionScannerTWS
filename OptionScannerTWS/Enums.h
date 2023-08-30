@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <unordered_map>
 
 // All enumerations used alongside price and options data with output overloads
 
@@ -38,8 +39,8 @@ namespace Alerts {
 	enum class PriceDelta { Under1, Under2, Over2 };
 
 	// Contract and Underlying daily highs and lows
-	enum class DailyHighsAndLows { NDL, NDH }; // Near daily high, near daily low
-	enum class LocalHighsAndLows { NLL, NLH }; // Near local low, near local high
+	enum class DailyHighsAndLows { NDL, NDH, Inside }; // Near daily high, near daily low
+	enum class LocalHighsAndLows { NLL, NLH, Inside }; // Near local low, near local high
 
 	// Additions for later
 	// Repeated hits (more than 2 of same alert back to back)
@@ -53,6 +54,8 @@ namespace Alerts {
 	// Low daily high - daily low delta
 	// High daily high - daily low delta
 
+	// Overwrite functions for iostream usage
+	std::ostream& operator<<(std::ostream& out, const OptionType value);
 	std::ostream& operator<<(std::ostream& out, const RelativeToMoney value);
 	std::ostream& operator<<(std::ostream& out, const TimeOfDay value);
 	std::ostream& operator<<(std::ostream& out, const VolumeStDev value);
@@ -60,4 +63,20 @@ namespace Alerts {
 	std::ostream& operator<<(std::ostream& out, const PriceDelta value);
 	std::ostream& operator<<(std::ostream& out, const DailyHighsAndLows value);
 	std::ostream& operator<<(std::ostream& out, const LocalHighsAndLows value);
+
+
+	// Due to the nature of spdlog, it has conflicting format issues with the ostream overriden functions
+	// Manually creating string conversions for each enum class
+	class EnumString {
+	public:
+		static std::string option_type(OptionType val);
+		static std::string time_frame(TimeFrame val);
+		static std::string realtive_to_money(RelativeToMoney val);
+		static std::string time_of_day(TimeOfDay val);
+		static std::string vol_st_dev(VolumeStDev val);
+		static std::string vol_threshold(VolumeThreshold val);
+		static std::string price_delta(PriceDelta val);
+		static std::string daily_highs_and_lows(DailyHighsAndLows val);
+		static std::string local_highs_and_lows(LocalHighsAndLows val);
+	};
 }

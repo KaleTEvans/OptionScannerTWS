@@ -15,6 +15,21 @@ namespace Alerts {
 		initTime = std::chrono::steady_clock::now();
 	}
 
+	void AlertStats::updateAlertStats(bool win, double percentWon) {
+		total_++;
+
+		if (win) {
+			totalWins_++;
+			sumPercentWon_ += percentWon;
+		}
+
+		winRate_ = totalWins_ / total_;
+		averageWin_ = sumPercentWon_ / totalWins_;
+	}
+	
+	double AlertStats::winRate() { return winRate_; }
+	double AlertStats::averageWin() { return averageWin_; }
+
 	//===================================================
 	// Alert Data 
 	//===================================================
@@ -22,7 +37,7 @@ namespace Alerts {
 	void AlertHandler::inputAlert(TimeFrame tf, std::shared_ptr<ContractData> cd, 
 		std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle) {
 
-		std::unique_ptr<Alert> alert = std::make_unique<Alert>(candle->reqId(), candle->close(), tf);
+		Alert alert(candle->reqId(), candle->close(), tf);
 
 		int strike = 0;
 		OptionType optType;
@@ -99,44 +114,53 @@ namespace Alerts {
 
 		AlertTags alertTags(optType, tf, rtm, tod, volStDev, volThreshold, underlyingDelta, optionDelta, spxHighLowVals.first,
 			spxHighLowVals.second, optHighLowVals.first, optHighLowVals.second);
+
+		if (vol > 50) {
+			OPTIONSCANNER_INFO("{} at Strike: {} | Current Volume: {} [ TAGS: TimeFrame: {} | {} | {} | Standard Deviations: {} | Total Vol: {} ]",
+				EnumString::option_type(optType), strike, vol, EnumString::time_frame(tf), EnumString::realtive_to_money(rtm),
+				EnumString::time_of_day(tod), EnumString::vol_st_dev(volStDev), EnumString::vol_threshold(volThreshold));
+		}
+		//std::cout << "Alert added for " << optType << " at Strike: " << strike << " | Current Volume: " << vol << std::endl;
+
+		alertUpdateQueue.push({ alertTags, alert });
 	}
 
 	//========================================================
 	// Function to get the AlertData level of success
 	//========================================================
 
-	void AlertData::getSuccessLevel(vector<Candle> postAlertData) {
-		double maxPrice = INT_MAX;
-		double minPrice = 0;
-		double percentChange = 0;
+	//void AlertData::getSuccessLevel(vector<Candle> postAlertData) {
+	//	double maxPrice = INT_MAX;
+	//	double minPrice = 0;
+	//	double percentChange = 0;
 
-		for (size_t i = 0; i < postAlertData.size(); i++) {
-			// break the loop if the price drops below 30% before any gains
-			if (minPrice > 0 && abs(((postAlertData[i].close - minPrice) / minPrice) * 100) >= 30) {
-				// Add a log here to say max loss was met
-				break;
-			}
+	//	for (size_t i = 0; i < postAlertData.size(); i++) {
+	//		// break the loop if the price drops below 30% before any gains
+	//		if (minPrice > 0 && abs(((postAlertData[i].close - minPrice) / minPrice) * 100) >= 30) {
+	//			// Add a log here to say max loss was met
+	//			break;
+	//		}
 
-			if (maxPrice < INT_MAX) percentChange = abs(((postAlertData[i].close - maxPrice) / maxPrice) * 100);
-			if (percentChange >= 15 && percentChange < 30) successLevel = 1;
-			if (percentChange > 30 && percentChange < 100) successLevel = 2;
-			if (percentChange >= 100) successLevel = 3;
+	//		if (maxPrice < INT_MAX) percentChange = abs(((postAlertData[i].close - maxPrice) / maxPrice) * 100);
+	//		if (percentChange >= 15 && percentChange < 30) successLevel = 1;
+	//		if (percentChange > 30 && percentChange < 100) successLevel = 2;
+	//		if (percentChange >= 100) successLevel = 3;
 
-			minPrice = min(minPrice, postAlertData[i].low);
-			maxPrice = max(maxPrice, postAlertData[i].high);
-		}
-	}
+	//		minPrice = min(minPrice, postAlertData[i].low);
+	//		maxPrice = max(maxPrice, postAlertData[i].high);
+	//	}
+	//}
 
-	void AlertHandler::outputAlert(AlertData* a) {
-		std::stringstream ss;
-		for (size_t i = 0; i < a->alertCodes.size(); ++i) {
-			ss << a->alertCodes[i];
-			if (i != a->alertCodes.size() - 1) ss << ' ';
-		}
+	//void AlertHandler::outputAlert(AlertData* a) {
+	//	std::stringstream ss;
+	//	for (size_t i = 0; i < a->alertCodes.size(); ++i) {
+	//		ss << a->alertCodes[i];
+	//		if (i != a->alertCodes.size() - 1) ss << ' ';
+	//	}
 
-		OPTIONSCANNER_INFO("Alert for {} {} | Current Price: {} | Codes: {} | Volume: {}", 
-			a->strike, a->optionType, a->closePrice, ss.str(), a->vol);
-	}
+	//	OPTIONSCANNER_INFO("Alert for {} {} | Current Price: {} | Codes: {} | Volume: {}", 
+	//		a->strike, a->optionType, a->closePrice, ss.str(), a->vol);
+	//}
 
 	//========================================================
 	// Helper Functions
@@ -241,9 +265,11 @@ namespace Alerts {
 
 		if (comparisons[0]) DHL = DailyHighsAndLows::NDL;
 		else if (comparisons[1]) DHL = DailyHighsAndLows::NDH;
+		else DHL = DailyHighsAndLows::Inside;
 
 		if (comparisons[2]) LHL = LocalHighsAndLows::NLL;
 		else if (comparisons[3]) LHL = LocalHighsAndLows::NLH;
+		else LHL = LocalHighsAndLows::Inside;
 
 		return { DHL, LHL };
 	}

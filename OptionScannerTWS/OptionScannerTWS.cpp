@@ -4,14 +4,14 @@
 #include <memory>
 #include <ctime>
 
-//#define DEBUG_LOGS
+#define DEBUG_LOGS
 
 //#include "Candle.h"
-//#include "tWrapper.h"
-//#include "Logger.h"
+#include "tWrapper.h"
+#include "Logger.h"
 //#include "SQLSchema.h"
-//#include "App.h"
-//#include "OptionScanner.h"
+#include "App.h"
+#include "OptionScanner.h"
 //#include "ContractData.h"
 //#include "AlertHandler.h"
 
@@ -23,14 +23,14 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-//constexpr bool runTests = false;
+constexpr bool runTests = true;
 
 // Main launcher for imformal tests
 void informalTests();
 // Tests
-//void basicHistoricalDataRequest(std::unique_ptr<App>& test);
-//void testMktDataRequest(std::unique_ptr<App>& test);
-//void testRealTimeBars(std::unique_ptr<App>& test);
+void basicHistoricalDataRequest(std::unique_ptr<App>& test);
+void testMktDataRequest(std::unique_ptr<App>& test);
+void testRealTimeBars(std::unique_ptr<App>& test);
 //void candleFunctionality(std::unique_ptr<TestConnections>& test);
 //void testStreamingAlerts(std::unique_ptr<TestConnections>& test);
 //void testLowAndHighAccuracy(std::unique_ptr<TestConnections>& test);
@@ -43,19 +43,19 @@ void informalTests();
 
 int main(void) {
 
-    //Logger::Initialize();
-    //// 
-    //if (runTests) {
-    //    informalTests();
-    //}
+    Logger::Initialize();
+    // 
+    if (runTests) {
+        informalTests();
+    }
 
-    //else {
-    //    const char* host = "127.0.0.1";
-    //    IBString ticker = "SPX";
+    else {
+        const char* host = "127.0.0.1";
+        IBString ticker = "SPX";
 
-    //    //std::unique_ptr<OptionScanner> opt = std::make_unique<OptionScanner>(host, ticker);
-    //    OptionScanner* opt = new OptionScanner(host, ticker);
-    //    opt->streamOptionData();
+        //std::unique_ptr<OptionScanner> opt = std::make_unique<OptionScanner>(host, ticker);
+        OptionScanner* opt = new OptionScanner(host, ticker);
+        opt->streamOptionData();
 
        /* std::thread t([&] {
             opt->streamOptionData();
@@ -73,11 +73,11 @@ int main(void) {
 
             lock.unlock();
         }*/
-    //}
+    }
 
-    //Logger::Shutdown();
+    Logger::Shutdown();
 
-    return 0;
+    //return 0;
 }
 
 
@@ -92,9 +92,9 @@ void informalTests() {
     constexpr bool showWelcome = true;
 
     // Test functionality of a basic historical data request
-    constexpr bool showBasicRequest = false;
+    constexpr bool showBasicRequest = true;
     // Test different outputs of a market data request
-    constexpr bool showMktDataRequest = true;
+    constexpr bool showMktDataRequest = false;
     // Test functionality of 5 second real time bars for 30 seconds
     constexpr bool showRealTimeBarsTest = true;
     // Test ability for ContractData to create functional candles in different time frames
@@ -112,12 +112,12 @@ void informalTests() {
 
     // Create a connection to TWS for use in all functions
     //App* test = new App("127.0.0.1");
-    /*std::unique_ptr<App> test = std::make_unique<App>("127.0.0.1");
+    std::unique_ptr<App> test = std::make_unique<App>("127.0.0.1");
     cout << "Current Time: " << test->YW.getCurrentTime() << endl;
 
     if (showBasicRequest) basicHistoricalDataRequest(test);
     if (showMktDataRequest) testMktDataRequest(test);
-    if (showRealTimeBarsTest) testRealTimeBars(test);*/
+    if (showRealTimeBarsTest) testRealTimeBars(test);
     //if (showCandleFunctionality) candleFunctionality(test);
     //if (showAlertFunctionality) testStreamingAlerts(test);
     //if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);
@@ -129,108 +129,108 @@ void informalTests() {
 //// Test functionality of a basic historical data request
 ////=================================================================
 
-//void basicHistoricalDataRequest(std::unique_ptr<App>& test) {
-//    
-//    cout << "========================================================================" << endl;
-//    cout << "Testing Historical Data Functionality" << endl;
-//    cout << "========================================================================" << endl;
-//
-//    test->YW.showHistoricalDataOutput();
-//
-//    Contract C;
-//    C.symbol = "SPX";
-//    C.secType = "IND";
-//    C.currency = "USD";
-//    C.exchange = "SMART";
-//    C.primaryExchange = *Exchange::CBOE;
-//    /*C.lastTradeDateOrContractMonth = "20230710";
-//    C.right = "CALL";
-//    C.strike = 4445;*/
-//
-//    test->EC->reqHistoricalData
-//    (10
-//        , C
-//        , "20230807 09:30:00 US/Central"
-//        , "3600 S"
-//        , "5 secs"
-//        , *WhatToShow::TRADES
-//        , UseRTH::OnlyRegularTradingData
-//        , FormatDate::AsDate
-//        , false
-//    );
-//
-//    while (test->YW.notDone()) {
-//        test->EC->checkMessages();
-//        if (test->YW.getReqId() == 10) break;
-//    }
-//    
-//    cout << "Num test candles received: " << test->YW.historicCandles().size() << endl;
-//}
+void basicHistoricalDataRequest(std::unique_ptr<App>& test) {
+    
+    cout << "========================================================================" << endl;
+    cout << "Testing Historical Data Functionality" << endl;
+    cout << "========================================================================" << endl;
+
+    test->YW.showHistoricalDataOutput();
+
+    Contract C;
+    C.symbol = "SPX";
+    C.secType = "OPT";
+    C.currency = "USD";
+    C.exchange = "SMART";
+    C.primaryExchange = *Exchange::CBOE;
+    C.lastTradeDateOrContractMonth = "20230830";
+    C.right = "PUT";
+    C.strike = 4510;
+
+    test->EC->reqHistoricalData
+    (10
+        , C
+        , "20230830 15:00:00 US/Central"
+        , "3600 S"
+        , "5 secs"
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+        , FormatDate::AsDate
+        , false
+    );
+
+    while (test->YW.notDone()) {
+        test->EC->checkMessages();
+        if (test->YW.getReqId() == 10) break;
+    }
+    
+    cout << "Num test candles received: " << test->YW.historicCandles().size() << endl;
+}
 
 //=================================================================
 // Test functionality of a market data request
 //=================================================================
 
-//void testMktDataRequest(std::unique_ptr<App>& test) {
-//
-//    cout << "========================================================================" << endl;
-//    cout << "Testing Market Data Output" << endl;
-//    cout << "========================================================================" << endl;
-//
-//    Contract C;
-//    C.symbol = "SPX";
-//    C.secType = "IND";
-//    C.currency = "USD";
-//    C.exchange = "SMART";
-//    C.primaryExchange = *Exchange::CBOE;
-//
-//    test->EC->reqMktData(11, C, *GenericTicks::MiscellaneousStats, true);
-//
-//    while (test->YW.getReqId() != 11) {
-//        test->EC->checkMessages();
-//    }
-//
-//    cout << test->YW.lastTickPrice() << endl;
-//}
+void testMktDataRequest(std::unique_ptr<App>& test) {
+
+    cout << "========================================================================" << endl;
+    cout << "Testing Market Data Output" << endl;
+    cout << "========================================================================" << endl;
+
+    Contract C;
+    C.symbol = "SPX";
+    C.secType = "IND";
+    C.currency = "USD";
+    C.exchange = "SMART";
+    C.primaryExchange = *Exchange::CBOE;
+
+    test->EC->reqMktData(11, C, *GenericTicks::MiscellaneousStats, true);
+
+    while (test->YW.getReqId() != 11) {
+        test->EC->checkMessages();
+    }
+
+    cout << test->YW.lastTickPrice() << endl;
+}
 
 ////=================================================================
 //// Test functionality of 5 second real time bars for 30 seconds
 ////=================================================================
 //
-//void testRealTimeBars(std::unique_ptr<App>& test) {
-//
-//    cout << "========================================================================" << endl;
-//    cout << "Testing Real Time Bar Output" << endl;
-//    cout << "========================================================================" << endl;
-//
-//    test->YW.showRealTimeDataOutput();
-//
-//    Contract C;
-//    C.symbol = "SPX";
-//    C.secType = "IND";
-//    C.currency = "USD";
-//    //C.exchange = "SMART";
-//    C.primaryExchange = "CBOE";
-//
-//    test->EC->reqRealTimeBars
-//    (20
-//        , C
-//        , 5
-//        , *WhatToShow::TRADES
-//        , UseRTH::OnlyRegularTradingData
-//    );
-//
-//    // Let run for 15 secs
-//    int timer = 15;
-//
-//    while (test->YW.notDone()) {
-//        if (timer <= 0) break;
-//        test->EC->checkMessages();
-//
-//        std::this_thread::sleep_for(std::chrono::seconds(1));
-//        timer -= 1;
-//    }
-//}
+void testRealTimeBars(std::unique_ptr<App>& test) {
+
+    cout << "========================================================================" << endl;
+    cout << "Testing Real Time Bar Output" << endl;
+    cout << "========================================================================" << endl;
+
+    test->YW.showRealTimeDataOutput();
+
+    Contract C;
+    C.symbol = "SPX";
+    C.secType = "IND";
+    C.currency = "USD";
+    //C.exchange = "SMART";
+    C.primaryExchange = "CBOE";
+
+    test->EC->reqRealTimeBars
+    (20
+        , C
+        , 5
+        , *WhatToShow::TRADES
+        , UseRTH::OnlyRegularTradingData
+    );
+
+    // Let run for 15 secs
+    int timer = 15;
+
+    while (test->YW.notDone()) {
+        if (timer <= 0) break;
+        test->EC->checkMessages();
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        timer -= 1;
+    }
+}
 
 ////======================================================================================
 //// Test ability for ContractData to create functional candles in different time frames

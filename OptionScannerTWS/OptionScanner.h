@@ -12,7 +12,7 @@
 
 #include "App.h"
 #include "ContractData.h"
-// #include "AlertHandler.h"
+#include "AlertHandler.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -37,7 +37,7 @@ public:
 	void streamOptionData();
 
 	// Alert Callback Functions
-	// void registerAlertCallback(std::shared_ptr<ContractData> cd);
+	void registerAlertCallback(std::shared_ptr<ContractData> cd);
 	// void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
 
 	// Functions for storing data after market close
@@ -74,7 +74,7 @@ private:
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
 	vector<int> addedContracts; // Keep track of all currently requested contracts
 
-	// Alerts::AlertHandler alertHandler;
+	Alerts::AlertHandler alertHandler;
 
 	std::mutex optScanMutex_;
 	std::condition_variable optScanCV_;

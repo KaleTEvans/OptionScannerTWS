@@ -9,6 +9,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
+#include "Enums.h"
+
 #include <memory>
 
 #define OPTIONSCANNER_DEFAULT_LOGGER_NAME "optiondatalog"

@@ -1,7 +1,7 @@
 #include "OptionScanner.h"
 #include "Logger.h"
 
-OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker) {
+OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker), alertHandler() {
 
 	// Start the checkMessages thread
 	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
@@ -20,7 +20,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 	todayDate = EndDateTime(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 
 	// Create RTB request for SPX underlying **This will not be accessible until buffer is processed
-	YW.showRealTimeDataOutput();
+	//YW.showRealTimeDataOutput();
 	EC->reqRealTimeBars
 	(1234
 		, SPX
@@ -66,7 +66,7 @@ void OptionScanner::streamOptionData() {
 		// Use the wrapper conditional to check buffer
 		std::unique_lock<std::mutex> lock(YW.wrapperMutex());
 		YW.wrapperConditional().wait(lock, [&] { return YW.checkBufferFull(); });
-		OPTIONSCANNER_INFO("Buffer full, current capacity: {}", YW.bufferCapacity());
+		// OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
 
 		for (auto& candle : YW.processedFiveSecCandles()) {
 
@@ -77,7 +77,7 @@ void OptionScanner::streamOptionData() {
 			}
 			else {
 				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
-				// registerAlertCallback(cd);
+				registerAlertCallback(cd);
 				contractChain_[req] = cd;
 			}
 		}
@@ -88,7 +88,7 @@ void OptionScanner::streamOptionData() {
 		optScanCV_.notify_one();
 
 		updateStrikes(contractChain_[1234]->currentPrice());
-		OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
+		//OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
 	}
 }
 
@@ -142,7 +142,7 @@ void OptionScanner::updateStrikes(double price) {
 		contractsInScope.insert(i + 1);
 	}
 
-	OPTIONSCANNER_DEBUG("New contracts added to request queue");
+	if (!contractReqQueue.empty()) OPTIONSCANNER_DEBUG("{} new contracts added to request queue", contractReqQueue.size());
 
 	// Empty queue and create the requests
 	while (!contractReqQueue.empty()) {
@@ -167,12 +167,12 @@ void OptionScanner::updateStrikes(double price) {
 		contractReqQueue.pop();
 	}
 
-	OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
+	//OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
 
 	// If addedContracts vector exceeds current buffer size, update the buffer
 	if (static_cast<int>(addedContracts.size()) > YW.bufferCapacity()) {
 		YW.setBufferCapacity(static_cast<int>(addedContracts.size()));
-		OPTIONSCANNER_INFO("Current requests higher than buffer capacity... updating to size: {}", addedContracts.size());
+		OPTIONSCANNER_DEBUG("Current requests higher than buffer capacity... updating to size: {}", addedContracts.size());
 	}
 }
 
@@ -180,17 +180,17 @@ void OptionScanner::updateStrikes(double price) {
 // Alert Callback Functions
 //===================================================
 
-//void OptionScanner::registerAlertCallback(ContractData* cd) {
-//	cd->registerAlert([this, cd](int data, const StandardDeviation& sdPrice, const StandardDeviation sdVol, const Candle c) {
-//
-//		// Make sure contract is in scope
-//		if (contractsInScope.find(c.reqId) != contractsInScope.end()) {
-//
-//			Alerts::AlertData* a = new Alerts::AlertData(c, data, sdVol, sdPrice, uSdVol, uSdPrice, uBars, compCode);
-//			alertHandler.inputAlert(a);
-//		}
-//	});
-//}
+void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
+	std::lock_guard<std::mutex> lock(optScanMutex_);
+	cd->registerAlert([this, cd](TimeFrame tf, std::shared_ptr<Candle> candle) {
+
+		// Make sure contract is in scope
+		if (contractsInScope.find(candle->reqId()) != contractsInScope.end()) {
+
+			alertHandler.inputAlert(tf, cd, contractChain_[1234], candle);
+		}
+	});
+}
 
 //void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
 //	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " volume: " << c.volume << " close price: " << c.close << endl;
@@ -227,8 +227,8 @@ vector<int> populateStrikes(double price) {
 		strikePrice += multiple;
 	}
 
-	for (auto i : strikes) cout << i << " ";
-	cout << endl;
+	//for (auto i : strikes) cout << i << " ";
+	//cout << endl;
 
 	return strikes;
 }

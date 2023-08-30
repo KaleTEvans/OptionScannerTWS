@@ -19,25 +19,17 @@
 #include <unordered_map>
 #include <queue>
 #include <sstream>
+#include <map>
 
 #include "Enums.h"
 #include "tWrapper.h"
 #include "ContractData.h"
+#include "Logger.h"
 
 using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
-
-//===========================================================
-// Current Alert Codes
-// 
-// Alert codes will be inserted into a vector, each code  
-// representing a different aspect of the alert
-// 
-// This will allow us to create a tree of all alert codes
-// and levels, and attach win probabilities
-//===========================================================
 
 namespace Alerts {
 
@@ -60,15 +52,6 @@ namespace Alerts {
 			DailyHighsAndLows underlyngDailyHL, LocalHighsAndLows underlyingLocalHL, DailyHighsAndLows optionDailyHL, LocalHighsAndLows optionLocalHL);
 	};
 
-
-	// Helper function to get bindary code for comparing price to high and low values
-	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice);
-	TimeOfDay getCurrentHourSlot();
-	std::pair<DailyHighsAndLows, LocalHighsAndLows> getHighsAndLows(vector<bool> comparisons);
-	int getComparisonCode(vector<bool>& optionComparisons, vector<bool>& SPXComparisons);
-	string decodeComparisonCode(int comparisonCode);
-	// Get the code based on the current market hour
-
 	struct Alert {
 		int reqId;
 		double currentPrice;
@@ -78,57 +61,27 @@ namespace Alerts {
 		Alert(int reqId, double currentPrice, TimeFrame tf);
 	};
 
-	//=========================================================================================================
-	//	AlertData is constructed upon every callback received in OptionScanner from ContractData. It will handle 
-	//	all of the data from each instance of an alert, and create nearly all the alert codes upon it's creation.
-	//	For each alert created, the program will keep them in a 30 minute queue (subject to change based on success)
-	//	and then request data to determine the level of success. This level of success will then be sent to the 
-	//	alert code tree to determine the overall success rate.
-	//=========================================================================================================
-	class AlertData {
+	class AlertStats {
 	public:
-		AlertData(TimeFrame tf, std::shared_ptr<ContractData> cd, std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle);
+		void updateAlertStats(bool win, double percentWon);
 
-		// Need a copy constructor for additional alerts like repeated hits
+		double winRate();
+		double averageWin();
 
-		// vector<int> getAlertCodes() { return alertCodes; }
+	private:
+		double winRate_{ 0 };
+		double averageWin_{ 0 };
 
-		// Initial variables to be sent from callback
-	public:
+		double totalWins_{ 0 };
+		double sumPercentWon_{ 0 };
 
-		// Incoming Variables
-		TimeFrame tf_;
-		std::shared_ptr<ContractData> cd_;
-		std::shared_ptr<Candle> candle_;
-
-		int code;
-		StandardDeviation sdVol;
-		StandardDeviation sdPriceDelta;
-		StandardDeviation uSdVol; // Underlying
-		StandardDeviation uSdPriceDelta; // Underlying
-		Candle uBars; // Underlying
-		int compCode;
-
-		// Added variables
-		int reqId;
-		time_t time;
-		string dateTime;
-		int strike;
-		string optionType;
-		double vol;
-		double priceDelta;
-		double closePrice;
-		double underlyingPrice;
-		double underlyingPriceDelta;
-		vector<int> alertCodes;
-
-		// Variables that will be filled to check alert success
-	public:
-		// This will be provided based on levels
-		// -30% will be a failure or 0, 1 will be 15-30%, and so on
-		void getSuccessLevel(vector<Candle> postAlertData);
-		int successLevel = 0;
+		double total_{ 0 };
 	};
+
+	// Helper function to get bindary code for comparing price to high and low values
+	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice);
+	TimeOfDay getCurrentHourSlot();
+	std::pair<DailyHighsAndLows, LocalHighsAndLows> getHighsAndLows(vector<bool> comparisons);
 
 	class AlertHandler {
 	public:
@@ -137,13 +90,14 @@ namespace Alerts {
 			std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle);
 
 		// **** Be sure to take into account alerts right before close
-		void checkQueueUpdates(Candle c, std::unordered_map<int, ContractData*>& contractMap);
+		void checkAlertOutcomes();
 
-		void outputAlert(AlertData* a);
+		bool doneCheckingAlerts_{ false }; // Change to true on market close
+		//void outputAlert();
 
 	private:
 		// std::unordered_map<int, AlertNode> alertStorage;
-		std::queue<AlertData*> alertUpdateQueue;
+		std::queue<std::pair<AlertTags, Alert>> alertUpdateQueue;
 	};
 
 }
