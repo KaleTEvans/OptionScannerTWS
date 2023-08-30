@@ -53,6 +53,7 @@
   <ItemGroup>
     <ClCompile Include="..\OptionScannerTWS\Candle.cpp" />
     <ClCompile Include="..\OptionScannerTWS\ContractData.cpp" />
+    <ClCompile Include="..\OptionScannerTWS\Enums.cpp" />
     <ClCompile Include="BenchmarkTests\benchmarks.cpp" />
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
     <ClCompile Include="IntegrationTests\option_scanner_tests.cpp" />

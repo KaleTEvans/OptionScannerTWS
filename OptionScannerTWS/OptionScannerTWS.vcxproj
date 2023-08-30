@@ -237,9 +237,12 @@
     <ClCompile Include="ContractData.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Enums.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="libs\nanodbc\nanodbc.cpp" />
     <ClCompile Include="Logger.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="OptionScanner.cpp">
@@ -273,6 +276,9 @@
     <ClInclude Include="Candle.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Enums.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="SQLSchema.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
@@ -284,7 +290,7 @@
     </ClInclude>
     <ClInclude Include="libs\nanodbc\nanodbc.h" />
     <ClInclude Include="Logger.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="OptionScanner.h">

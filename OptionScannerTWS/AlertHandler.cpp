@@ -2,94 +2,103 @@
 
 namespace Alerts {
 
+	AlertTags::AlertTags(OptionType optType, TimeFrame timeFrame, RelativeToMoney rtm, TimeOfDay timeOfDay, VolumeStDev volStDev, 
+		VolumeThreshold volThreshold, PriceDelta underlyingPriceDelta, PriceDelta optionPriceDelta, DailyHighsAndLows underlyngDailyHL, 
+		LocalHighsAndLows underlyingLocalHL, DailyHighsAndLows optionDailyHL, LocalHighsAndLows optionLocalHL) :
+		optType(optType), timeFrame(timeFrame), rtm(rtm), timeOfDay(timeOfDay), volStDev(volStDev), volThreshold(volThreshold),
+		underlyingPriceDelta(underlyingPriceDelta), optionPriceDelta(optionPriceDelta), underlyngDailyHL(underlyngDailyHL), 
+		underlyingLocalHL(underlyingLocalHL), optionDailyHL(optionDailyHL), optionLocalHL(optionLocalHL) {}
+
+	Alert::Alert(int reqId, double currentPrice, TimeFrame tf) :
+		reqId(reqId), currentPrice(currentPrice), tf(tf) {
+
+		initTime = std::chrono::steady_clock::now();
+	}
+
 	//===================================================
 	// Alert Data 
 	//===================================================
 
-	AlertData::AlertData(Candle c, int code, StandardDeviation sdVol, StandardDeviation sdPriceDelta,
-		StandardDeviation uSdVol, StandardDeviation uSdPriceDelta, Candle uBars, int compCode) :
-		code(code), sdVol(sdVol), sdPriceDelta(sdPriceDelta), uSdVol(uSdVol), uSdPriceDelta(uSdPriceDelta),
-		underlyingPrice(underlyingPrice),compCode(compCode) {
-		reqId = c.reqId;
-		time = c.time;
-		vol = c.volume;
-		closePrice = c.close;
-		priceDelta = c.high - c.low;
-		underlyingPrice = uBars.close;
-		underlyingPriceDelta = uBars.high - uBars.low;
+	void AlertHandler::inputAlert(TimeFrame tf, std::shared_ptr<ContractData> cd, 
+		std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle) {
 
-		struct tm* timeInfo;
-		char buffer[80];
+		std::unique_ptr<Alert> alert = std::make_unique<Alert>(candle->reqId(), candle->close(), tf);
 
-		timeInfo = localtime(&time);
-		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
+		int strike = 0;
+		OptionType optType;
+		RelativeToMoney rtm;
+		TimeOfDay tod;
+		VolumeStDev volStDev;
+		VolumeThreshold volThreshold;
 
-		dateTime = buffer;
+		PriceDelta optionDelta;
+		PriceDelta underlyingDelta;
 
 		// Determine whether call or put using reqId
-		if (c.reqId % 5 == 0) {
-			optionType = "CALL";
-			alertCodes.push_back(11);
-			strike = c.reqId;
+		if (candle->reqId() % 5 == 0) {
+			optType = OptionType::Call;
+			strike = candle->reqId();
 		}
 		else {
-			optionType = "PUT";
-			alertCodes.push_back(22);
-			strike = c.reqId - 1;
+			optType = OptionType::Put;
+			strike = candle->reqId() - 1;
 		}
-
-		alertCodes.push_back(code);
 
 		//==================================================================
 		// Alert code determining how close to the money the option is
-		double difference = strike - underlyingPrice;
-		if (difference <= 5 && difference > 0) (optionType == "CALL") ? alertCodes.push_back(1210) : alertCodes.push_back(1110);
-		else if (difference <= 10 && difference > 5) (optionType == "CALL") ? alertCodes.push_back(1220) : alertCodes.push_back(1120);
-		else if (difference > 10) (optionType == "CALL") ? alertCodes.push_back(1230) : alertCodes.push_back(1130);
-		else if (difference <= 0 && difference > -5) (optionType == "CALL") ? alertCodes.push_back(1110) : alertCodes.push_back(1210);
-		else if (difference <= -5 && difference > -10) (optionType == "CALL") ? alertCodes.push_back(1120) : alertCodes.push_back(1220);
-		else if (difference < -10) (optionType == "CALL") ? alertCodes.push_back(1130) : alertCodes.push_back(1230);
-		else {
-			cout << "Error, could not retrieve OTM or ITM code for contract: " << strike << " difference: " << difference << endl;
-		}
+		
+		double spxPrice = SPX->currentPrice();
+		rtm = distFromPrice(optType, strike, spxPrice);
 
 		//==========================================================
 		// Alert code for time of day
 
-		alertCodes.push_back(2000 + getCurrentHourSlot());
+		tod = getCurrentHourSlot();
 
 		//=====================================================
 		// Alert code to be used for the volume
-		int volAlertCode = 3011;
 
-		if (sdVol.numStDev(vol) > 2) volAlertCode++; // 3012
-		if (sdVol.numStDev(vol) > 3) volAlertCode++; // 3013
+		StandardDeviation sdVol = cd->volStDev(tf);
+		long vol = candle->volume();
 
-		if (vol > 100) volAlertCode += 100;
-		if (vol > 250) volAlertCode += 100; // 200
-		if (vol > 500) volAlertCode += 100; // 300
-		if (vol > 1000) volAlertCode += 100; // 400
+		if (sdVol.numStDev(vol) <= 1) volStDev = VolumeStDev::LowVol;
+		else if (sdVol.numStDev(vol) > 1 && sdVol.numStDev(vol) <= 2) volStDev = VolumeStDev::Over1;
+		else if (sdVol.numStDev(vol) > 2 && sdVol.numStDev(vol) <= 3) volStDev = VolumeStDev::Over2;
+		else if (sdVol.numStDev(vol) > 3 && sdVol.numStDev(vol) <= 4) volStDev = VolumeStDev::Over3;
+		else volStDev = VolumeStDev::Over4;
 
-		alertCodes.push_back(volAlertCode);
+		if (vol <= 100) volThreshold = VolumeThreshold::LowVol;
+		else if (vol > 100 && vol <= 250) volThreshold = VolumeThreshold::Vol100;
+		else if (vol > 250 && vol <= 500) volThreshold = VolumeThreshold::Vol250;
+		else if (vol > 500 && vol <= 1000) volThreshold = VolumeThreshold::Vol500;
+		else volThreshold = VolumeThreshold::Vol1000;
 
 		//================================================================
 		// Alert code for the underlying price delta standard deviations
-		int priceDeltaCode = 0;
-		double numStDevCon = sdPriceDelta.numStDev(priceDelta);
-		double numStDevU = uSdPriceDelta.numStDev(underlyingPriceDelta);
+		
+		StandardDeviation sdPriceOpt = cd->priceStDev(tf);
+		StandardDeviation sdPriceSpx = SPX->priceStDev(tf);
+		std::shared_ptr<Candle> spxCandle = SPX->latestCandle(tf);
 
-		if (numStDevCon >= 2 && numStDevU >= 2) priceDeltaCode = 4007;
-		if (numStDevCon < 2 && numStDevU < 2) priceDeltaCode = 4006;
-		if (numStDevCon <= 1 && numStDevU <= 1) priceDeltaCode = 4005;
-		if (numStDevCon < 2 && numStDevU >= 2) priceDeltaCode = 4004;
-		if (numStDevCon < 1 && numStDevU >= 1) priceDeltaCode = 4003;
-		if (numStDevCon >= 2 && numStDevU < 2) priceDeltaCode = 4002;
-		if (numStDevCon >= 1 && numStDevU < 1) priceDeltaCode = 4001;
-		//===================================
-		// Add logger here if no codes returned
+		double optPriceDev = sdPriceOpt.numStDev(candle->high() - candle->low());
+		double spxPriceDev = sdPriceSpx.numStDev(spxCandle->high() - spxCandle->low());
 
-		alertCodes.push_back(priceDeltaCode);
-		alertCodes.push_back(compCode);
+		if (optPriceDev < 1) optionDelta = PriceDelta::Under1;
+		else if (optPriceDev >= 1 && optPriceDev < 2) optionDelta = PriceDelta::Under2;
+		else optionDelta = PriceDelta::Over2;
+
+		if (spxPriceDev < 1) underlyingDelta = PriceDelta::Under1;
+		else if (spxPriceDev >= 1 && spxPriceDev < 2) underlyingDelta = PriceDelta::Under2;
+		else underlyingDelta = PriceDelta::Over2;
+
+		//==================================================
+		// Alert code for distance from highs and lows
+		
+		std::pair<DailyHighsAndLows, LocalHighsAndLows> optHighLowVals = getHighsAndLows(cd->highLowComparisons());
+		std::pair<DailyHighsAndLows, LocalHighsAndLows> spxHighLowVals = getHighsAndLows(SPX->highLowComparisons());
+
+		AlertTags alertTags(optType, tf, rtm, tod, volStDev, volThreshold, underlyingDelta, optionDelta, spxHighLowVals.first,
+			spxHighLowVals.second, optHighLowVals.first, optHighLowVals.second);
 	}
 
 	//========================================================
@@ -118,12 +127,6 @@ namespace Alerts {
 		}
 	}
 
-	void AlertHandler::inputAlert(AlertData* a) {
-		alertUpdateQueue.push(a);
-
-		outputAlert(a);
-	}
-
 	void AlertHandler::outputAlert(AlertData* a) {
 		std::stringstream ss;
 		for (size_t i = 0; i < a->alertCodes.size(); ++i) {
@@ -139,7 +142,51 @@ namespace Alerts {
 	// Helper Functions
 	//========================================================
 
-	int getCurrentHourSlot() {
+	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice) {
+		RelativeToMoney rtm;
+
+		double priceDifference = std::abs(spxPrice - static_cast<double>(strike));
+
+		if (spxPrice == strike) {
+			rtm = RelativeToMoney::ATM;
+		}
+		else {
+			int strikesOTM = static_cast<int>(std::ceil(priceDifference / 5));
+
+			switch (strikesOTM)
+			{
+			case 1:
+				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM1 : rtm = RelativeToMoney::ITM1;
+				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM1 : rtm = RelativeToMoney::OTM1;
+				break;
+			case 2:
+				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM2 : rtm = RelativeToMoney::ITM2;
+				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM2 : rtm = RelativeToMoney::OTM2;
+				break;
+			case 3:
+				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM3 : rtm = RelativeToMoney::ITM3;
+				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM3 : rtm = RelativeToMoney::OTM3;
+				break;
+			case 4:
+				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM4 : rtm = RelativeToMoney::ITM4;
+				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM4 : rtm = RelativeToMoney::OTM4;
+				break;
+			case 5:
+				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM5 : rtm = RelativeToMoney::ITM5;
+				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM5 : rtm = RelativeToMoney::OTM5;
+				break;
+			default:
+				std::cout << "Error ocurred calculating distance from price" << std::endl;
+				break;
+			}
+		}
+
+		return rtm;
+	}
+
+	TimeOfDay getCurrentHourSlot() {
+		TimeOfDay tod;
+
 		// Get the current time
 		auto now = std::chrono::system_clock::now();
 		time_t currentTime = std::chrono::system_clock::to_time_t(now);
@@ -157,85 +204,48 @@ namespace Alerts {
 		// Calculate the slot number (1 to 7)
 		int slotNumber = minutesSince830AM / 60 + 1;
 
-		return slotNumber;
+		switch (slotNumber)
+		{
+		case 1:
+			tod = TimeOfDay::Hour1;
+			break;
+		case 2:
+			tod = TimeOfDay::Hour2;
+			break;
+		case 3:
+			tod = TimeOfDay::Hour3;
+			break;
+		case 4:
+			tod = TimeOfDay::Hour4;
+			break;
+		case 5:
+			tod = TimeOfDay::Hour5;
+			break;
+		case 6:
+			tod = TimeOfDay::Hour6;
+			break;
+		case 7:
+			tod = TimeOfDay::Hour7;
+			break;
+		default:
+			std::cout << "Error occured calculating time of day" << std::endl;
+			break;
+		}
+
+		return tod;
 	}
 
-	int getComparisonCode(vector<bool>& optionComparisons, vector<bool>& SPXComparisons) {
-		// Now determine the alert code for the comparison of highs and lows
-		int comparisonCode = 0;
+	std::pair<DailyHighsAndLows, LocalHighsAndLows> getHighsAndLows(vector<bool> comparisons) {
+		DailyHighsAndLows DHL;
+		LocalHighsAndLows LHL;
 
-		// Convert v1 to an integer value (bits 0-3)
-		for (int i = 0; i < 4; ++i) {
-			if (optionComparisons[i]) {
-				comparisonCode |= (1 << (optionComparisons.size() - 1 - i));
-			}
-		}
+		if (comparisons[0]) DHL = DailyHighsAndLows::NDL;
+		else if (comparisons[1]) DHL = DailyHighsAndLows::NDH;
 
-		// Convert v2 to an integer value (bits 4-7)
-		for (int i = 0; i < 4; ++i) {
-			if (SPXComparisons[i]) {
-				comparisonCode |= (1 << (2 * SPXComparisons.size() - 1 - i));
-			}
-		}
+		if (comparisons[2]) LHL = LocalHighsAndLows::NLL;
+		else if (comparisons[3]) LHL = LocalHighsAndLows::NLH;
 
-		return comparisonCode;
+		return { DHL, LHL };
 	}
 
-	string decodeComparisonCode(int combinationValue) {
-		string output;
-		int size = 4;
-
-		// Check each bit for v1
-		output += "| Con | ";
-		for (int i = 0; i < size; ++i) {
-			if (combinationValue & (1 << (size - 1 - i))) {
-				//output += " | ";
-				switch (i) {
-				case 0:
-					output += "NDL";
-					break;
-				case 1:
-					output += "NDH";
-					break;
-				case 2:
-					output += "NLL";
-					break;
-				case 3:
-					output += "NLH";
-					break;
-				}
-				output += " ";
-			}
-		}
-
-		// Check each bit for v2
-		output += "| SPX | ";
-		for (int i = 0; i < size; ++i) {
-			if (combinationValue & (1 << (2 * size - 1 - i))) {
-				//output += "SPX | ";
-				switch (i) {
-				case 0:
-					output += "NDL";
-					break;
-				case 1:
-					output += "NDH";
-					break;
-				case 2:
-					output += "NLL";
-					break;
-				case 3:
-					output += "NLH";
-					break;
-				}
-				output += " ";
-			}
-		}
-
-		// Remove the trailing space if any
-		if (!output.empty()) {
-			output.pop_back();
-		}
-
-		return output;
-	}
 }

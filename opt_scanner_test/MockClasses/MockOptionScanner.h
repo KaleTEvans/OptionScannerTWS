@@ -12,6 +12,7 @@
 struct Alert {
 	TimeFrame tf;
 	std::shared_ptr<ContractData> cd;
+	std::shared_ptr<ContractData> SPX;
 	std::shared_ptr<Candle> candle;
 };
 

@@ -1,5 +1,5 @@
 #include "ContractData.h"
-#include "Logger.h"
+//#include "Logger.h"
 
 // Helper function to create new candles from time increments
 std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::shared_ptr<Candle>> data) {
@@ -69,8 +69,8 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 		std::shared_ptr<Candle> thirtySec{ createNewBars(contractId_, 6, fiveSecCandles_) };
 		updateContainers(thirtySec, TimeFrame::ThirtySecs);
 
-		OPTIONSCANNER_DEBUG("30 Second candle created for {}, Open: {}, Close: {}, volume{}",
-			contractId_, thirtySecCandles_.back()->open(), thirtySecCandles_.back()->close(), thirtySecCandles_.back()->volume());
+		//OPTIONSCANNER_DEBUG("30 Second candle created for {}, Open: {}, Close: {}, volume{}",
+		//	contractId_, thirtySecCandles_.back()->open(), thirtySecCandles_.back()->close(), thirtySecCandles_.back()->volume());
 
 		///////////////////////// 30 Second Alert Options ///////////////////////////////
 		if (sdVol30Sec_.checkDeviation(thirtySec->volume(), 1.5) && sdVol30Sec_.sum() > 9 && !isUnderlying_) {
@@ -135,6 +135,69 @@ long long ContractData::totalVol() const { return cumulativeVolume_.back().secon
 vector<std::pair<long, long long>> ContractData::volOverTime() const { return cumulativeVolume_; }
 vector<bool> ContractData::highLowComparisons() const { return { nearDailyLow, nearDailyHigh, nearLocalLow, nearLocalHigh }; }
 
+std::shared_ptr<Candle> ContractData::latestCandle(TimeFrame tf) {
+	switch (tf)
+	{
+	case TimeFrame::FiveSecs:
+		return fiveSecCandles_.back();
+		break;
+	case TimeFrame::ThirtySecs:
+		return thirtySecCandles_.back();
+		break;
+	case TimeFrame::OneMin:
+		return oneMinCandles_.back();
+		break;
+	case TimeFrame::FiveMin:
+		return fiveMinCandles_.back();
+		break;
+	}
+
+	//OPTIONSCANNER_ERROR("Failed to return most recent candle");
+	return {};
+}
+
+std::vector<std::shared_ptr<Candle>> ContractData::candlesLast30Minutes(TimeFrame tf) {
+	vector<std::shared_ptr<Candle>> res;
+
+	switch (tf)
+	{
+	case TimeFrame::FiveSecs:
+		if (fiveSecCandles_.size() >= 360) {
+			for (size_t i = fiveSecCandles_.size() - 360; i < fiveSecCandles_.size(); i++) res.push_back(fiveSecCandles_[i]);
+		}
+		else {
+			//OPTIONSCANNER_ERROR("Error: Not enough five second candles in vector");
+		}
+		break;
+	case TimeFrame::ThirtySecs:
+		if (thirtySecCandles_.size() >= 60) {
+			for (size_t i = thirtySecCandles_.size() - 60; i < thirtySecCandles_.size(); i++) res.push_back(thirtySecCandles_[i]);
+		}
+		else {
+			//OPTIONSCANNER_ERROR("Error: Not enough thirty second candles in vector");
+		}
+		break;
+	case TimeFrame::OneMin:
+		if (oneMinCandles_.size() >= 30) {
+			for (size_t i = oneMinCandles_.size() - 30; i < oneMinCandles_.size(); i++) res.push_back(oneMinCandles_[i]);
+		}
+		else {
+			//OPTIONSCANNER_ERROR("Error: Not enough one minute candles in vector");
+		}
+		break;
+	case TimeFrame::FiveMin:
+		if (fiveMinCandles_.size() >= 6) {
+			for (size_t i = fiveMinCandles_.size() - 6; i < fiveMinCandles_.size(); i++) res.push_back(fiveMinCandles_[i]);
+		}
+		else {
+			//OPTIONSCANNER_ERROR("Error: Not enough five minute candles in vector");
+		}
+		break;
+	}
+
+	return res;
+}
+
 StandardDeviation ContractData::priceStDev(TimeFrame tf) {
 	switch (tf)
 	{
@@ -152,6 +215,7 @@ StandardDeviation ContractData::priceStDev(TimeFrame tf) {
 		break;
 	}
 
+	//OPTIONSCANNER_DEBUG("Failed to return Price Standard Deviation Object");
 	return {};
 }
 
@@ -172,6 +236,7 @@ StandardDeviation ContractData::volStDev(TimeFrame tf) {
 		break;
 	}
 
+	//OPTIONSCANNER_DEBUG("Failed to return Volume Standard Deviation Object");
 	return {};
 }
 

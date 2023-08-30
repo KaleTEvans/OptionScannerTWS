@@ -77,12 +77,12 @@ void MockOptionScanner::streamOptionData() {
 		// Update test variables
 		curChainSize_ = contractChain_.size();
 		currentSPX_ = contractChain_[1234]->currentPrice();
-
-		updateStrikes(contractChain_[1234]->currentPrice());
 		// std::cout << "Buffer size currently at: " << YW.getBufferCapacity() << std::endl;
 
 		lock.unlock();
 		mosCnditional.notify_one();
+
+		updateStrikes(contractChain_[1234]->currentPrice());
 	}
 
 	if (!YW.notDone()) {
@@ -102,6 +102,7 @@ void MockOptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) 
 		Alert a;
 		a.tf = tf;
 		a.cd = cd;
+		a.SPX = contractChain_[1234];
 		a.candle = candle;
 
 		alertQueue.push(a);

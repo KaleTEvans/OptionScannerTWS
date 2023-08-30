@@ -22,6 +22,7 @@
 #include <memory>
 
 //#include "tWrapper.h"
+#include "Enums.h"
 #include "Candle.h"
 #include "Formulas.h"
 
@@ -30,14 +31,6 @@ using std::string;
 using std::max;
 using std::min;
 using std::pair;
-
-// Time frame enums
-enum class TimeFrame {
-	FiveSecs,
-	ThirtySecs,
-	OneMin,
-	FiveMin
-};
 
 // Helper function for combining candles
 std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::shared_ptr<Candle>> data);
@@ -58,6 +51,9 @@ public:
 	vector<std::shared_ptr<Candle>> thirtySecData() const;
 	vector<std::shared_ptr<Candle>> oneMinData() const;
 	vector<std::shared_ptr<Candle>> fiveMinData() const;
+
+	std::shared_ptr<Candle> latestCandle(TimeFrame tf);
+	vector<std::shared_ptr<Candle>> candlesLast30Minutes(TimeFrame tf);
 
 	// Other data acessors
 	double currentPrice() const;

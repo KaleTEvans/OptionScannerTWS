@@ -1,10 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#include "ContractData.h"
 #include "../pch.h"
 
 #include "../MockClasses/MockClient.h"
 #include "../MockClasses/MockWrapper.h"
-#include "ContractData.h"
+
 
 using namespace testing;
 
@@ -56,6 +57,12 @@ TEST(ContractDataTests, updateDataTest) {
 	EXPECT_EQ(cd.dailyHigh(), maxPrice);
 	EXPECT_EQ(cd.currentPrice(), lastPrice);
 	EXPECT_EQ(cd.totalVol(), totalVol);
+
+	// Test return functionality for last 30 minutes of candles
+	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::FiveSecs).size(), 360);
+	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::ThirtySecs).size(), 60);
+	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::OneMin).size(), 30);
+	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::FiveMin).size(), 6);
 }
 
 TEST(ContractDataTests, AlertSystemTest) {
