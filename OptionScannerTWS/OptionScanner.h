@@ -68,13 +68,13 @@ private:
 	// void outputChain();
 
 	// This map will hold all of the contracts and will be updated repeatedly
-	std::unordered_map<int, std::shared_ptr<ContractData>> contractChain_;
+	std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> contractChain_;
 
 	std::queue<Contract> contractReqQueue; // Holds new contracts to request data
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
 	vector<int> addedContracts; // Keep track of all currently requested contracts
 
-	Alerts::AlertHandler alertHandler;
+	std::unique_ptr<Alerts::AlertHandler> alertHandler;
 
 	std::mutex optScanMutex_;
 	std::condition_variable optScanCV_;

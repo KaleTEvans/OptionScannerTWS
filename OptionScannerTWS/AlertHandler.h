@@ -42,30 +42,35 @@ namespace Alerts {
 		VolumeThreshold volThreshold;
 		PriceDelta underlyingPriceDelta;
 		PriceDelta optionPriceDelta;
-		DailyHighsAndLows underlyngDailyHL;
+		DailyHighsAndLows underlyingDailyHL;
 		LocalHighsAndLows underlyingLocalHL;
 		DailyHighsAndLows optionDailyHL;
 		LocalHighsAndLows optionLocalHL;
 
 		AlertTags(OptionType optType, TimeFrame timeFrame, RelativeToMoney rtm, TimeOfDay timeOfDay, VolumeStDev volStDev, 
 			VolumeThreshold volThreshold, PriceDelta underlyingPriceDelta, PriceDelta optionPriceDelta, 
-			DailyHighsAndLows underlyngDailyHL, LocalHighsAndLows underlyingLocalHL, DailyHighsAndLows optionDailyHL, LocalHighsAndLows optionLocalHL);
+			DailyHighsAndLows underlyingDailyHL, LocalHighsAndLows underlyingLocalHL, DailyHighsAndLows optionDailyHL, LocalHighsAndLows optionLocalHL);
 	};
+
+	// Comparison operator to hold alertTags in a map
+	bool operator<(const AlertTags& left, const AlertTags& right);
 
 	struct Alert {
 		int reqId;
 		double currentPrice;
 		TimeFrame tf;
 		std::chrono::steady_clock::time_point initTime;
+		long unixTime;
 
 		Alert(int reqId, double currentPrice, TimeFrame tf);
 	};
 
 	class AlertStats {
 	public:
-		void updateAlertStats(bool win, double percentWon);
+		// A win will be considered 60% profit or more (2:1 ratio to stop loss)
+		void updateAlertStats(double win, double percentWon);
 
-		double winRate();
+		double winRate(); // 0 is a loss, 1 is break even or small win, 2 is 60% or more
 		double averageWin();
 
 	private:
@@ -78,26 +83,45 @@ namespace Alerts {
 		double total_{ 0 };
 	};
 
-	// Helper function to get bindary code for comparing price to high and low values
-	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice);
-	TimeOfDay getCurrentHourSlot();
-	std::pair<DailyHighsAndLows, LocalHighsAndLows> getHighsAndLows(vector<bool> comparisons);
-
 	class AlertHandler {
 	public:
+
+		AlertHandler(std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> contractMap);
+		//~AlertHandler();
 
 		void inputAlert(TimeFrame tf, std::shared_ptr<ContractData> cd,
 			std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle);
 
 		// **** Be sure to take into account alerts right before close
 		void checkAlertOutcomes();
+		void doneCheckingAlerts();
 
 		bool doneCheckingAlerts_{ false }; // Change to true on market close
 		//void outputAlert();
 
 	private:
+		std::mutex alertMtx_;
+		//std::thread alertCheckThread_;
 		// std::unordered_map<int, AlertNode> alertStorage;
 		std::queue<std::pair<AlertTags, Alert>> alertUpdateQueue;
+		// This will store all alert data and stats
+		std::map<AlertTags, AlertStats> alertData_;
+
+		// Points to the map being updated by the Option Scanner
+		std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> contractMap_;
 	};
+
+	//========================================================
+	// Helper Functions
+	//========================================================
+
+	// Get num strikes ITM or OTM
+	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice);
+	// Return the time of day during market hours 1-7
+	TimeOfDay getCurrentHourSlot();
+	// Get proximity to min and max price values
+	std::pair<DailyHighsAndLows, LocalHighsAndLows> getHighsAndLows(vector<bool> comparisons);
+	// Measure the win rate and the percent win of each alert
+	std::pair<double, double> checkWinStats(std::vector<std::shared_ptr<Candle>> prevCandles, Alert a);
 
 }

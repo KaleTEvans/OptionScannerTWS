@@ -1,7 +1,7 @@
 #include "OptionScanner.h"
 #include "Logger.h"
 
-OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker), alertHandler() {
+OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker) {
 
 	// Start the checkMessages thread
 	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
@@ -30,6 +30,12 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 	);
 
 	OPTIONSCANNER_DEBUG("Initializing scanner ... Request 1234 sent to client");
+
+	// Initialzie the contract chain
+	contractChain_ = std::make_shared<std::unordered_map<int, std::shared_ptr<ContractData>>>();
+
+	// Initialize the alert handler with a pointer to the contract map
+	alertHandler = std::make_unique<Alerts::AlertHandler>(contractChain_);
 }
 
 void OptionScanner::checkClientMessages() {
@@ -51,7 +57,7 @@ void OptionScanner::streamOptionData() {
 	// Wait for request
 	while (YW.getReqId() != 111) continue;
 	
-	OPTIONSCANNER_DEBUG("Market data request received, last tick price: {}", YW.lastTickPrice());
+	OPTIONSCANNER_INFO("Market data request received, last tick price: {}", YW.lastTickPrice());
 
 	updateStrikes(YW.lastTickPrice());
 
@@ -66,19 +72,19 @@ void OptionScanner::streamOptionData() {
 		// Use the wrapper conditional to check buffer
 		std::unique_lock<std::mutex> lock(YW.wrapperMutex());
 		YW.wrapperConditional().wait(lock, [&] { return YW.checkBufferFull(); });
-		// OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
+		OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
 
 		for (auto& candle : YW.processedFiveSecCandles()) {
 
 			int req = candle->reqId();
 
-			if (contractChain_.find(req) != contractChain_.end()) {
-				contractChain_[req]->updateData(std::move(candle));
+			if (contractChain_->find(req) != contractChain_->end()) {
+				contractChain_->at(req)->updateData(std::move(candle));
 			}
 			else {
 				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
 				registerAlertCallback(cd);
-				contractChain_[req] = cd;
+				contractChain_->insert({ req, cd });
 			}
 		}
 
@@ -87,8 +93,8 @@ void OptionScanner::streamOptionData() {
 		lock.unlock();
 		optScanCV_.notify_one();
 
-		updateStrikes(contractChain_[1234]->currentPrice());
-		//OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
+		updateStrikes(contractChain_->at(1234)->currentPrice());
+		OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
 	}
 }
 
@@ -100,7 +106,7 @@ bool OptionScanner::strikesUpdated() { return strikesUpdated_; }
 void OptionScanner::changeStrikesUpdated() { strikesUpdated_ = false; }
 
 void OptionScanner::outputChainData() {
-	for (auto& i : contractChain_) {
+	for (auto& i : *contractChain_) {
 		std::cout << "Strike: " << i.first << " Price: " << i.second->currentPrice() << std::endl;
 	}
 }
@@ -116,7 +122,7 @@ void OptionScanner::updateStrikes(double price) {
 
 	for (auto i : strikes) {
 		// If the contracts map doesn't already contain the strike, then a new one has come into scope
-		if (contractChain_.find(i) == contractChain_.end()) {
+		if (contractChain_->find(i) == contractChain_->end()) {
 
 			// Create new contracts if not in map and add to queue for requests
 			Contract con;
@@ -142,7 +148,7 @@ void OptionScanner::updateStrikes(double price) {
 		contractsInScope.insert(i + 1);
 	}
 
-	if (!contractReqQueue.empty()) OPTIONSCANNER_DEBUG("{} new contracts added to request queue", contractReqQueue.size());
+	if (!contractReqQueue.empty()) OPTIONSCANNER_INFO("{} new contracts added to request queue", contractReqQueue.size());
 
 	// Empty queue and create the requests
 	while (!contractReqQueue.empty()) {
@@ -167,12 +173,12 @@ void OptionScanner::updateStrikes(double price) {
 		contractReqQueue.pop();
 	}
 
-	//OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
+	OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
 
 	// If addedContracts vector exceeds current buffer size, update the buffer
 	if (static_cast<int>(addedContracts.size()) > YW.bufferCapacity()) {
 		YW.setBufferCapacity(static_cast<int>(addedContracts.size()));
-		OPTIONSCANNER_DEBUG("Current requests higher than buffer capacity... updating to size: {}", addedContracts.size());
+		OPTIONSCANNER_INFO("Current requests higher than buffer capacity... updating to size: {}", addedContracts.size());
 	}
 }
 
@@ -187,7 +193,7 @@ void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
 		// Make sure contract is in scope
 		if (contractsInScope.find(candle->reqId()) != contractsInScope.end()) {
 
-			alertHandler.inputAlert(tf, cd, contractChain_[1234], candle);
+			alertHandler->inputAlert(tf, cd, contractChain_->at(1234), candle);
 		}
 	});
 }
@@ -204,7 +210,7 @@ void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
 void OptionScanner::prepareContractData() {
 	std::cout << "Market closed, ending realTimeBar connection" << std::endl;
 	
-	for (auto i : contractChain_) EC->cancelRealTimeBars(i.first);
+	for (auto& i : *contractChain_) EC->cancelRealTimeBars(i.first);
 	EC->cancelRealTimeBars(1234);
 }
 
@@ -219,16 +225,16 @@ vector<int> populateStrikes(double price) {
 	// Round the price down to nearest increment
 	int roundedPrice = int(price + (multiple / 2));
 	roundedPrice -= roundedPrice % multiple;
-	int strikePrice = roundedPrice - (multiple * 4);
+	int strikePrice = roundedPrice - (multiple * 5);
 
 	// This will give us 9 strikes in total
-	while (strikePrice <= roundedPrice + (multiple * 4)) {
+	while (strikePrice <= roundedPrice + (multiple * 5)) {
 		strikes.push_back(strikePrice);
 		strikePrice += multiple;
 	}
 
-	//for (auto i : strikes) cout << i << " ";
-	//cout << endl;
+	for (auto i : strikes) cout << i << " ";
+	cout << endl;
 
 	return strikes;
 }

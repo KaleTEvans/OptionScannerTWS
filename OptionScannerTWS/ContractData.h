@@ -53,7 +53,7 @@ public:
 	vector<std::shared_ptr<Candle>> fiveMinData() const;
 
 	std::shared_ptr<Candle> latestCandle(TimeFrame tf);
-	vector<std::shared_ptr<Candle>> candlesLast30Minutes(TimeFrame tf);
+	vector<std::shared_ptr<Candle>> candlesLast30Minutes();
 
 	// Other data acessors
 	double currentPrice() const;

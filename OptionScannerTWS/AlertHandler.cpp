@@ -6,20 +6,63 @@ namespace Alerts {
 		VolumeThreshold volThreshold, PriceDelta underlyingPriceDelta, PriceDelta optionPriceDelta, DailyHighsAndLows underlyngDailyHL, 
 		LocalHighsAndLows underlyingLocalHL, DailyHighsAndLows optionDailyHL, LocalHighsAndLows optionLocalHL) :
 		optType(optType), timeFrame(timeFrame), rtm(rtm), timeOfDay(timeOfDay), volStDev(volStDev), volThreshold(volThreshold),
-		underlyingPriceDelta(underlyingPriceDelta), optionPriceDelta(optionPriceDelta), underlyngDailyHL(underlyngDailyHL), 
+		underlyingPriceDelta(underlyingPriceDelta), optionPriceDelta(optionPriceDelta), underlyingDailyHL(underlyingDailyHL), 
 		underlyingLocalHL(underlyingLocalHL), optionDailyHL(optionDailyHL), optionLocalHL(optionLocalHL) {}
+
+	bool operator<(const AlertTags& left, const AlertTags& right) {
+		if (left.optType < right.optType) return true;
+		if (right.optType < left.optType) return false;
+
+		if (left.timeFrame < right.timeFrame) return true;
+		if (right.timeFrame < left.timeFrame) return false;
+
+		if (left.rtm < right.rtm) return true;
+		if (right.rtm < left.rtm) return false;
+
+		if (left.timeOfDay < right.timeOfDay) return true;
+		if (right.timeOfDay < left.timeOfDay) return false;
+
+		if (left.volStDev < right.volStDev) return true;
+		if (right.volStDev < left.volStDev) return false;
+
+		if (left.volThreshold < right.volThreshold) return true;
+		if (right.volThreshold < left.volThreshold) return false;
+
+		if (left.underlyingPriceDelta < right.underlyingPriceDelta) return true;
+		if (right.underlyingPriceDelta < left.underlyingPriceDelta) return false;
+
+		if (left.optionPriceDelta < right.optionPriceDelta) return true;
+		if (right.optionPriceDelta < left.optionPriceDelta) return false;
+
+		if (left.underlyingDailyHL < right.underlyingDailyHL) return true;
+		if (right.underlyingDailyHL < left.underlyingDailyHL) return false;
+
+		if (left.underlyingLocalHL < right.underlyingLocalHL) return true;
+		if (right.underlyingLocalHL < left.underlyingLocalHL) return false;
+
+		if (left.optionDailyHL < right.optionDailyHL) return true;
+		if (right.optionDailyHL < left.optionDailyHL) return false;
+
+		if (left.optionLocalHL < right.optionLocalHL) return true;
+		if (right.optionLocalHL < left.optionLocalHL) return false;
+
+		return false; // If all numbers are equal, return false
+	}
 
 	Alert::Alert(int reqId, double currentPrice, TimeFrame tf) :
 		reqId(reqId), currentPrice(currentPrice), tf(tf) {
 
 		initTime = std::chrono::steady_clock::now();
+
+		time_t tempTime = std::chrono::duration_cast<std::chrono::seconds>(initTime.time_since_epoch()).count();
+		unixTime = static_cast<long>(tempTime);
 	}
 
-	void AlertStats::updateAlertStats(bool win, double percentWon) {
+	void AlertStats::updateAlertStats(double win, double percentWon) {
 		total_++;
+		totalWins_ += win;
 
-		if (win) {
-			totalWins_++;
+		if (win > 0) {
 			sumPercentWon_ += percentWon;
 		}
 
@@ -31,8 +74,15 @@ namespace Alerts {
 	double AlertStats::averageWin() { return averageWin_; }
 
 	//===================================================
-	// Alert Data 
+	// Alert Handler
 	//===================================================
+
+	AlertHandler::AlertHandler(std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> contractMap) :
+		contractMap_(contractMap) {
+	
+		// Start a thread to check the alerts
+		//alertCheckThread_ = std::thread(&AlertHandler::checkAlertOutcomes, this);
+	}
 
 	void AlertHandler::inputAlert(TimeFrame tf, std::shared_ptr<ContractData> cd, 
 		std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle) {
@@ -125,46 +175,89 @@ namespace Alerts {
 		alertUpdateQueue.push({ alertTags, alert });
 	}
 
-	//========================================================
-	// Function to get the AlertData level of success
-	//========================================================
+	void AlertHandler::checkAlertOutcomes() {
+		while (!doneCheckingAlerts_) {
+			while (!alertUpdateQueue.empty()) {
+				// Check current time to see if 30 minutes have passed since the first alert was added to the queue
+				std::chrono::steady_clock::time_point prevAlertTIme = alertUpdateQueue.front().second.initTime;
+				std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+				std::chrono::minutes elsapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - prevAlertTIme);
 
-	//void AlertData::getSuccessLevel(vector<Candle> postAlertData) {
-	//	double maxPrice = INT_MAX;
-	//	double minPrice = 0;
-	//	double percentChange = 0;
+				if (elsapsedTime >= std::chrono::minutes(30)) {
+					std::unique_lock<std::mutex> lock(alertMtx_);
+					
+					AlertTags tags = alertUpdateQueue.front().first;
+					Alert a = alertUpdateQueue.front().second;
+					// Access data from the contract map
+					std::vector<std::shared_ptr<Candle>> prevCandles = contractMap_->at(a.reqId)->candlesLast30Minutes();
 
-	//	for (size_t i = 0; i < postAlertData.size(); i++) {
-	//		// break the loop if the price drops below 30% before any gains
-	//		if (minPrice > 0 && abs(((postAlertData[i].close - minPrice) / minPrice) * 100) >= 30) {
-	//			// Add a log here to say max loss was met
-	//			break;
-	//		}
+					// just use the lock to access the contract map
+					lock.unlock();
 
-	//		if (maxPrice < INT_MAX) percentChange = abs(((postAlertData[i].close - maxPrice) / maxPrice) * 100);
-	//		if (percentChange >= 15 && percentChange < 30) successLevel = 1;
-	//		if (percentChange > 30 && percentChange < 100) successLevel = 2;
-	//		if (percentChange >= 100) successLevel = 3;
+					// Retrieve pair of win bool and percent win
+					std::pair<double, double> winStats = checkWinStats(prevCandles, a);
 
-	//		minPrice = min(minPrice, postAlertData[i].low);
-	//		maxPrice = max(maxPrice, postAlertData[i].high);
-	//	}
-	//}
+					// Now update the alert win rate if in the map
+					if (alertData_.find(tags) != alertData_.end()) {
+						alertData_[tags].updateAlertStats(winStats.first, winStats.second);
+					}
+					else {
+						AlertStats aStat;
+						aStat.updateAlertStats(winStats.first, winStats.second);
+						alertData_.insert({ tags, aStat });
+					}
 
-	//void AlertHandler::outputAlert(AlertData* a) {
-	//	std::stringstream ss;
-	//	for (size_t i = 0; i < a->alertCodes.size(); ++i) {
-	//		ss << a->alertCodes[i];
-	//		if (i != a->alertCodes.size() - 1) ss << ' ';
-	//	}
+					alertUpdateQueue.pop();
+				}
+			}
+		}
+	}
 
-	//	OPTIONSCANNER_INFO("Alert for {} {} | Current Price: {} | Codes: {} | Volume: {}", 
-	//		a->strike, a->optionType, a->closePrice, ss.str(), a->vol);
-	//}
+	void AlertHandler::doneCheckingAlerts() {
+		doneCheckingAlerts_ = true;
+		//alertCheckThread_.join();
+	}
 
 	//========================================================
 	// Helper Functions
 	//========================================================
+
+	std::pair<double, double> checkWinStats(std::vector<std::shared_ptr<Candle>> prevCandles, Alert a) {
+		// Ensure we start at a vector candle that is after the alert time
+		// If we are close to the market close, it won't be a full 30 minutes
+		size_t i = 0;
+		while (a.unixTime > prevCandles[i]->time()) i++;
+
+		double startPrice = a.currentPrice;
+		double maxPrice = startPrice;
+		double minPrice = startPrice;
+		double percentChangeHigh = 0;
+		double percentChangeLow = 0;
+
+		for (i; i < prevCandles.size(); i++) {
+
+			// If percentChangeLow gets to -30% break and compare to percentChangeHigh
+			if (percentChangeLow <= -30.0) {
+				break;
+			}
+
+			minPrice = min(minPrice, prevCandles[i]->low());
+			maxPrice = max(maxPrice, prevCandles[i]->high());
+
+			percentChangeLow = ((minPrice - startPrice) / startPrice) * 100;
+			percentChangeHigh = ((maxPrice - startPrice) / startPrice) * 100;
+		}
+
+		if (percentChangeHigh <= 0) {
+			return { 0, 0 };
+		}
+		else  if (percentChangeHigh > 0 && percentChangeHigh < 60.0) {
+			return { 0.5, percentChangeHigh };
+		}
+		else {
+			return { 2, percentChangeHigh };
+		}
+	}
 
 	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice) {
 		RelativeToMoney rtm;
@@ -177,31 +270,28 @@ namespace Alerts {
 		else {
 			int strikesOTM = static_cast<int>(std::ceil(priceDifference / 5));
 
-			switch (strikesOTM)
-			{
-			case 1:
+			if (strikesOTM == 1) {
 				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM1 : rtm = RelativeToMoney::ITM1;
 				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM1 : rtm = RelativeToMoney::OTM1;
-				break;
-			case 2:
+			}
+			else if (strikesOTM == 2) {
 				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM2 : rtm = RelativeToMoney::ITM2;
 				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM2 : rtm = RelativeToMoney::OTM2;
-				break;
-			case 3:
+			}
+			else if (strikesOTM == 3) {
 				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM3 : rtm = RelativeToMoney::ITM3;
 				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM3 : rtm = RelativeToMoney::OTM3;
-				break;
-			case 4:
+			} 
+			else if (strikesOTM == 4) {
 				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM4 : rtm = RelativeToMoney::ITM4;
 				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM4 : rtm = RelativeToMoney::OTM4;
-				break;
-			case 5:
-				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::OTM5 : rtm = RelativeToMoney::ITM5;
-				else (optType == OptionType::Call) ? rtm = RelativeToMoney::ITM5 : rtm = RelativeToMoney::OTM5;
-				break;
-			default:
+			} 
+			else if (strikesOTM >= 5) {
+				if (spxPrice > strike) (optType == OptionType::Call) ? rtm = RelativeToMoney::DeepOTM : rtm = RelativeToMoney::DeepITM;
+				else (optType == OptionType::Call) ? rtm = RelativeToMoney::DeepITM : rtm = RelativeToMoney::DeepOTM;
+			}
+			else {
 				std::cout << "Error ocurred calculating distance from price" << std::endl;
-				break;
 			}
 		}
 

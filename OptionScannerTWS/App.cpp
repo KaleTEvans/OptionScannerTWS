@@ -1,6 +1,6 @@
 #include "App.h"
 
-App::App(const char* host) : host(host), YW(19, false) {
+App::App(const char* host) : host(host), YW(23, false) {
 
     // Initialize connection
     EC = EClientL0::New(&YW);

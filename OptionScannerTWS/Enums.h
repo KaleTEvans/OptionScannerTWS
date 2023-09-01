@@ -24,8 +24,8 @@ namespace Alerts {
 	// In the Money or Out of the Money
 	enum class RelativeToMoney {
 		ATM,
-		ITM1, ITM2, ITM3, ITM4, ITM5,
-		OTM1, OTM2, OTM3, OTM4, OTM5
+		ITM1, ITM2, ITM3, ITM4, DeepITM,
+		OTM1, OTM2, OTM3, OTM4, DeepOTM
 	};
 
 	// Time of day

@@ -37,12 +37,12 @@ namespace Alerts {
 				PROCESS_VAL(ITM2);
 				PROCESS_VAL(ITM3);
 				PROCESS_VAL(ITM4);
-				PROCESS_VAL(ITM5);
+				PROCESS_VAL(DeepITM);
 				PROCESS_VAL(OTM1);
 				PROCESS_VAL(OTM2);
 				PROCESS_VAL(OTM3);
 				PROCESS_VAL(OTM4);
-				PROCESS_VAL(OTM5);
+				PROCESS_VAL(DeepOTM);
 			default: return "";
 			}
 	#undef PROCESS_VAL
@@ -197,8 +197,8 @@ namespace Alerts {
 		case Alerts::RelativeToMoney::ITM4:
 			res = "4 Strikes ITM";
 			break;
-		case Alerts::RelativeToMoney::ITM5:
-			res = "5 Strikes ITM";
+		case Alerts::RelativeToMoney::DeepITM:
+			res = "Deep ITM";
 			break;
 		case Alerts::RelativeToMoney::OTM1:
 			res = "1 Strikes OTM";
@@ -212,8 +212,8 @@ namespace Alerts {
 		case Alerts::RelativeToMoney::OTM4:
 			res = "4 Strikes OTM";
 			break;
-		case Alerts::RelativeToMoney::OTM5:
-			res = "5 Strikes OTM";
+		case Alerts::RelativeToMoney::DeepOTM:
+			res = "Deep OTM";
 			break;
 		default:
 			break;

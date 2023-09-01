@@ -60,9 +60,6 @@ TEST(ContractDataTests, updateDataTest) {
 
 	// Test return functionality for last 30 minutes of candles
 	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::FiveSecs).size(), 360);
-	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::ThirtySecs).size(), 60);
-	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::OneMin).size(), 30);
-	EXPECT_EQ(cd.candlesLast30Minutes(TimeFrame::FiveMin).size(), 6);
 }
 
 TEST(ContractDataTests, AlertSystemTest) {
