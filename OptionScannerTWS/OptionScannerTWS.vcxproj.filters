@@ -27,7 +27,7 @@
     <ClCompile Include="OptionScanner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AlertHandler.cpp">
+    <ClCompile Include="Alerts\AlertHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
@@ -51,6 +51,9 @@
     <ClCompile Include="Enums.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Alerts\AlertTags.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tWrapper.h">
@@ -68,7 +71,7 @@
     <ClInclude Include="OptionScanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AlertHandler.h">
+    <ClInclude Include="Alerts\AlertHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Enums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Alerts\AlertTags.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

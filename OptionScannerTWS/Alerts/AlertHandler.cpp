@@ -2,53 +2,6 @@
 
 namespace Alerts {
 
-	AlertTags::AlertTags(OptionType optType, TimeFrame timeFrame, RelativeToMoney rtm, TimeOfDay timeOfDay, VolumeStDev volStDev, 
-		VolumeThreshold volThreshold, PriceDelta underlyingPriceDelta, PriceDelta optionPriceDelta, DailyHighsAndLows underlyngDailyHL, 
-		LocalHighsAndLows underlyingLocalHL, DailyHighsAndLows optionDailyHL, LocalHighsAndLows optionLocalHL) :
-		optType(optType), timeFrame(timeFrame), rtm(rtm), timeOfDay(timeOfDay), volStDev(volStDev), volThreshold(volThreshold),
-		underlyingPriceDelta(underlyingPriceDelta), optionPriceDelta(optionPriceDelta), underlyingDailyHL(underlyingDailyHL), 
-		underlyingLocalHL(underlyingLocalHL), optionDailyHL(optionDailyHL), optionLocalHL(optionLocalHL) {}
-
-	bool operator<(const AlertTags& left, const AlertTags& right) {
-		if (left.optType < right.optType) return true;
-		if (right.optType < left.optType) return false;
-
-		if (left.timeFrame < right.timeFrame) return true;
-		if (right.timeFrame < left.timeFrame) return false;
-
-		if (left.rtm < right.rtm) return true;
-		if (right.rtm < left.rtm) return false;
-
-		if (left.timeOfDay < right.timeOfDay) return true;
-		if (right.timeOfDay < left.timeOfDay) return false;
-
-		if (left.volStDev < right.volStDev) return true;
-		if (right.volStDev < left.volStDev) return false;
-
-		if (left.volThreshold < right.volThreshold) return true;
-		if (right.volThreshold < left.volThreshold) return false;
-
-		if (left.underlyingPriceDelta < right.underlyingPriceDelta) return true;
-		if (right.underlyingPriceDelta < left.underlyingPriceDelta) return false;
-
-		if (left.optionPriceDelta < right.optionPriceDelta) return true;
-		if (right.optionPriceDelta < left.optionPriceDelta) return false;
-
-		if (left.underlyingDailyHL < right.underlyingDailyHL) return true;
-		if (right.underlyingDailyHL < left.underlyingDailyHL) return false;
-
-		if (left.underlyingLocalHL < right.underlyingLocalHL) return true;
-		if (right.underlyingLocalHL < left.underlyingLocalHL) return false;
-
-		if (left.optionDailyHL < right.optionDailyHL) return true;
-		if (right.optionDailyHL < left.optionDailyHL) return false;
-
-		if (left.optionLocalHL < right.optionLocalHL) return true;
-		if (right.optionLocalHL < left.optionLocalHL) return false;
-
-		return false; // If all numbers are equal, return false
-	}
-
 	Alert::Alert(int reqId, double currentPrice, TimeFrame tf) :
 		reqId(reqId), currentPrice(currentPrice), tf(tf) {
 
@@ -58,21 +11,6 @@ namespace Alerts {
 		unixTime = static_cast<long>(tempTime);
 	}
 
-	void AlertStats::updateAlertStats(double win, double percentWon) {
-		total_++;
-		totalWins_ += win;
-
-		if (win > 0) {
-			sumPercentWon_ += percentWon;
-		}
-
-		winRate_ = totalWins_ / total_;
-		averageWin_ = sumPercentWon_ / totalWins_;
-	}
-	
-	double AlertStats::winRate() { return winRate_; }
-	double AlertStats::averageWin() { return averageWin_; }
-
 	//===================================================
 	// Alert Handler
 	//===================================================
@@ -80,6 +18,8 @@ namespace Alerts {
 	AlertHandler::AlertHandler(std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> contractMap) :
 		contractMap_(contractMap) {
 	
+		// Initialize the alert tag stats class for win rate handling
+		alertTagStats = std::make_unique<AlertTagStats>();
 		// Start a thread to check the alerts
 		//alertCheckThread_ = std::thread(&AlertHandler::checkAlertOutcomes, this);
 	}
@@ -198,14 +138,7 @@ namespace Alerts {
 					std::pair<double, double> winStats = checkWinStats(prevCandles, a);
 
 					// Now update the alert win rate if in the map
-					if (alertData_.find(tags) != alertData_.end()) {
-						alertData_[tags].updateAlertStats(winStats.first, winStats.second);
-					}
-					else {
-						AlertStats aStat;
-						aStat.updateAlertStats(winStats.first, winStats.second);
-						alertData_.insert({ tags, aStat });
-					}
+					alertTagStats->updateStats(tags, winStats.first, winStats.second);
 
 					alertUpdateQueue.pop();
 				}
