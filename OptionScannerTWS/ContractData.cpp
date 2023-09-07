@@ -1,5 +1,5 @@
 #include "ContractData.h"
-#include "Logger.h"
+//#include "Logger.h"
 
 // Helper function to create new candles from time increments
 std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::shared_ptr<Candle>> data) {
@@ -147,7 +147,7 @@ std::shared_ptr<Candle> ContractData::latestCandle(TimeFrame tf) {
 	case TimeFrame::FiveMin:
 		return fiveMinCandles_.back();
 	default:
-		OPTIONSCANNER_ERROR("Failed to return most recent candle");
+		//OPTIONSCANNER_ERROR("Failed to return most recent candle");
 		return {};
 	}
 }
@@ -160,7 +160,7 @@ std::vector<std::shared_ptr<Candle>> ContractData::candlesLast30Minutes() {
 	}
 	else {
 		res = {};
-		OPTIONSCANNER_ERROR("Not enough five sec candles to return");
+		//OPTIONSCANNER_ERROR("Not enough five sec candles to return");
 	}
 
 	return res;
@@ -178,7 +178,7 @@ StandardDeviation ContractData::priceStDev(TimeFrame tf) {
 	case TimeFrame::FiveMin:
 		return sdPrice5Min_;
 	default:
-		OPTIONSCANNER_ERROR("Failed to return Price Standard Deviation Object");
+		//OPTIONSCANNER_ERROR("Failed to return Price Standard Deviation Object");
 		return {};
 	}
 }
@@ -195,7 +195,7 @@ StandardDeviation ContractData::volStDev(TimeFrame tf) {
 	case TimeFrame::FiveMin:
 		return sdVol5Min_;
 	default:
-		OPTIONSCANNER_ERROR("Failed to return Volume Standard Deviation Object");
+		//OPTIONSCANNER_ERROR("Failed to return Volume Standard Deviation Object");
 		return {};
 	}
 }

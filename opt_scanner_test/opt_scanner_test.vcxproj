@@ -51,6 +51,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\OptionScannerTWS\Alerts\AlertTags.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Candle.cpp" />
     <ClCompile Include="..\OptionScannerTWS\ContractData.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Enums.cpp" />
@@ -58,6 +59,7 @@
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
     <ClCompile Include="IntegrationTests\option_scanner_tests.cpp" />
     <ClCompile Include="MockClasses\MockOptionScanner.cpp" />
+    <ClCompile Include="UnitTests\alert_tag_tests.cpp" />
     <ClCompile Include="UnitTests\buffer_mock_tests.cpp" />
     <ClCompile Include="UnitTests\candle_tests.cpp" />
     <ClCompile Include="MockClasses\MockClient.cpp" />
