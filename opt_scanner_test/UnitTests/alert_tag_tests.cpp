@@ -10,7 +10,9 @@
 using namespace testing;
 using namespace Alerts;
 
-TEST(alertTagTests, tagMapFunctionality) {
+std::vector<std::pair<AlertTags, std::pair<double, double>>> createData();
+
+TEST(alertTagTests, alertTags) {
 	// Create some alerts
 	AlertTags alertOne(OptionType::Call, TimeFrame::FiveMin, RelativeToMoney::ATM, TimeOfDay::Hour1, VolumeStDev::LowVol,
 		VolumeThreshold::Vol100, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
@@ -32,5 +34,59 @@ TEST(alertTagTests, tagMapFunctionality) {
 		VolumeThreshold::Vol100, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
 		DailyHighsAndLows::NDH, LocalHighsAndLows::NLH);
 
+	AlertTags testAlertTwo(OptionType::Put, TimeFrame::FiveMin, RelativeToMoney::ATM, TimeOfDay::Hour1, VolumeStDev::LowVol,
+		VolumeThreshold::Vol100, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
+		DailyHighsAndLows::NDH, LocalHighsAndLows::NLH);
+
 	EXPECT_EQ(testMap.at(testAlert), 1);
+	EXPECT_EQ(testMap.at(testAlertTwo), 2);
+}
+
+TEST(alertTagTests, alertStats) {
+	// Use helper function to generate array of alert tag items, see below
+	std::vector<std::pair<AlertTags, std::pair<double, double>>> sampleData = createData();
+
+	AlertTagStats sampleStats;
+
+	for (auto i : sampleData) {
+		sampleStats.updateStats(i.first, i.second.first, i.second.second);
+	}
+}
+
+std::vector<std::pair<AlertTags, std::pair<double, double>>> createData() {
+	std::vector<std::pair<AlertTags, std::pair<double, double>>> sampleData;
+
+	AlertTags alertOne(OptionType::Call, TimeFrame::FiveSecs, RelativeToMoney::ITM1, TimeOfDay::Hour1, VolumeStDev::Over3,
+		VolumeThreshold::Vol1000, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
+		DailyHighsAndLows::NDH, LocalHighsAndLows::NLH);
+
+	std::vector<std::pair<double, double>> winStatsOne = { {1, 100},{0.5, 50}, {1, 100}, {0.5, 50}, {1, 100} }; // Avg win = 80%
+
+	for (auto i = 0; i < 5; i++) sampleData.push_back({ alertOne, winStatsOne[i] });
+
+	AlertTags alertTwo(OptionType::Put, TimeFrame::FiveSecs, RelativeToMoney::ITM1, TimeOfDay::Hour1, VolumeStDev::Over3,
+		VolumeThreshold::Vol1000, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLL,
+		DailyHighsAndLows::Inside, LocalHighsAndLows::NLH);
+
+	std::vector<std::pair<double, double>> winStatsTwo = { {0, 0}, {0, 0}, {1, 60} }; // Avg win = 60%, winRate = 33%
+
+	for (auto i = 0; i < 3; i++) sampleData.push_back({ alertTwo, winStatsTwo[i] });
+
+	AlertTags alertThree(OptionType::Call, TimeFrame::OneMin, RelativeToMoney::OTM4, TimeOfDay::Hour1, VolumeStDev::Over3,
+		VolumeThreshold::Vol1000, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
+		DailyHighsAndLows::NDL, LocalHighsAndLows::NLL);
+
+	std::vector<std::pair<double, double>> winStatsThree = { {0, 0}, {1, 100}, {0.5, 50}, {1, 100}, {0.5, 50} }; // Avg win = 75%, winRate = 66%
+
+	for (auto i = 0; i < 5; i++) sampleData.push_back({ alertThree, winStatsThree[i] });
+
+	AlertTags alertFour(OptionType::Put, TimeFrame::OneMin, RelativeToMoney::OTM4, TimeOfDay::Hour6, VolumeStDev::Over3,
+		VolumeThreshold::Vol1000, PriceDelta::Under1, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
+		DailyHighsAndLows::NDL, LocalHighsAndLows::NLL);
+
+	std::vector<std::pair<double, double>> winStatsFour = { {0, 0}, {0, 0} };
+
+	for (auto i = 0; i < 2; i++) sampleData.push_back({ alertFour, winStatsFour[i] });
+
+	return sampleData;
 }

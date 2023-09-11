@@ -14,11 +14,10 @@ namespace Alerts {
 		totalWins_ += win;
 
 		if (win > 0) {
-			sumPercentWon_ += percentWon;
+			averageWin_ = averageWin_ + ((percentWon - averageWin_) / totalWins_);
 		}
 
 		winRate_ = totalWins_ / total_;
-		averageWin_ = sumPercentWon_ / totalWins_;
 	}
 
 	double AlertStats::winRate() { return winRate_; }
@@ -28,15 +27,22 @@ namespace Alerts {
 	// Alert Tag Stats
 	//==================================================
 
+	AlertStats::AlertStats() {}
+	AlertStats::AlertStats(double totalWins, double total, double averageWin) : 
+		totalWins_(totalWins), total_(total), averageWin_(averageWin) {
+		
+		winRate_ = totalWins_ / total_;
+	}
+
 	void AlertTagStats::updateStats(AlertTags tags, double win, double pctWon) {
 
-		if (alertStats.find(tags) != alertStats.end()) {
-			alertStats[tags].updateAlertStats(win, pctWon);
+		if (alertSpecificStats_.find(tags) != alertSpecificStats_.end()) {
+			alertSpecificStats_[tags].updateAlertStats(win, pctWon);
 		}
 		else {
 			AlertStats ast;
 			ast.updateAlertStats(win, pctWon);
-			alertStats.insert({ tags, ast });
+			alertSpecificStats_.insert({ tags, ast });
 		}
 			 
 		updateStatsMap(optionTypeStats, tags.optType, win, pctWon);
@@ -51,6 +57,21 @@ namespace Alerts {
 		updateStatsMap(uLocalHLStats, tags.underlyingLocalHL, win, pctWon);
 		updateStatsMap(oDailyHLStats, tags.optionDailyHL, win, pctWon);
 		updateStatsMap(oLocalHLStats, tags.optionLocalHL, win, pctWon);
+	}
+
+	AlertStats AlertTagStats::alertSpecificStats(AlertTags tags) {
+		if (alertSpecificStats_.find(tags) != alertSpecificStats_.end()) {
+			return alertSpecificStats_.at(tags);
+		}
+		else {
+			std::cout << "No data yet" << std::endl;
+			return {};
+		}
+	}
+
+	template<typename T>
+	AlertStats AlertTagStats::tagSpecificStats(T tag) {
+		return {};
 	}
 
 	template<typename T>

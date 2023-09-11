@@ -188,7 +188,7 @@ namespace Alerts {
 			return { 0.5, percentChangeHigh };
 		}
 		else {
-			return { 2, percentChangeHigh };
+			return { 1, percentChangeHigh };
 		}
 	}
 

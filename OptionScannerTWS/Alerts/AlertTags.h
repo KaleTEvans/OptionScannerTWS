@@ -30,10 +30,14 @@ namespace Alerts {
 
 	class AlertStats {
 	public:
+		// Initial constructor
+		AlertStats();
+		// Constructor for creation with db data
+		AlertStats(double totalWins, double total, double averageWin);
 		// A win will be considered 60% profit or more (2:1 ratio to stop loss)
 		void updateAlertStats(double win, double percentWon);
 
-		double winRate(); // 0 is a loss, 1 is break even or small win, 2 is 60% or more
+		double winRate(); // 0 is a loss, 0.5 is break even or small win, 1 is 60% or more
 		double averageWin();
 
 	private:
@@ -41,7 +45,6 @@ namespace Alerts {
 		double averageWin_{ 0 };
 
 		double totalWins_{ 0 };
-		double sumPercentWon_{ 0 };
 
 		double total_{ 0 };
 	};
@@ -56,10 +59,15 @@ namespace Alerts {
 
 		void updateStats(AlertTags tags, double win, double pctWon);
 
+		AlertStats alertSpecificStats(AlertTags tags);
+		
+		template<typename T>
+		AlertStats tagSpecificStats(T tag);
+
 	private:
 
 		// Contains data for all specific alert combinations
-		std::map<AlertTags, AlertStats> alertStats;
+		std::map<AlertTags, AlertStats> alertSpecificStats_;
 
 		// Individual tag stats
 		std::unordered_map<OptionType, AlertStats> optionTypeStats;
