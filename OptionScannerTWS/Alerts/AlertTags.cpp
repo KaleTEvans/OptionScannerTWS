@@ -9,30 +9,37 @@ namespace Alerts {
 		underlyingPriceDelta(underlyingPriceDelta), optionPriceDelta(optionPriceDelta), underlyingDailyHL(underlyingDailyHL),
 		underlyingLocalHL(underlyingLocalHL), optionDailyHL(optionDailyHL), optionLocalHL(optionLocalHL) {}
 
+	//==================================
+	// Alert Stats
+	//==================================
+
+	AlertStats::AlertStats() {}
+
+	AlertStats::AlertStats(double weightedWins, double unweightedWins, double total, double averageWin) :
+		weightedWins_(weightedWins), unweightedWins_(unweightedWins), total_(total), averageWin_(averageWin) {
+
+		winRate_ = weightedWins_ / total_;
+	}
+
 	void AlertStats::updateAlertStats(double win, double percentWon) {
 		total_++;
-		totalWins_ += win;
+		weightedWins_ += win;
 
 		if (win > 0) {
-			averageWin_ = averageWin_ + ((percentWon - averageWin_) / totalWins_);
+			unweightedWins_++;
+			averageWin_ = averageWin_ + ((percentWon - averageWin_) / unweightedWins_);
 		}
 
-		winRate_ = totalWins_ / total_;
+		winRate_ = weightedWins_ / total_;
 	}
 
 	double AlertStats::winRate() { return winRate_; }
 	double AlertStats::averageWin() { return averageWin_; }
+	double AlertStats::totalAlerts() { return total_; }
 	
 	//==================================================
 	// Alert Tag Stats
 	//==================================================
-
-	AlertStats::AlertStats() {}
-	AlertStats::AlertStats(double totalWins, double total, double averageWin) : 
-		totalWins_(totalWins), total_(total), averageWin_(averageWin) {
-		
-		winRate_ = totalWins_ / total_;
-	}
 
 	void AlertTagStats::updateStats(AlertTags tags, double win, double pctWon) {
 
@@ -45,33 +52,52 @@ namespace Alerts {
 			alertSpecificStats_.insert({ tags, ast });
 		}
 			 
-		updateStatsMap(optionTypeStats, tags.optType, win, pctWon);
-		updateStatsMap(timeFrameStats, tags.timeFrame, win, pctWon);
-		updateStatsMap(relativeToMoneyStats, tags.rtm, win, pctWon);
-		updateStatsMap(timeoFDayStats, tags.timeOfDay, win, pctWon);
-		updateStatsMap(volStDevStats, tags.volStDev, win, pctWon);
-		updateStatsMap(volThresholdStats, tags.volThreshold, win, pctWon);
-		updateStatsMap(underlyingPriceDeltaStats, tags.underlyingPriceDelta, win, pctWon);
-		updateStatsMap(optionPriceDeltaStats, tags.optionPriceDelta, win, pctWon);
-		updateStatsMap(uDailyHLStats, tags.underlyingDailyHL, win, pctWon);
-		updateStatsMap(uLocalHLStats, tags.underlyingLocalHL, win, pctWon);
-		updateStatsMap(oDailyHLStats, tags.optionDailyHL, win, pctWon);
-		updateStatsMap(oLocalHLStats, tags.optionLocalHL, win, pctWon);
+		updateStatsMap(optionTypeStats_, tags.optType, win, pctWon);
+		updateStatsMap(timeFrameStats_, tags.timeFrame, win, pctWon);
+		updateStatsMap(relativeToMoneyStats_, tags.rtm, win, pctWon);
+		updateStatsMap(timeOfDayStats_, tags.timeOfDay, win, pctWon);
+		updateStatsMap(volStDevStats_, tags.volStDev, win, pctWon);
+		updateStatsMap(volThresholdStats_, tags.volThreshold, win, pctWon);
+		updateStatsMap(underlyingPriceDeltaStats_, tags.underlyingPriceDelta, win, pctWon);
+		updateStatsMap(optionPriceDeltaStats_, tags.optionPriceDelta, win, pctWon);
+		updateStatsMap(uDailyHLStats_, tags.underlyingDailyHL, win, pctWon);
+		updateStatsMap(uLocalHLStats_, tags.underlyingLocalHL, win, pctWon);
+		updateStatsMap(oDailyHLStats_, tags.optionDailyHL, win, pctWon);
+		updateStatsMap(oLocalHLStats_, tags.optionLocalHL, win, pctWon);
 	}
 
 	AlertStats AlertTagStats::alertSpecificStats(AlertTags tags) {
-		if (alertSpecificStats_.find(tags) != alertSpecificStats_.end()) {
-			return alertSpecificStats_.at(tags);
+		if (alertSpecificStats_.find(tags) == alertSpecificStats_.end()) {
+			// If no data, insert a class with 0 values
+			AlertStats ast;
+			alertSpecificStats_.insert({ tags, ast });
 		}
-		else {
-			std::cout << "No data yet" << std::endl;
-			return {};
-		}
+
+		return alertSpecificStats_.at(tags);
 	}
 
+	// Alert type accessors
+	AlertStats AlertTagStats::optionTypeStats(OptionType key) { return checkStatsMap(key, optionTypeStats_); }
+	AlertStats AlertTagStats::timeFrameStats(TimeFrame key) { return checkStatsMap(key, timeFrameStats_); }
+	AlertStats AlertTagStats::relativeToMoneyStats(RelativeToMoney key) { return checkStatsMap(key, relativeToMoneyStats_); }
+	AlertStats AlertTagStats::timeOfDayStats(TimeOfDay key) { return checkStatsMap(key, timeOfDayStats_); }
+	AlertStats AlertTagStats::volStDevStats(VolumeStDev key) { return checkStatsMap(key, volStDevStats_); }
+	AlertStats AlertTagStats::volThresholdStats(VolumeThreshold key) { return checkStatsMap(key, volThresholdStats_); }
+	AlertStats AlertTagStats::underlyingDeltaStats(PriceDelta key) { return checkStatsMap(key, underlyingPriceDeltaStats_); }
+	AlertStats AlertTagStats::optionDeltaStats(PriceDelta key) { return checkStatsMap(key, optionPriceDeltaStats_); }
+	AlertStats AlertTagStats::underlyingDailyHLStats(DailyHighsAndLows key) { return checkStatsMap(key, uDailyHLStats_); }
+	AlertStats AlertTagStats::underlyingLocalHLStats(LocalHighsAndLows key) { return checkStatsMap(key, uLocalHLStats_); }
+	AlertStats AlertTagStats::optionDailyHLStats(DailyHighsAndLows key) { return checkStatsMap(key, oDailyHLStats_); }
+	AlertStats AlertTagStats::optionLocalHLStats(LocalHighsAndLows key) { return checkStatsMap(key, oLocalHLStats_); }
+
 	template<typename T>
-	AlertStats AlertTagStats::tagSpecificStats(T tag) {
-		return {};
+	AlertStats AlertTagStats::checkStatsMap(T key, std::unordered_map<T, AlertStats>& statsMap) {
+		if (statsMap.find(key) == statsMap.end()) {
+			AlertStats ast;
+			statsMap.insert({ key, ast });
+		}
+
+		return statsMap.at(key);
 	}
 
 	template<typename T>

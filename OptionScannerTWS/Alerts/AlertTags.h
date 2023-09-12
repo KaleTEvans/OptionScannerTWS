@@ -33,18 +33,20 @@ namespace Alerts {
 		// Initial constructor
 		AlertStats();
 		// Constructor for creation with db data
-		AlertStats(double totalWins, double total, double averageWin);
+		AlertStats(double weightedWins, double unweightedWins, double total, double averageWin);
 		// A win will be considered 60% profit or more (2:1 ratio to stop loss)
 		void updateAlertStats(double win, double percentWon);
 
 		double winRate(); // 0 is a loss, 0.5 is break even or small win, 1 is 60% or more
 		double averageWin();
+		double totalAlerts();
 
 	private:
 		double winRate_{ 0 };
 		double averageWin_{ 0 };
 
-		double totalWins_{ 0 };
+		double unweightedWins_{ 0 };
+		double weightedWins_{ 0 };
 
 		double total_{ 0 };
 	};
@@ -61,8 +63,23 @@ namespace Alerts {
 
 		AlertStats alertSpecificStats(AlertTags tags);
 		
+		// Alert type accessors
+		AlertStats optionTypeStats(OptionType key);
+		AlertStats timeFrameStats(TimeFrame key);
+		AlertStats relativeToMoneyStats(RelativeToMoney key);
+		AlertStats timeOfDayStats(TimeOfDay key);
+		AlertStats volStDevStats(VolumeStDev key);
+		AlertStats volThresholdStats(VolumeThreshold key);
+		AlertStats underlyingDeltaStats(PriceDelta key);
+		AlertStats optionDeltaStats(PriceDelta key);
+		AlertStats underlyingDailyHLStats(DailyHighsAndLows key);
+		AlertStats underlyingLocalHLStats(LocalHighsAndLows key);
+		AlertStats optionDailyHLStats(DailyHighsAndLows key);
+		AlertStats optionLocalHLStats(LocalHighsAndLows key);
+
+		// This helper template will simplify checking if a map has a value or not
 		template<typename T>
-		AlertStats tagSpecificStats(T tag);
+		AlertStats checkStatsMap(T key, std::unordered_map<T, AlertStats>& statsMap);
 
 	private:
 
@@ -70,18 +87,18 @@ namespace Alerts {
 		std::map<AlertTags, AlertStats> alertSpecificStats_;
 
 		// Individual tag stats
-		std::unordered_map<OptionType, AlertStats> optionTypeStats;
-		std::unordered_map<TimeFrame, AlertStats> timeFrameStats;
-		std::unordered_map<RelativeToMoney, AlertStats> relativeToMoneyStats;
-		std::unordered_map<TimeOfDay, AlertStats> timeoFDayStats;
-		std::unordered_map<VolumeStDev, AlertStats> volStDevStats;
-		std::unordered_map<VolumeThreshold, AlertStats> volThresholdStats;
-		std::unordered_map<PriceDelta, AlertStats> underlyingPriceDeltaStats;
-		std::unordered_map<PriceDelta, AlertStats> optionPriceDeltaStats;
-		std::unordered_map<DailyHighsAndLows, AlertStats> uDailyHLStats;
-		std::unordered_map<LocalHighsAndLows, AlertStats> uLocalHLStats;
-		std::unordered_map<DailyHighsAndLows, AlertStats> oDailyHLStats;
-		std::unordered_map<LocalHighsAndLows, AlertStats> oLocalHLStats;
+		std::unordered_map<OptionType, AlertStats> optionTypeStats_;
+		std::unordered_map<TimeFrame, AlertStats> timeFrameStats_;
+		std::unordered_map<RelativeToMoney, AlertStats> relativeToMoneyStats_;
+		std::unordered_map<TimeOfDay, AlertStats> timeOfDayStats_;
+		std::unordered_map<VolumeStDev, AlertStats> volStDevStats_;
+		std::unordered_map<VolumeThreshold, AlertStats> volThresholdStats_;
+		std::unordered_map<PriceDelta, AlertStats> underlyingPriceDeltaStats_;
+		std::unordered_map<PriceDelta, AlertStats> optionPriceDeltaStats_;
+		std::unordered_map<DailyHighsAndLows, AlertStats> uDailyHLStats_;
+		std::unordered_map<LocalHighsAndLows, AlertStats> uLocalHLStats_;
+		std::unordered_map<DailyHighsAndLows, AlertStats> oDailyHLStats_;
+		std::unordered_map<LocalHighsAndLows, AlertStats> oLocalHLStats_;
 	};
 
 	template<typename T>

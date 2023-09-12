@@ -51,6 +51,22 @@ TEST(alertTagTests, alertStats) {
 	for (auto i : sampleData) {
 		sampleStats.updateStats(i.first, i.second.first, i.second.second);
 	}
+
+	// First test that all the alerts have been added
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[0].first).totalAlerts(), 5);
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[5].first).totalAlerts(), 3);
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[8].first).totalAlerts(), 5);
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[13].first).totalAlerts(), 2);
+
+	// Check the average win
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[0].first).averageWin(), 80);
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[5].first).averageWin(), 60);
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[8].first).averageWin(), 75);
+	EXPECT_EQ(sampleStats.alertSpecificStats(sampleData[13].first).averageWin(), 0);
+
+	// Check win rates
+	EXPECT_EQ(sampleStats.timeFrameStats(sampleData[0].first.timeFrame).winRate(), 0.625);
+	EXPECT_EQ(sampleStats.timeOfDayStats(sampleData[0].first.timeOfDay).winRate(), 8.0/13.0);
 }
 
 std::vector<std::pair<AlertTags, std::pair<double, double>>> createData() {
@@ -60,7 +76,7 @@ std::vector<std::pair<AlertTags, std::pair<double, double>>> createData() {
 		VolumeThreshold::Vol1000, PriceDelta::Over2, PriceDelta::Under1, DailyHighsAndLows::Inside, LocalHighsAndLows::NLH,
 		DailyHighsAndLows::NDH, LocalHighsAndLows::NLH);
 
-	std::vector<std::pair<double, double>> winStatsOne = { {1, 100},{0.5, 50}, {1, 100}, {0.5, 50}, {1, 100} }; // Avg win = 80%
+	std::vector<std::pair<double, double>> winStatsOne = { {1, 100}, {0.5, 50}, {1, 100}, {0.5, 50}, {1, 100} }; // Avg win = 80%
 
 	for (auto i = 0; i < 5; i++) sampleData.push_back({ alertOne, winStatsOne[i] });
 
