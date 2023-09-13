@@ -21,11 +21,11 @@
 #include <sstream>
 #include <map>
 
-#include "Enums.h"
+#include "../Enums.h"
 #include "AlertTags.h"
-#include "tWrapper.h"
-#include "ContractData.h"
-#include "Logger.h"
+#include "../tWrapper.h"
+#include "../ContractData.h"
+// #include "Logger.h"
 
 using std::cout;
 using std::endl;

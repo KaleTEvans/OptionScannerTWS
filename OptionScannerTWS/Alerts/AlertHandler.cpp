@@ -105,11 +105,11 @@ namespace Alerts {
 		AlertTags alertTags(optType, tf, rtm, tod, volStDev, volThreshold, underlyingDelta, optionDelta, spxHighLowVals.first,
 			spxHighLowVals.second, optHighLowVals.first, optHighLowVals.second);
 
-		if (vol > 50) {
+		/*if (vol > 50) {
 			OPTIONSCANNER_INFO("{} at Strike: {} | Current Volume: {} [ TAGS: TimeFrame: {} | {} | {} | Standard Deviations: {} | Total Vol: {} ]",
 				EnumString::option_type(optType), strike, vol, EnumString::time_frame(tf), EnumString::realtive_to_money(rtm),
 				EnumString::time_of_day(tod), EnumString::vol_st_dev(volStDev), EnumString::vol_threshold(volThreshold));
-		}
+		}*/
 		//std::cout << "Alert added for " << optType << " at Strike: " << strike << " | Current Volume: " << vol << std::endl;
 
 		alertUpdateQueue.push({ alertTags, alert });

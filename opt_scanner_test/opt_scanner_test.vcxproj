@@ -51,11 +51,15 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\OptionScannerTWS\Alerts\AlertHandler.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Alerts\AlertTags.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Candle.cpp" />
     <ClCompile Include="..\OptionScannerTWS\ContractData.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Enums.cpp" />
     <ClCompile Include="BenchmarkTests\benchmarks.cpp" />
+    <ClCompile Include="IntegrationTests\alert_handler_tests.cpp">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OptionScannerTWS);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
     <ClCompile Include="IntegrationTests\option_scanner_tests.cpp" />
     <ClCompile Include="MockClasses\MockOptionScanner.cpp" />
