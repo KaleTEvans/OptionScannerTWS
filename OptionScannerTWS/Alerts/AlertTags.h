@@ -35,11 +35,11 @@ namespace Alerts {
 		// Constructor for creation with db data
 		AlertStats(double weightedWins, double unweightedWins, double total, double averageWin);
 		// A win will be considered 60% profit or more (2:1 ratio to stop loss)
-		void updateAlertStats(double win, double percentWon);
+		void updateAlertStats(const double win, const double percentWon);
 
-		double winRate(); // 0 is a loss, 0.5 is break even or small win, 1 is 60% or more
-		double averageWin();
-		double totalAlerts();
+		double winRate() const; // 0 is a loss, 0.5 is break even or small win, 1 is 60% or more
+		double averageWin() const;
+		double totalAlerts() const;
 
 	private:
 		double winRate_{ 0 };

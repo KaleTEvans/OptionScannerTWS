@@ -21,7 +21,7 @@ namespace Alerts {
 		winRate_ = weightedWins_ / total_;
 	}
 
-	void AlertStats::updateAlertStats(double win, double percentWon) {
+	void AlertStats::updateAlertStats(const double win, const double percentWon) {
 		total_++;
 		weightedWins_ += win;
 
@@ -33,9 +33,9 @@ namespace Alerts {
 		winRate_ = weightedWins_ / total_;
 	}
 
-	double AlertStats::winRate() { return winRate_; }
-	double AlertStats::averageWin() { return averageWin_; }
-	double AlertStats::totalAlerts() { return total_; }
+	double AlertStats::winRate() const { return winRate_; }
+	double AlertStats::averageWin() const { return averageWin_; }
+	double AlertStats::totalAlerts() const { return total_; }
 	
 	//==================================================
 	// Alert Tag Stats

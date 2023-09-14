@@ -62,7 +62,8 @@ namespace Alerts {
 
 	private:
 		std::mutex alertMtx_;
-		//std::thread alertCheckThread_;
+		std::thread alertCheckThread_;
+
 		// std::unordered_map<int, AlertNode> alertStorage;
 		std::queue<std::pair<AlertTags, Alert>> alertUpdateQueue;
 		// This will store all alert data and stats
@@ -79,7 +80,7 @@ namespace Alerts {
 	// Get num strikes ITM or OTM
 	RelativeToMoney distFromPrice(OptionType optType, int strike, double spxPrice);
 	// Return the time of day during market hours 1-7
-	TimeOfDay getCurrentHourSlot();
+	TimeOfDay getCurrentHourSlot(long unixTime = 0);
 	// Get proximity to min and max price values
 	std::pair<DailyHighsAndLows, LocalHighsAndLows> getHighsAndLows(vector<bool> comparisons);
 	// Measure the win rate and the percent win of each alert

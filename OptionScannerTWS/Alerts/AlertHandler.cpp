@@ -21,7 +21,7 @@ namespace Alerts {
 		// Initialize the alert tag stats class for win rate handling
 		alertTagStats = std::make_unique<AlertTagStats>();
 		// Start a thread to check the alerts
-		//alertCheckThread_ = std::thread(&AlertHandler::checkAlertOutcomes, this);
+		alertCheckThread_ = std::thread(&AlertHandler::checkAlertOutcomes, this);
 	}
 
 	void AlertHandler::inputAlert(TimeFrame tf, std::shared_ptr<ContractData> cd, 
@@ -148,7 +148,7 @@ namespace Alerts {
 
 	void AlertHandler::doneCheckingAlerts() {
 		doneCheckingAlerts_ = true;
-		//alertCheckThread_.join();
+		alertCheckThread_.join();
 	}
 
 	//========================================================
@@ -231,12 +231,19 @@ namespace Alerts {
 		return rtm;
 	}
 
-	TimeOfDay getCurrentHourSlot() {
+	TimeOfDay getCurrentHourSlot(long unixTime) {
 		TimeOfDay tod;
 
-		// Get the current time
-		auto now = std::chrono::system_clock::now();
-		time_t currentTime = std::chrono::system_clock::to_time_t(now);
+		std::time_t currentTime;
+		
+		if (unixTime > 0) {
+			currentTime = static_cast<time_t>(unixTime);
+		}
+		else {
+			// Get the current time
+			auto now = std::chrono::system_clock::now();
+			currentTime = std::chrono::system_clock::to_time_t(now);
+		}
 
 		// Convert the current time to local time
 		tm* localTime = std::localtime(&currentTime);
