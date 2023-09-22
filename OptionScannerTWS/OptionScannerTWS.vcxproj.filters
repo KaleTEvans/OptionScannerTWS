@@ -54,6 +54,9 @@
     <ClCompile Include="Alerts\AlertTags.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Securities\IndexOptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tWrapper.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Alerts\AlertTags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Securities\IndexOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

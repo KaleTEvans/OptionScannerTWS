@@ -257,6 +257,7 @@
     <ClCompile Include="OptionScannerTWS.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Securities\IndexOptions.cpp" />
     <ClCompile Include="SQLSchema.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -287,6 +288,7 @@
     <ClInclude Include="Enums.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="Securities\IndexOptions.h" />
     <ClInclude Include="SQLSchema.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
