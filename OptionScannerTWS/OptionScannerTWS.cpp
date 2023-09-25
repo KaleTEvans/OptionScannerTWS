@@ -1,5 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#define TEST_CONFIG
+
+#ifndef TEST_CONFIG
+
 #include <iostream>
 #include <memory>
 #include <ctime>
@@ -422,4 +426,10 @@ void testRealTimeBars(std::unique_ptr<App>& test) {
 //
 //    return true;
 //}
+
+#else
+
+int main(void) { return 0; }
+
+#endif // !TEST_CONFIG
 

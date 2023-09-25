@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #pragma once
 
 #include <iostream>
@@ -7,6 +9,7 @@
 #include <memory>
 
 #include "../tWrapper.h"
+#include "../ContractData.h"
 
 namespace Securities {
 
@@ -14,8 +17,16 @@ namespace Securities {
 	public:
 		Index(IBString ticker, const int req, const int multiple, const int numStrikes);
 
+		// Mutators
+		int numReqs() const;
+		std::vector<int> currentActiveReqs() const;
+		bool checkCurrentScope(const int req);
+
+		void changeNumStrikes(const int strikes);
+
 		void initializeOptionRequests(EClientL0* EC, const int mktReq);
-		void updateOptionRequests(EClientL0* EC, const double curPrice);
+		void updateOptionRequests(EClientL0* EC, const double curPrice, IBString todayDate,
+			std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> chainData);
 
 
 	private:
@@ -23,7 +34,7 @@ namespace Securities {
 		Contract con_;
 		const int indReq_;
 		const int multiple_;
-		const int numStrikes_;
+		int numStrikes_;
 
 		std::vector<int> currentReqs_;
 		std::unordered_set<int> consInScope_;
@@ -34,35 +45,3 @@ namespace Securities {
 	std::vector<int> getStrikes(const double price, const int multiple, const int numStrikes);
 }
 
-namespace Securities {
-
-	//namespace Index {
-
-		Contract createIndexContract(IBString ticker) {
-			Contract con;
-			con.symbol = ticker;
-			con.secType = *SecType::IND;
-			con.currency = "USD";
-			con.primaryExchange = *Exchange::CBOE;
-
-			return con;
-		}
-
-		void initializeOptionRequests(EClientL0* EC, Contract con, const int req, const int mktReq) {
-			// begin by sending an RTB request for the index
-			EC->reqRealTimeBars
-			(req
-				, con
-				, 5
-				, *WhatToShow::MIDPOINT
-				, UseRTH::OnlyRegularTradingData
-			);
-
-			// Now add the exchange and send a mkt data request
-			con.exchange = *Exchange::IB_SMART;
-			EC->reqMktData(mktReq, con, "", true);
-		}
-
-		//std::unordered_set<int> updateOptionRequests(EClientL0* EC, )
-	//}
-}
