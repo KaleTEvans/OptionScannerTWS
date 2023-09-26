@@ -21,7 +21,7 @@
 #include <functional>
 #include <memory>
 
-//#include "tWrapper.h"
+#include "tWrapper.h"
 #include "Enums.h"
 #include "Candle.h"
 #include "Formulas.h"

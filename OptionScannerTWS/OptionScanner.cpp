@@ -20,7 +20,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 	todayDate = EndDateTime(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 
 	// Create RTB request for SPX underlying **This will not be accessible until buffer is processed
-	//YW.showRealTimeDataOutput();
+	// YW.showRealTimeDataOutput();
 	EC->reqRealTimeBars
 	(1234
 		, SPX
@@ -72,7 +72,7 @@ void OptionScanner::streamOptionData() {
 		// Use the wrapper conditional to check buffer
 		std::unique_lock<std::mutex> lock(YW.wrapperMutex());
 		YW.wrapperConditional().wait(lock, [&] { return YW.checkBufferFull(); });
-		OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
+		//OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
 
 		for (auto& candle : YW.processedFiveSecCandles()) {
 
@@ -94,7 +94,7 @@ void OptionScanner::streamOptionData() {
 		optScanCV_.notify_one();
 
 		updateStrikes(contractChain_->at(1234)->currentPrice());
-		OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
+		//OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
 	}
 }
 
@@ -173,7 +173,7 @@ void OptionScanner::updateStrikes(double price) {
 		contractReqQueue.pop();
 	}
 
-	OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
+	//OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
 
 	// If addedContracts vector exceeds current buffer size, update the buffer
 	if (static_cast<int>(addedContracts.size()) > YW.bufferCapacity()) {
@@ -233,8 +233,8 @@ vector<int> populateStrikes(double price) {
 		strikePrice += multiple;
 	}
 
-	for (auto i : strikes) cout << i << " ";
-	cout << endl;
+	//for (auto i : strikes) cout << i << " ";
+	//cout << endl;
 
 	return strikes;
 }

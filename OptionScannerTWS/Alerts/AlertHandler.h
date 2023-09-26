@@ -25,7 +25,7 @@
 #include "AlertTags.h"
 #include "../tWrapper.h"
 #include "../ContractData.h"
-// #include "Logger.h"
+#include "Logger.h"
 
 using std::cout;
 using std::endl;
@@ -36,12 +36,13 @@ namespace Alerts {
 
 	struct Alert {
 		int reqId;
+		int strike;
 		double currentPrice;
 		TimeFrame tf;
 		std::chrono::steady_clock::time_point initTime;
 		long unixTime;
 
-		Alert(int reqId, double currentPrice, TimeFrame tf);
+		Alert(int reqId, int strike, double currentPrice, TimeFrame tf);
 	};
 
 	class AlertHandler {

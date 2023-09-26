@@ -1,5 +1,5 @@
 #include "ContractData.h"
-//#include "Logger.h"
+#include "Logger.h"
 
 // Helper function to create new candles from time increments
 std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::shared_ptr<Candle>> data) {

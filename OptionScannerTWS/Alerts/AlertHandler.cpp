@@ -2,8 +2,8 @@
 
 namespace Alerts {
 
-	Alert::Alert(int reqId, double currentPrice, TimeFrame tf) :
-		reqId(reqId), currentPrice(currentPrice), tf(tf) {
+	Alert::Alert(int reqId, int strike, double currentPrice, TimeFrame tf) :
+		reqId(reqId), strike(strike), currentPrice(currentPrice), tf(tf) {
 
 		initTime = std::chrono::steady_clock::now();
 
@@ -27,8 +27,6 @@ namespace Alerts {
 	void AlertHandler::inputAlert(TimeFrame tf, std::shared_ptr<ContractData> cd, 
 		std::shared_ptr<ContractData> SPX, std::shared_ptr<Candle> candle) {
 
-		Alert alert(candle->reqId(), candle->close(), tf);
-
 		int strike = 0;
 		OptionType optType;
 		RelativeToMoney rtm;
@@ -48,6 +46,8 @@ namespace Alerts {
 			optType = OptionType::Put;
 			strike = candle->reqId() - 1;
 		}
+
+		Alert alert(candle->reqId(), strike, candle->close(), tf);
 
 		//==================================================================
 		// Alert code determining how close to the money the option is
@@ -105,11 +105,11 @@ namespace Alerts {
 		AlertTags alertTags(optType, tf, rtm, tod, volStDev, volThreshold, underlyingDelta, optionDelta, spxHighLowVals.first,
 			spxHighLowVals.second, optHighLowVals.first, optHighLowVals.second);
 
-		/*if (vol > 50) {
+		if (vol > 50) {
 			OPTIONSCANNER_INFO("{} at Strike: {} | Current Volume: {} [ TAGS: TimeFrame: {} | {} | {} | Standard Deviations: {} | Total Vol: {} ]",
 				EnumString::option_type(optType), strike, vol, EnumString::time_frame(tf), EnumString::realtive_to_money(rtm),
 				EnumString::time_of_day(tod), EnumString::vol_st_dev(volStDev), EnumString::vol_threshold(volThreshold));
-		}*/
+		}
 		//std::cout << "Alert added for " << optType << " at Strike: " << strike << " | Current Volume: " << vol << std::endl;
 
 		alertUpdateQueue.push({ alertTags, alert });
@@ -137,11 +137,17 @@ namespace Alerts {
 					// Retrieve pair of win bool and percent win
 					std::pair<double, double> winStats = checkWinStats(prevCandles, a);
 
+					OPTIONSCANNER_DEBUG("Update complete for {} at strike: {} | [ TimeFrame: {} | {} | Total Vol: {} ] [ Win Pct: {} ]",
+						EnumString::option_type(tags.optType), a.strike, EnumString::time_frame(tags.timeFrame), EnumString::realtive_to_money(tags.rtm),
+						EnumString::vol_threshold(tags.volThreshold), winStats.second);
+
 					// Now update the alert win rate if in the map
 					alertTagStats->updateStats(tags, winStats.first, winStats.second);
 
 					alertUpdateQueue.pop();
 				}
+
+				std::this_thread::sleep_for(std::chrono::seconds(5));
 			}
 		}
 	}

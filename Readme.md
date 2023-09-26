@@ -18,11 +18,13 @@ with the price delta (high-low) for both the contract and the underlying being l
 an alert. The 5 second, 30 second, 1 minute, and 5 minute time frames will all be monitored simultaneously for each contract.
 
 ### Current Status
-I have decided to make the alert system much more complex. Each alert contains a vector of different codes. These codes each have different 
-attributes, for example, timeframe, magnitude of volume, time of day, etc. This will allow me to store the alerts in a tree structure, about 6 or 7
-layers depending on the type of alert. Each alert will also be updated at 5, 15, and 30 minute intervals, to determine the magnitude of
-success of the given alert. As data is collected each day and analyzed, this should allow the program to add a probability of success
-for every level of data provided in each alert.
+The base application will track an alert any time an unusual volume has been notified. The alert will then be assigned several tags, which 
+can be seen in the enums.h file. Currently, the time window is set to track alerts for 30 minutes. After 30 minutes, the percent gain will 
+be calculated for the option that has been alerted, if any, and added to a map containing each of the tags. This way, the app can track
+the success probability for both the specific alert, as well as each of the tags individually. The basic state of the application is now
+complete. We can monitor the SPX options chain throughout the day, see alerts as the come in (currently via the terminal) as well as
+determine their level of success after 30 minutes. Future updates will include an SQL database with API capabilities for a future web 
+applicaiton.
 
 ## Technologies Used
 * C++
@@ -30,7 +32,7 @@ for every level of data provided in each alert.
 * TwsApiCpp library by JanBoonen (https://github.com/JanBoonen/TwsApiCpp)
 
 ## Progress Updates
-<img src="Assets/TerminalOutput1.PNG" />
+<img src="Assets/TerminalOutput2.PNG" />
 
 * Very raw form of alerts has been completed, outputting to terminal. All we are doing here is checking for volume above normal 
 	standard deviations for each timeframe. 

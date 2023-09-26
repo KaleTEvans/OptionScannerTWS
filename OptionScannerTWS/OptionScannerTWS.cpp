@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#define TEST_CONFIG
+// #define TEST_CONFIG
 
 #ifndef TEST_CONFIG
 
@@ -27,7 +27,7 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = true;
+constexpr bool runTests = false;
 
 // Main launcher for imformal tests
 void informalTests();
