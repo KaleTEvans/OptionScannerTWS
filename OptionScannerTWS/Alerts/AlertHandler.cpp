@@ -109,6 +109,15 @@ namespace Alerts {
 			OPTIONSCANNER_INFO("{} at Strike: {} | Current Volume: {} [ TAGS: TimeFrame: {} | {} | {} | Standard Deviations: {} | Total Vol: {} ]",
 				EnumString::option_type(optType), strike, vol, EnumString::time_frame(tf), EnumString::realtive_to_money(rtm),
 				EnumString::time_of_day(tod), EnumString::vol_st_dev(volStDev), EnumString::vol_threshold(volThreshold));
+
+			AlertStats stats = alertTagStats->alertSpecificStats(alertTags);
+			if (stats.totalAlerts() == 0) {
+				OPTIONSCANNER_INFO("Currently no data available for alert: {} {}", EnumString::option_type(optType), strike);
+			}
+			else {
+				OPTIONSCANNER_INFO("Data for alert: {} {} | Win Rate: {} | Average Win: {}",
+					EnumString::option_type(optType), strike, stats.winRate(), stats.averageWin());
+			}
 		}
 		//std::cout << "Alert added for " << optType << " at Strike: " << strike << " | Current Volume: " << vol << std::endl;
 
@@ -116,6 +125,9 @@ namespace Alerts {
 	}
 
 	void AlertHandler::checkAlertOutcomes() {
+		// Start time to reference and log win rate data every 30 minutes
+		std::chrono::steady_clock::time_point refTime = std::chrono::steady_clock::now();
+
 		while (!doneCheckingAlerts_) {
 			while (!alertUpdateQueue.empty()) {
 				// Check current time to see if 30 minutes have passed since the first alert was added to the queue
@@ -137,14 +149,21 @@ namespace Alerts {
 					// Retrieve pair of win bool and percent win
 					std::pair<double, double> winStats = checkWinStats(prevCandles, a);
 
-					OPTIONSCANNER_DEBUG("Update complete for {} at strike: {} | [ TimeFrame: {} | {} | Total Vol: {} ] [ Win Pct: {} ]",
+					/*OPTIONSCANNER_DEBUG("Update complete for {} at strike: {} | [ TimeFrame: {} | {} | Total Vol: {} ] [ Win Pct: {} ]",
 						EnumString::option_type(tags.optType), a.strike, EnumString::time_frame(tags.timeFrame), EnumString::realtive_to_money(tags.rtm),
-						EnumString::vol_threshold(tags.volThreshold), winStats.second);
+						EnumString::vol_threshold(tags.volThreshold), winStats.second);*/
 
 					// Now update the alert win rate if in the map
 					alertTagStats->updateStats(tags, winStats.first, winStats.second);
 
 					alertUpdateQueue.pop();
+				}
+
+				// Log alert tag values every 30 mintues
+				std::chrono::minutes elapsedLogTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - refTime);
+				if (elapsedLogTime >= std::chrono::minutes(30)) {
+					alertTagStats->logAllTagStats();
+					refTime = std::chrono::steady_clock::now();
 				}
 
 				std::this_thread::sleep_for(std::chrono::seconds(5));

@@ -90,6 +90,74 @@ namespace Alerts {
 	AlertStats AlertTagStats::optionDailyHLStats(DailyHighsAndLows key) { return checkStatsMap(key, oDailyHLStats_); }
 	AlertStats AlertTagStats::optionLocalHLStats(LocalHighsAndLows key) { return checkStatsMap(key, oLocalHLStats_); }
 
+	void AlertTagStats::logAllTagStats() {
+#ifndef TEST_CONFIG
+
+		OPTIONSCANNER_INFO("Beginning Tag Stat Output ====================================================================");
+		OPTIONSCANNER_INFO("OptionType | Call | Win Rate: {} | Average Win: {}",
+			optionTypeStats(OptionType::Call).winRate(), optionTypeStats(OptionType::Call).averageWin());
+		OPTIONSCANNER_INFO("OptionType | Put | Win Rate: {} | Average Win: {}",
+			optionTypeStats(OptionType::Put).winRate(), optionTypeStats(OptionType::Put).averageWin());
+
+		OPTIONSCANNER_INFO("TimeFrame | 5 Sec | Win Rate: {} | Average Win: {}",
+			timeFrameStats(TimeFrame::FiveSecs).winRate(), timeFrameStats(TimeFrame::FiveSecs).averageWin());
+		OPTIONSCANNER_INFO("TimeFrame | 30 Sec | Win Rate: {} | Average Win: {}",
+			timeFrameStats(TimeFrame::ThirtySecs).winRate(), timeFrameStats(TimeFrame::ThirtySecs).averageWin());
+		OPTIONSCANNER_INFO("TimeFrame | 1 Min | Win Rate: {} | Average Win: {}",
+			timeFrameStats(TimeFrame::OneMin).winRate(), timeFrameStats(TimeFrame::OneMin).averageWin());
+		OPTIONSCANNER_INFO("TimeFrame | 5 Min | Win Rate: {} | Average Win: {}",
+			timeFrameStats(TimeFrame::FiveMin).winRate(), timeFrameStats(TimeFrame::FiveMin).averageWin());
+
+		OPTIONSCANNER_INFO("RTM | ATM | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::ATM).winRate(), relativeToMoneyStats(RelativeToMoney::ATM).averageWin());
+		OPTIONSCANNER_INFO("RTM | ITM1 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::ITM1).winRate(), relativeToMoneyStats(RelativeToMoney::ITM1).averageWin());
+		OPTIONSCANNER_INFO("RTM | ITM2 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::ITM2).winRate(), relativeToMoneyStats(RelativeToMoney::ITM2).averageWin());
+		OPTIONSCANNER_INFO("RTM | ITM3 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::ITM3).winRate(), relativeToMoneyStats(RelativeToMoney::ITM3).averageWin());
+		OPTIONSCANNER_INFO("RTM | ITM4 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::ITM4).winRate(), relativeToMoneyStats(RelativeToMoney::ITM4).averageWin());
+		OPTIONSCANNER_INFO("RTM | Deep ITM | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::DeepITM).winRate(), relativeToMoneyStats(RelativeToMoney::DeepITM).averageWin());
+		OPTIONSCANNER_INFO("RTM | OTM1 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::OTM1).winRate(), relativeToMoneyStats(RelativeToMoney::OTM1).averageWin());
+		OPTIONSCANNER_INFO("RTM | OTM2 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::OTM2).winRate(), relativeToMoneyStats(RelativeToMoney::OTM2).averageWin());
+		OPTIONSCANNER_INFO("RTM | OTM3 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::OTM3).winRate(), relativeToMoneyStats(RelativeToMoney::OTM3).averageWin());
+		OPTIONSCANNER_INFO("RTM | OTM4 | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::OTM4).winRate(), relativeToMoneyStats(RelativeToMoney::OTM4).averageWin());
+		OPTIONSCANNER_INFO("RTM | Deep OTM | Win Rate: {} | Average Win: {}",
+			relativeToMoneyStats(RelativeToMoney::DeepOTM).winRate(), relativeToMoneyStats(RelativeToMoney::DeepOTM).averageWin());
+
+		OPTIONSCANNER_INFO("VolumeStDev | Over1 | Win Rate: {} | Average Win: {}",
+			volStDevStats(VolumeStDev::Over1).winRate(), volStDevStats(VolumeStDev::Over1).averageWin());
+		OPTIONSCANNER_INFO("VolumeStDev | Over2 | Win Rate: {} | Average Win: {}",
+			volStDevStats(VolumeStDev::Over2).winRate(), volStDevStats(VolumeStDev::Over2).averageWin());
+		OPTIONSCANNER_INFO("VolumeStDev | Over3 | Win Rate: {} | Average Win: {}",
+			volStDevStats(VolumeStDev::Over3).winRate(), volStDevStats(VolumeStDev::Over3).averageWin());
+		OPTIONSCANNER_INFO("VolumeStDev | Over4 | Win Rate: {} | Average Win: {}",
+			volStDevStats(VolumeStDev::Over4).winRate(), volStDevStats(VolumeStDev::Over4).averageWin());
+		OPTIONSCANNER_INFO("VolumeStDev | Low Vol | Win Rate: {} | Average Win: {}",
+			volStDevStats(VolumeStDev::LowVol).winRate(), volStDevStats(VolumeStDev::LowVol).averageWin());
+
+		OPTIONSCANNER_INFO("Volume Threshold | Over100 | Win Rate: {} | Average Win: {}",
+			volThresholdStats(VolumeThreshold::Vol100).winRate(), volThresholdStats(VolumeThreshold::Vol100).averageWin());
+		OPTIONSCANNER_INFO("Volume Threshold | Over250 | Win Rate: {} | Average Win: {}",
+			volThresholdStats(VolumeThreshold::Vol250).winRate(), volThresholdStats(VolumeThreshold::Vol250).averageWin());
+		OPTIONSCANNER_INFO("Volume Threshold | Over500 | Win Rate: {} | Average Win: {}",
+			volThresholdStats(VolumeThreshold::Vol500).winRate(), volThresholdStats(VolumeThreshold::Vol500).averageWin());
+		OPTIONSCANNER_INFO("Volume Threshold | Over1000 | Win Rate: {} | Average Win: {}",
+			volThresholdStats(VolumeThreshold::Vol1000).winRate(), volThresholdStats(VolumeThreshold::Vol1000).averageWin());
+		OPTIONSCANNER_INFO("Volume Threshold | Low Vol | Win Rate: {} | Average Win: {}",
+			volThresholdStats(VolumeThreshold::LowVol).winRate(), volThresholdStats(VolumeThreshold::LowVol).averageWin());
+
+		OPTIONSCANNER_INFO("Ending stat output ====================================================================");
+
+#endif // !TEST_CONFIG
+	}
+
 	template<typename T>
 	AlertStats AlertTagStats::checkStatsMap(T key, std::unordered_map<T, AlertStats>& statsMap) {
 		if (statsMap.find(key) == statsMap.end()) {

@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <unordered_set>
 #include <iostream>
 
 #include "TwsApiL0.h"
@@ -24,6 +23,8 @@ public:
 
     // Constructor for other candles created from 5 sec
     Candle(TickerId reqId, long time, double open, double high, double low, double close, long volume);
+
+    Candle();
 
     TickerId reqId() const;
     IBString date() const;

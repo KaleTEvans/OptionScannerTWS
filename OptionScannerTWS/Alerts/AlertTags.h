@@ -1,11 +1,17 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#define TEST_CONFIG
+
 #pragma once
 
 #include <unordered_map>
 #include <map>
 
 #include "../Enums.h"
+
+#ifndef TEST_CONFIG
+#include "../Logger.h"
+#endif // !TEST_CONFIG
 
 namespace Alerts {
 
@@ -76,6 +82,8 @@ namespace Alerts {
 		AlertStats underlyingLocalHLStats(LocalHighsAndLows key);
 		AlertStats optionDailyHLStats(DailyHighsAndLows key);
 		AlertStats optionLocalHLStats(LocalHighsAndLows key);
+
+		void logAllTagStats();
 
 		// This helper template will simplify checking if a map has a value or not
 		template<typename T>

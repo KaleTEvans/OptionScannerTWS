@@ -40,29 +40,36 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ExecutablePath>C:\Users\kalet\source\libs\ODB\libodb-2.4.0\bin;C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\bin;C:\Users\kalet\source\libs\ODB\libodb-2.4.0\bin;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\kalet\source\libs\ODB\libodb-2.4.0\bin;C:\Users\kalet\source\libs\ODB\libodb-mssql-2.4.0\bin;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">
     <VcpkgUseStatic>true</VcpkgUseStatic>
     <VcpkgConfiguration>Release</VcpkgConfiguration>
   </PropertyGroup>
   <ItemGroup>
+    <ClInclude Include="DatabaseTests\sample_db_obj.h" />
     <ClInclude Include="MockClasses\MockClient.h" />
+    <ClInclude Include="MockClasses\MockSecurityReqHandler.h" />
     <ClInclude Include="MockClasses\MockWrapper.h" />
     <ClInclude Include="MockClasses\MockOptionScanner.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\OptionScannerTWS\Alerts\AlertHandler.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Alerts\AlertTags.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Candle.cpp" />
     <ClCompile Include="..\OptionScannerTWS\ContractData.cpp" />
     <ClCompile Include="..\OptionScannerTWS\Enums.cpp" />
-    <ClCompile Include="..\OptionScannerTWS\Securities\IndexOptions.cpp" />
     <ClCompile Include="BenchmarkTests\benchmarks.cpp" />
+    <ClCompile Include="DatabaseTests\db_connection_test.cpp" />
     <ClCompile Include="IntegrationTests\alert_handler_tests.cpp">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(OptionScannerTWS);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="IntegrationTests\mock_client_wrapper_tests.cpp" />
     <ClCompile Include="IntegrationTests\option_scanner_tests.cpp" />
+    <ClCompile Include="MockClasses\MockSecurityReqHandler.cpp" />
     <ClCompile Include="MockClasses\MockOptionScanner.cpp" />
     <ClCompile Include="UnitTests\alert_tag_tests.cpp" />
     <ClCompile Include="UnitTests\buffer_mock_tests.cpp" />
@@ -171,7 +178,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>C:\TwsApiCpp-master\TwsApiC++\Api;C:\TwsApiCpp-master\source\PosixClient\Shared;$(SolutionDir)\OptionScannerTWS\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\TwsApiC++\Api;C:\TwsApiCpp-master\source\PosixClient\Shared;$(SolutionDir)\OptionScannerTWS\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
@@ -179,6 +186,7 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

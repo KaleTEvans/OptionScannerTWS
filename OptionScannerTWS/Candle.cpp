@@ -32,6 +32,9 @@ Candle::Candle(TickerId reqId, long time, double open, double high,
     dateConverted_ = false;
 }
 
+Candle::Candle() : reqId_(0), date_(""), time_(0), open_(0), close_(0), high_(0),
+    low_(0), volume_(0), barCount_(0), WAP_(0.0), hasGaps_(0), count_(0) {}
+
 // Getters
 TickerId Candle::reqId() const { return reqId_; }
 long Candle::time() const { return time_; }

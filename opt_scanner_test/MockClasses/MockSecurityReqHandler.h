@@ -8,14 +8,16 @@
 #include <vector>
 #include <memory>
 
-#include "../tWrapper.h"
-#include "../ContractData.h"
+//#include "tWrapper.h"
+#include "MockWrapper.h"
+#include "MockClient.h"
+#include "ContractData.h"
 
 namespace Securities {
 
-	class Index {
+	class SecurityRequestHandler {
 	public:
-		Index(IBString ticker, int req, int multiple, int numStrikes);
+		SecurityRequestHandler(IBString ticker, int req, int multiple, int numStrikes, std::string secType);
 
 		// Mutators
 		int numReqs() const;
@@ -23,25 +25,26 @@ namespace Securities {
 		bool checkCurrentScope(const int req);
 
 		void changeNumStrikes(const int strikes);
+		std::vector<int> getStrikes(const double price);
 
-		void initializeOptionRequests(EClientL0* EC, const int mktReq);
-		void updateOptionRequests(EClientL0* EC, const double curPrice, IBString todayDate,
+		void initializeOptionRequests(MockClient& EC, const int mktReq);
+		void updateOptionRequests(MockClient& EC, const double curPrice, IBString todayDate,
 			std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> chainData);
+
+		bool strikesUpdated{ false };
 
 
 	private:
 		IBString ticker_;
 		Contract con_;
-		int indReq_;
 		int multiple_;
+		int req_;
 		int numStrikes_;
+		std::string secType_;
 
 		std::vector<int> currentReqs_;
 		std::unordered_set<int> consInScope_;
 
-		std::mutex indexMtx;
+		std::mutex secMtx;
 	};
-
-	std::vector<int> getStrikes(const double price, const int multiple, const int numStrikes);
 }
-

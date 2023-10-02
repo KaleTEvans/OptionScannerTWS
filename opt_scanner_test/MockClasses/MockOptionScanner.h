@@ -5,6 +5,7 @@
 #include "MockWrapper.h"
 #include "MockClient.h"
 #include "ContractData.h"
+#include "MockSecurityReqHandler.h"
 
 #include <queue>
 
@@ -49,6 +50,7 @@ public:
 
 private:
 	Contract SPX; // Contract to be monitored
+	Securities::SecurityRequestHandler SPX_;
 
 	IBString ticker;
 
@@ -65,7 +67,7 @@ private:
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes(double price);
 
-	std::unordered_map<int, std::shared_ptr<ContractData>> contractChain_;
+	std::shared_ptr<std::unordered_map<int, std::shared_ptr<ContractData>>> contractChain_;
 
 	std::queue<Contract> contractReqQueue; // Holds new contracts to request data
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
