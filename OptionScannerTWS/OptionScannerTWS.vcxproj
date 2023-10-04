@@ -129,7 +129,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)OptionScannerTWS\Alerts;C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)OptionScannerTWS\Alerts;C:\TwsApiCpp-master\TwsApiC++\Api;$(SolutionDir)OptionScannerTWS\SQLSchemas;$(SolutionDir)OptionScannerTWS\libs;C:\TwsApiCpp-master\source\PosixClient\Shared</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -260,9 +260,6 @@
     <ClCompile Include="Securities\IndexOptions.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="SQLSchema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="tWrapper.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
@@ -293,8 +290,9 @@
     <ClInclude Include="Securities\IndexOptions.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="SQLSchema.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
+    <ClInclude Include="SQLSchemas\CandleRoutes.h" />
+    <ClInclude Include="SQLSchemas\SQLSchema.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="ContractData.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>

@@ -12,45 +12,52 @@
 #include <iomanip>
 #include <sstream>
 
-#include "tWrapper.h"
+#include "../tWrapper.h"
 #include "nanodbc/nanodbc.h"
 
-nanodbc::connection connectToDB() {
+namespace OptionDB {
 
-    // Retrieve connection configuration variables
-    std::string server = std::getenv("DB_SERVER_NAME");
-    std::string dbName = std::getenv("DB_NAME");
-    std::string username = std::getenv("DB_USERNAME");
-    std::string password = std::getenv("DB_PASSWORD");
+    nanodbc::connection connectToDB() {
 
-    std::string paramStr = "Driver={ODBC Driver 17 for SQL Server};"
-        "Server=tcp:" + server + ".database.windows.net,1433;"
-        "Database=" + dbName + ";"
-        "Uid=" + username + "@" + server + ";"
-        "Pwd=" + password + ";"
-        "Encrypt=yes;"
-        "TrustServerCertificate=no;"
-        "Connection Timeout=30;";
+        // Retrieve connection configuration variables
+        std::string server = std::getenv("DB_SERVER_NAME");
+        std::string dbName = std::getenv("DB_NAME");
+        std::string username = std::getenv("DB_USERNAME");
+        std::string password = std::getenv("DB_PASSWORD");
 
-    try {
-        nanodbc::connection conn(paramStr);
+        std::cout << "Server: " << std::getenv("DB_SERVER_NAME") << std::endl;
 
-        // Check if the connection is successful
-        if (conn.connected()) {
-            std::cout << "Connection to database established!" << std::endl;
-            
-            return conn;
+        std::string paramStr = "Driver={ODBC Driver 17 for SQL Server};"
+            "Server=tcp:" + server + ".database.windows.net,1433;"
+            "Database=" + dbName + ";"
+            "Uid=" + username + "@" + server + ";"
+            "Pwd=" + password + ";"
+            "Encrypt=yes;"
+            "TrustServerCertificate=no;"
+            "Connection Timeout=30;";
+
+        try {
+            nanodbc::connection conn(paramStr);
+
+            // Check if the connection is successful
+            if (conn.connected()) {
+                std::cout << "Connection to database established!" << std::endl;
+
+                return conn;
+            }
+            else {
+                std::cout << "Failed to establish connection!" << std::endl;
+                return nanodbc::connection();
+            }
         }
-        else {
-            std::cout << "Failed to establish connection!" << std::endl;
+        catch (const std::exception& ex) {
+            std::cout << "Error: " << ex.what() << std::endl;
             return nanodbc::connection();
         }
     }
-    catch (const std::exception& ex) {
-        std::cout << "Error: " << ex.what() << std::endl;
-        return nanodbc::connection();
-    }
 }
+
+
 //
 //void resetTables(nanodbc::connection conn, bool priceTable, bool OptionTable = false, bool strikesTable = false) {
 //    if (priceTable) {

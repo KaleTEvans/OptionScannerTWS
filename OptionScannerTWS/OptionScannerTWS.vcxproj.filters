@@ -36,9 +36,6 @@
     <ClCompile Include="libs\nanodbc\nanodbc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SQLSchema.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Candle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -80,7 +77,7 @@
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SQLSchema.h">
+    <ClInclude Include="SQLSchemas\SQLSchema.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="libs\nanodbc\nanodbc.h">
@@ -96,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Securities\IndexOptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLSchemas\CandleRoutes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,6 +14,29 @@ std::ostream& operator<<(std::ostream& out, const TimeFrame value) {
 	}();
 }
 
+std::string time_frame(TimeFrame val) {
+	std::string res;
+	switch (val)
+	{
+	case TimeFrame::FiveSecs:
+		res = "FiveSecs";
+		break;
+	case TimeFrame::ThirtySecs:
+		res = "ThirtySecs";
+		break;
+	case TimeFrame::OneMin:
+		res = "OneMin";
+		break;
+	case TimeFrame::FiveMin:
+		res = "FiveMin";
+		break;
+	default:
+		break;
+	}
+
+	return res;
+}
+
 namespace Alerts {
 
 	std::ostream& operator<<(std::ostream& out, const OptionType value) {
@@ -152,29 +175,6 @@ namespace Alerts {
 		default:
 			break;
 		}
-		return res;
-	}
-
-	std::string EnumString::time_frame(TimeFrame val) {
-		std::string res;
-		switch (val)
-		{
-		case TimeFrame::FiveSecs:
-			res = "FiveSecs";
-			break;
-		case TimeFrame::ThirtySecs:
-			res = "ThirtySecs";
-			break;
-		case TimeFrame::OneMin:
-			res = "OneMin";
-			break;
-		case TimeFrame::FiveMin:
-			res = "FiveMin";
-			break;
-		default:
-			break;
-		}
-
 		return res;
 	}
 

@@ -14,6 +14,7 @@ enum class TimeFrame {
 };
 
 std::ostream& operator<<(std::ostream& out, const TimeFrame value);
+std::string time_frame(TimeFrame val);
 
 // Enums attached to alerts
 namespace Alerts {
@@ -70,7 +71,6 @@ namespace Alerts {
 	class EnumString {
 	public:
 		static std::string option_type(OptionType val);
-		static std::string time_frame(TimeFrame val);
 		static std::string realtive_to_money(RelativeToMoney val);
 		static std::string time_of_day(TimeOfDay val);
 		static std::string vol_st_dev(VolumeStDev val);

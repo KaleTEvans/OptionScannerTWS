@@ -18,19 +18,13 @@ Candle::Candle(TickerId reqId, const IBString& date, double open, double high, d
 Candle::Candle(TickerId reqId, long time, double open, double high, double low,
     double close, long volume, double wap, int count)
     : reqId_(reqId), date_(""), time_(time), open_(open), close_(close), high_(high), 
-    low_(low), volume_(volume), barCount_(0), WAP_(wap), hasGaps_(0), count_(count)
-{
-    dateConverted_ = false;
-}
+    low_(low), volume_(volume), barCount_(0), WAP_(wap), hasGaps_(0), count_(count) {}
 
 // Constructor for other candles created from 5 sec
 Candle::Candle(TickerId reqId, long time, double open, double high,
     double low, double close, long volume)
     : reqId_(reqId), date_(""), time_(time), open_(open), close_(close), high_(high), 
-    low_(low), volume_(volume), barCount_(0), WAP_(0.0), hasGaps_(0), count_(0)
-{
-    dateConverted_ = false;
-}
+    low_(low), volume_(volume), barCount_(0), WAP_(0.0), hasGaps_(0), count_(0) {}
 
 Candle::Candle() : reqId_(0), date_(""), time_(0), open_(0), close_(0), high_(0),
     low_(0), volume_(0), barCount_(0), WAP_(0.0), hasGaps_(0), count_(0) {}

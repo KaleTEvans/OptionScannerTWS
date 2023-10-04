@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//#define TEST_CONFIG
+#define TEST_CONFIG
 
 #ifndef TEST_CONFIG
 
@@ -14,6 +14,7 @@
 #include "tWrapper.h"
 #include "Logger.h"
 #include "SQLSchema.h"
+#include "CandleRoutes.h"
 //#include "App.h"
 #include "OptionScanner.h"
 #include "ContractData.h"
@@ -51,7 +52,7 @@ int main(void) {
     
     if (runTests) {
         //informalTests();
-        nanodbc::connection conn = connectToDB();
+        nanodbc::connection conn = OptionDB::connectToDB();
     }
 
     else {

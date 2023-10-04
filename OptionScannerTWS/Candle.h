@@ -45,7 +45,7 @@ public:
 private:
     TickerId reqId_;
     mutable IBString date_;
-    mutable bool dateConverted_; // Marked false if a unix time is received in the constructor
+    mutable bool dateConverted_{ false }; // Marked false if a unix time is received in the constructor
     long time_;
     double open_;
     double close_;
