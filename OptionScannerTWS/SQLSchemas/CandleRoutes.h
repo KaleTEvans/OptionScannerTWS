@@ -15,7 +15,7 @@ namespace OptionDB {
 		void setTable(nanodbc::connection conn, TimeFrame tf) {
 			string tfstring = time_frame(tf);
 
-			nanodbc::execute(conn, "DROP TABLE IF EXISTS " + tfstring);
+			nanodbc::execute(conn, "DROP TABLE IF EXISTS" + tfstring);
 
 			string sql = "CREATE TABLE " + tfstring + " ("
 				"id INT IDENTITY(1, 1) PRIMARY KEY,"

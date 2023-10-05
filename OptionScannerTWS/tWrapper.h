@@ -18,13 +18,12 @@
 #include <unordered_map>
 #include <condition_variable>
 
-//#include "Logger.h"
+#ifndef TEST_CONFIG
+#include "../Logger.h"
+#endif // !TEST_CONFIG
+
 #include "Candle.h"
-
-///Easier: Just one include statement for all functionality
 #include "TwsApiL0.h"
-
-///Faster: Check spelling of parameter at compile time instead of runtime.
 #include "TwsApiDefs.h"
 using namespace TwsApi; // for TwsApiDefs.h
 

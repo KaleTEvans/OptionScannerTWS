@@ -3,9 +3,6 @@
 
 OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), ticker(ticker) {
 
-	// Start the checkMessages thread
-	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
-
 	// Request last quote for SPX upon class initiation to get closest option strikes
 	SPX.symbol = ticker;
 	SPX.secType = *SecType::IND;
@@ -29,6 +26,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 		, UseRTH::OnlyRegularTradingData
 	);
 
+	addedContracts.push_back(1234);
 	OPTIONSCANNER_DEBUG("Initializing scanner ... Request 1234 sent to client");
 
 	// Initialzie the contract chain
@@ -36,11 +34,15 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 
 	// Initialize the alert handler with a pointer to the contract map
 	alertHandler = std::make_unique<Alerts::AlertHandler>(contractChain_);
+
+	// Start the checkMessages thread
+	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
 }
 
 void OptionScanner::checkClientMessages() {
 	while (!closeEClienthread) {
 		EC->checkMessages();
+		if (pauseMessages) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 
@@ -72,7 +74,7 @@ void OptionScanner::streamOptionData() {
 		// Use the wrapper conditional to check buffer
 		std::unique_lock<std::mutex> lock(YW.wrapperMutex());
 		YW.wrapperConditional().wait(lock, [&] { return YW.checkBufferFull(); });
-		//OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
+		OPTIONSCANNER_DEBUG("Buffer full, current capacity: {}", YW.bufferCapacity());
 
 		for (auto& candle : YW.processedFiveSecCandles()) {
 
@@ -94,7 +96,7 @@ void OptionScanner::streamOptionData() {
 		optScanCV_.notify_one();
 
 		updateStrikes(contractChain_->at(1234)->currentPrice());
-		//OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
+		OPTIONSCANNER_DEBUG("Strikes updated, current buffer capacity: {}", YW.bufferCapacity());
 	}
 }
 
@@ -150,6 +152,7 @@ void OptionScanner::updateStrikes(double price) {
 
 	if (!contractReqQueue.empty()) OPTIONSCANNER_INFO("{} new contracts added to request queue", contractReqQueue.size());
 
+	pauseMessages = true;
 	// Empty queue and create the requests
 	while (!contractReqQueue.empty()) {
 		Contract con = contractReqQueue.front();
@@ -167,13 +170,16 @@ void OptionScanner::updateStrikes(double price) {
 			, UseRTH::OnlyRegularTradingData
 		);
 
+		OPTIONSCANNER_DEBUG("Request {} sent to client", req);
+
 		// Update contract request vector
 		addedContracts.push_back(req);
 
 		contractReqQueue.pop();
 	}
+	pauseMessages = false;
 
-	//OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
+	OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
 
 	// If addedContracts vector exceeds current buffer size, update the buffer
 	if (static_cast<int>(addedContracts.size()) > YW.bufferCapacity()) {

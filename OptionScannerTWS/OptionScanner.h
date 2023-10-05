@@ -56,8 +56,11 @@ private:
 
 	IBString todayDate; // Updated each day
 
+	// SQL Connection
+
 	std::thread messageThread_; // Used to continuously check messages
 	bool closeEClienthread{ false };
+	bool pauseMessages{ false };
 	
 	// We will update the strikes periodically to ensure that they are close to the underlying
 	void updateStrikes(double price);

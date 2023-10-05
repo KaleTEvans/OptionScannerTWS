@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#define TEST_CONFIG
+//#define TEST_CONFIG
 
 #ifndef TEST_CONFIG
 
@@ -15,7 +15,7 @@
 #include "Logger.h"
 #include "SQLSchema.h"
 #include "CandleRoutes.h"
-//#include "App.h"
+#include "App.h"
 #include "OptionScanner.h"
 #include "ContractData.h"
 #include "AlertHandler.h"
@@ -28,7 +28,7 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = true;
+constexpr bool runTests = false;
 
 // Main launcher for imformal tests
 void informalTests();
@@ -51,8 +51,7 @@ int main(void) {
     Logger::Initialize();
     
     if (runTests) {
-        //informalTests();
-        nanodbc::connection conn = OptionDB::connectToDB();
+        informalTests();
     }
 
     else {

@@ -189,17 +189,21 @@ int CandleBuffer::getCapacity() { return capacity_; }
 
 void CandleBuffer::checkBufferStatus() {
     if (!wasDataProcessed_) {
-        // ****** In real program, log an error each time this occurs *********
-        //std::cout << "Error, buffer not processing data. Current Buffer Size: " << bufferMap.size() << 
-        //    " Current Buffer Capacity: " << capacity_ << std::endl;
-        //std::cout << "Resetting buffer capacity to current size ..." << std::endl;
+
+#ifndef TEST_CONFIG
+        OPTIONSCANNER_WARN("Buffer not processing data. Current buffer size: {}", bufferMap.size());
+#endif // !TEST_CONFIG
         setNewBufferCapacity(bufferMap.size());
     }
 
     // Check if active wrapper requests outnumber current capacity
     if (wrapperActiveReqs > capacity_) {
-        //std::cout << "Warning, number of open requests outnumbers current capacity, updating capacity ..." << std::endl;
-        //std::cout << "Active Reqs: " << wrapperActiveReqs << " Capacity: " << capacity_ << std::endl;
+
+#ifndef TEST_CONFIG
+        OPTIONSCANNER_WARN("Number of open requests [{}] is greater than current buffer capacity [{}]", wrapperActiveReqs, capacity_);
+#endif // !TEST_CONFIG
         setNewBufferCapacity(wrapperActiveReqs);
     }
+
+    bufferTimePassed_ = std::chrono::steady_clock::now();
 }
