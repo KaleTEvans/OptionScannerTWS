@@ -54,6 +54,9 @@
     <ClCompile Include="Securities\IndexOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SQLSchemas\DatabaseManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tWrapper.h">
@@ -96,6 +99,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SQLSchemas\CandleRoutes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLSchemas\DatabaseManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

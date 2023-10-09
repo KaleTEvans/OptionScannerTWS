@@ -23,9 +23,9 @@ std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::s
 	return candle;
 }
 
-ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : contractId_{reqId},
-	dailyHigh_{ 0 }, dailyLow_{ 10000 }, localHigh_{ 0 }, localLow_{ 10000 }, tempHigh_{ 0 }, tempLow_{ 10000 },
-	nearDailyHigh{ false }, nearDailyLow{ false }, nearLocalHigh{ false }, nearLocalLow{ false }	
+ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : 
+	contractId_{reqId}, dailyHigh_{ 0 }, dailyLow_{ 10000 }, localHigh_{ 0 }, localLow_{ 10000 }, tempHigh_{ 0 }, tempLow_{ 10000 },
+	nearDailyHigh{ false }, nearDailyLow{ false }, nearLocalHigh{ false }, nearLocalLow{ false }
 {
 	// Push the first candle only in the 5 sec array
 	std::shared_ptr<Candle> initCandle{ std::move(initData) };
@@ -39,6 +39,12 @@ ContractData::ContractData(TickerId reqId, std::unique_ptr<Candle> initData) : c
 	if (initCandle->reqId() == 1234) isUnderlying_ = true;
 }
 
+// Initiate the SQL connection variable to add db insertion after each candle created
+void ContractData::setupDatabaseManager(std::shared_ptr<OptionDB::DatabaseManager> dbm) {
+	dbm_ = dbm;
+	dbConnect = true;
+}
+
 // The input data function will be called each time a new candle is received, and will be where we 
 // update each time series vector, stdev and mean. The chaining of if statements ensures that
 // each vector has enough values to fill the next timeframe
@@ -49,6 +55,9 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 	// Switch to shared pointer
 	std::shared_ptr<Candle> fiveSec{ std::move(c) };
 	updateContainers(fiveSec, TimeFrame::FiveSecs);
+
+	// Post to db
+	if (dbConnect) dbm_->addToInsertionQueue(fiveSec, TimeFrame::FiveSecs);
 
 	// Update daily high and low values to check relative price
 	dailyHigh_ = max(dailyHigh_, fiveSec->high());
@@ -69,6 +78,9 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 		std::shared_ptr<Candle> thirtySec{ createNewBars(contractId_, 6, fiveSecCandles_) };
 		updateContainers(thirtySec, TimeFrame::ThirtySecs);
 
+		// Post to db
+		if (dbConnect) dbm_->addToInsertionQueue(thirtySec, TimeFrame::ThirtySecs);
+
 		//OPTIONSCANNER_DEBUG("30 Second candle created for {}, Open: {}, Close: {}, volume{}",
 		//	contractId_, thirtySecCandles_.back()->open(), thirtySecCandles_.back()->close(), thirtySecCandles_.back()->volume());
 
@@ -86,6 +98,9 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 			updateCumulativeVolume(oneMin);
 			updateContainers(oneMin, TimeFrame::OneMin);
 
+			// Post to db
+			if (dbConnect) dbm_->addToInsertionQueue(oneMin, TimeFrame::OneMin);
+
 			///////////////////////// 1 minute Alert Options ///////////////////////////////
 			if (sdVol1Min_.checkDeviation(oneMin->volume(), 1) && sdVol1Min_.sum() > 9 && !isUnderlying_) {
 				if (alert_) alert_(TimeFrame::OneMin, oneMin);
@@ -100,6 +115,9 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 				// Every 30 minutes, update the local high and low.
 				updateLocalMinMax(fiveMin);
 				updateContainers(fiveMin, TimeFrame::FiveMin);
+
+				// Post to db
+				if (dbConnect) dbm_->addToInsertionQueue(fiveMin, TimeFrame::FiveMin);
 
 				///////////////////////// 5 Minute Alert Options ///////////////////////////////
 				if (sdVol5Min_.checkDeviation(fiveMin->volume(), 1) && sdVol5Min_.sum() > 4 && !isUnderlying_) {

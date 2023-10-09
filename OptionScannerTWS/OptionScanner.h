@@ -13,6 +13,7 @@
 #include "App.h"
 #include "ContractData.h"
 #include "AlertHandler.h"
+#include "DatabaseManager.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -38,7 +39,6 @@ public:
 
 	// Alert Callback Functions
 	void registerAlertCallback(std::shared_ptr<ContractData> cd);
-	// void showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c);
 
 	// Functions for storing data after market close
 	void prepareContractData();
@@ -55,8 +55,6 @@ private:
 	IBString ticker;
 
 	IBString todayDate; // Updated each day
-
-	// SQL Connection
 
 	std::thread messageThread_; // Used to continuously check messages
 	bool closeEClienthread{ false };

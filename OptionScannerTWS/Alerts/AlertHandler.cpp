@@ -129,45 +129,43 @@ namespace Alerts {
 		std::chrono::steady_clock::time_point refTime = std::chrono::steady_clock::now();
 
 		while (!doneCheckingAlerts_) {
-			while (!alertUpdateQueue.empty()) {
-				// Check current time to see if 30 minutes have passed since the first alert was added to the queue
-				std::chrono::steady_clock::time_point prevAlertTIme = alertUpdateQueue.front().second.initTime;
-				std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
-				std::chrono::minutes elsapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - prevAlertTIme);
+			// Check current time to see if 30 minutes have passed since the first alert was added to the queue
+			std::chrono::steady_clock::time_point prevAlertTIme = alertUpdateQueue.front().second.initTime;
+			std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
+			std::chrono::minutes elsapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - prevAlertTIme);
 
-				if (elsapsedTime >= std::chrono::minutes(30)) {
-					std::unique_lock<std::mutex> lock(alertMtx_);
+			if (elsapsedTime >= std::chrono::minutes(30)) {
+				std::unique_lock<std::mutex> lock(alertMtx_);
 					
-					AlertTags tags = alertUpdateQueue.front().first;
-					Alert a = alertUpdateQueue.front().second;
-					// Access data from the contract map
-					std::vector<std::shared_ptr<Candle>> prevCandles = contractMap_->at(a.reqId)->candlesLast30Minutes();
+				AlertTags tags = alertUpdateQueue.front().first;
+				Alert a = alertUpdateQueue.front().second;
+				// Access data from the contract map
+				std::vector<std::shared_ptr<Candle>> prevCandles = contractMap_->at(a.reqId)->candlesLast30Minutes();
 
-					// just use the lock to access the contract map
-					lock.unlock();
+				// just use the lock to access the contract map
+				lock.unlock();
 
-					// Retrieve pair of win bool and percent win
-					std::pair<double, double> winStats = checkWinStats(prevCandles, a);
+				// Retrieve pair of win bool and percent win
+				std::pair<double, double> winStats = checkWinStats(prevCandles, a);
 
-					/*OPTIONSCANNER_DEBUG("Update complete for {} at strike: {} | [ TimeFrame: {} | {} | Total Vol: {} ] [ Win Pct: {} ]",
-						EnumString::option_type(tags.optType), a.strike, EnumString::time_frame(tags.timeFrame), EnumString::realtive_to_money(tags.rtm),
-						EnumString::vol_threshold(tags.volThreshold), winStats.second);*/
+				/*OPTIONSCANNER_DEBUG("Update complete for {} at strike: {} | [ TimeFrame: {} | {} | Total Vol: {} ] [ Win Pct: {} ]",
+					EnumString::option_type(tags.optType), a.strike, EnumString::time_frame(tags.timeFrame), EnumString::realtive_to_money(tags.rtm),
+					EnumString::vol_threshold(tags.volThreshold), winStats.second);*/
 
-					// Now update the alert win rate if in the map
-					alertTagStats->updateStats(tags, winStats.first, winStats.second);
+				// Now update the alert win rate if in the map
+				alertTagStats->updateStats(tags, winStats.first, winStats.second);
 
-					alertUpdateQueue.pop();
-				}
-
-				// Log alert tag values every 30 mintues
-				std::chrono::minutes elapsedLogTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - refTime);
-				if (elapsedLogTime >= std::chrono::minutes(30)) {
-					alertTagStats->logAllTagStats();
-					refTime = std::chrono::steady_clock::now();
-				}
-
-				std::this_thread::sleep_for(std::chrono::seconds(5));
+				alertUpdateQueue.pop();
 			}
+
+			// Log alert tag values every 30 mintues
+			std::chrono::minutes elapsedLogTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - refTime);
+			if (elapsedLogTime >= std::chrono::minutes(30)) {
+				alertTagStats->logAllTagStats();
+				refTime = std::chrono::steady_clock::now();
+			}
+
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 

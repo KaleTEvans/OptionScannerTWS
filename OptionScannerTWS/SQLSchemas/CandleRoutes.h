@@ -5,6 +5,7 @@
 #include "SQLSchema.h"
 #include "../Candle.h"
 #include "../Enums.h"
+#include "../Logger.h"
 
 using std::string;
 
@@ -12,26 +13,33 @@ namespace OptionDB {
 
 	namespace CandleTables {
 
-		void setTable(nanodbc::connection conn, TimeFrame tf) {
-			string tfstring = time_frame(tf);
+		inline void setTable(nanodbc::connection conn, TimeFrame tf) {
+			try {
+				string tfstring = time_frame(tf);
 
-			nanodbc::execute(conn, "DROP TABLE IF EXISTS" + tfstring);
+				nanodbc::execute(conn, "DROP TABLE IF EXISTS " + tfstring);
 
-			string sql = "CREATE TABLE " + tfstring + " ("
-				"id INT IDENTITY(1, 1) PRIMARY KEY,"
-				"reqId INT NOT NULL,"
-				"date VARCHAR(10),"
-				"time INT NOT NULL,"
-				"[open] DECIMAL(16, 3) NOT NULL,"
-				"[close] DECIMAL(16, 3) NOT NULL,"
-				"high DECIMAL(16, 3) NOT NULL,"
-				"low DECIMAL(16, 3) NOT NULL,"
-				"volume BIGINT);";
+				string sql = "CREATE TABLE " + tfstring + " ("
+					"id INT IDENTITY(1, 1) PRIMARY KEY,"
+					"reqId INT NOT NULL,"
+					"date VARCHAR(10),"
+					"time INT NOT NULL,"
+					"[open] DECIMAL(16, 3) NOT NULL,"
+					"[close] DECIMAL(16, 3) NOT NULL,"
+					"high DECIMAL(16, 3) NOT NULL,"
+					"low DECIMAL(16, 3) NOT NULL,"
+					"volume BIGINT);";
 
-			nanodbc::execute(conn, sql);
+				nanodbc::execute(conn, sql);
+
+				OPTIONSCANNER_DEBUG("Table {} initialized", tfstring);
+			}
+			catch (const std::exception& e) {
+				std::cerr << "Error: " << e.what() << std::endl;
+			}
 		}
 
-		std::vector<Candle> get(nanodbc::connection conn, TimeFrame tf, int reqId = 0, string date = "", long time = 0) {
+		inline std::vector<Candle> get(nanodbc::connection conn, TimeFrame tf, int reqId = 0, string date = "", long time = 0) {
 			std::vector<Candle> candles;
 			string tfstring = time_frame(tf);
 
@@ -65,11 +73,11 @@ namespace OptionDB {
 			return candles;
 		}
 
-		void post(nanodbc::connection conn, std::shared_ptr<Candle> candle, TimeFrame tf) {
+		inline void post(std::shared_ptr<nanodbc::connection> conn, std::shared_ptr<Candle> candle, TimeFrame tf) {
 			try {
 				string tfstring = time_frame(tf);
 
-				nanodbc::statement stmt(conn);
+				nanodbc::statement stmt(*conn);
 				stmt.prepare("INSERT INTO " + tfstring + " (reqId, date, time, [open], [close], high, low, volume)"
 					"VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
@@ -98,7 +106,7 @@ namespace OptionDB {
 			}
 		}
 
-		void remove(nanodbc::connection conn, string& date, TimeFrame tf) {
+		inline void remove(nanodbc::connection conn, string& date, TimeFrame tf) {
 			try {
 				string tfstring = time_frame(tf);
 				nanodbc::statement stmt(conn);
@@ -112,7 +120,7 @@ namespace OptionDB {
 			}
 		}
 
-		void remove(nanodbc::connection conn, long time, TimeFrame tf) {
+		inline void remove(nanodbc::connection conn, long time, TimeFrame tf) {
 			try {
 				string tfstring = time_frame(tf);
 				nanodbc::statement stmt(conn);

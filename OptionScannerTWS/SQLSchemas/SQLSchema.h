@@ -2,6 +2,8 @@
 // Contains all of the sql schemas for the program
 // Will just add functions as they are needed
 //====================================================
+#define _CRT_SECURE_NO_WARNINGS
+
 #pragma once
 
 #include <iostream>
@@ -12,12 +14,12 @@
 #include <iomanip>
 #include <sstream>
 
-#include "../tWrapper.h"
 #include "nanodbc/nanodbc.h"
+#include "../Logger.h"
 
 namespace OptionDB {
 
-    nanodbc::connection connectToDB() {
+    inline nanodbc::connection connectToDB() {
 
         // Retrieve connection configuration variables
         std::string server = std::getenv("DB_SERVER_NAME");
@@ -41,7 +43,8 @@ namespace OptionDB {
 
             // Check if the connection is successful
             if (conn.connected()) {
-                std::cout << "Connection to database established!" << std::endl;
+                //std::cout << "Connection to database established!" << std::endl;
+                OPTIONSCANNER_DEBUG("Connection to database established!");
 
                 return conn;
             }

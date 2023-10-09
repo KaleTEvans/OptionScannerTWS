@@ -85,6 +85,10 @@ void OptionScanner::streamOptionData() {
 			}
 			else {
 				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
+
+				// Add SQL connection to contractData
+				cd->setupDatabaseManager(dbm);
+
 				registerAlertCallback(cd);
 				contractChain_->insert({ req, cd });
 			}
@@ -152,7 +156,10 @@ void OptionScanner::updateStrikes(double price) {
 
 	if (!contractReqQueue.empty()) OPTIONSCANNER_INFO("{} new contracts added to request queue", contractReqQueue.size());
 
-	pauseMessages = true;
+	////////////////////// 
+	pauseMessages = true; // temporarily pause thread running checkMessages
+	/////////////////////
+	
 	// Empty queue and create the requests
 	while (!contractReqQueue.empty()) {
 		Contract con = contractReqQueue.front();
@@ -177,7 +184,10 @@ void OptionScanner::updateStrikes(double price) {
 
 		contractReqQueue.pop();
 	}
-	pauseMessages = false;
+
+	//////////////////////
+	pauseMessages = false; // resume checking messages
+	//////////////////////
 
 	OPTIONSCANNER_DEBUG("New requests sent to queue, total option active requests: {}", addedContracts.size());
 
@@ -203,10 +213,6 @@ void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
 		}
 	});
 }
-
-//void OptionScanner::showAlertOutput(int data, double stDevVol, double stDevPrice, Candle c) {
-//	cout << "Callback Received for contract: " << c.reqId << " Code: " << data << " volume: " << c.volume << " close price: " << c.close << endl;
-//}
 
 
 //===================================================

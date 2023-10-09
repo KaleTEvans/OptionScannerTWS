@@ -25,6 +25,7 @@
 #include "Enums.h"
 #include "Candle.h"
 #include "Formulas.h"
+#include "DatabaseManager.h"
 
 using std::vector;
 using std::string;
@@ -38,6 +39,9 @@ std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::s
 class ContractData {
 public:
 	ContractData(TickerId reqId, std::unique_ptr<Candle> initData);
+
+	// Set the sql connection variable if pushing to db
+	void setupDatabaseManager(std::shared_ptr<OptionDB::DatabaseManager> dbm);
 
 	// With each incoming candle, we will need to update the vectors for each time frame
 	// This will also update stDevs for each time series
@@ -71,6 +75,8 @@ public:
 
 private:
 	const TickerId contractId_;
+	std::shared_ptr<OptionDB::DatabaseManager> dbm_{ nullptr };
+	bool dbConnect{ false };
 
 	vector<std::shared_ptr<Candle>> fiveSecCandles_;
 	vector<std::shared_ptr<Candle>> thirtySecCandles_;

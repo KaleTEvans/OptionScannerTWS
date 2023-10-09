@@ -9,8 +9,10 @@
 #include <iostream>
 #include <ctime>
 #include <cstdlib>
+#include <memory>
 
 #include "tWrapper.h"
+#include "DatabaseManager.h"
 
 using std::string;
 using std::vector;
@@ -26,6 +28,8 @@ public:
 public:
 	EClientL0* EC;
 	tWrapper YW;
+
+	std::shared_ptr<OptionDB::DatabaseManager> dbm; // Handles all db transactions on a separate thread
 
 	const char* host;
 };

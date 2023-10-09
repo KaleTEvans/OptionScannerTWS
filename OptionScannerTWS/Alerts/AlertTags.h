@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#define TEST_CONFIG
+//#define TEST_CONFIG
 
 #pragma once
 

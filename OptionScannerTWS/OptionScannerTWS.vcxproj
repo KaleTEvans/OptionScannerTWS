@@ -260,6 +260,7 @@
     <ClCompile Include="Securities\IndexOptions.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="SQLSchemas\DatabaseManager.cpp" />
     <ClCompile Include="tWrapper.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClCompile>
@@ -291,6 +292,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="SQLSchemas\CandleRoutes.h" />
+    <ClInclude Include="SQLSchemas\DatabaseManager.h" />
     <ClInclude Include="SQLSchemas\SQLSchema.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">false</ExcludedFromBuild>
     </ClInclude>
