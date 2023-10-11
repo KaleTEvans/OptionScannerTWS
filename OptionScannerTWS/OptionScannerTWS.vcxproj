@@ -291,6 +291,7 @@
     <ClInclude Include="Securities\IndexOptions.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Test|Win32'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="SQLSchemas\AlertRoutes.h" />
     <ClInclude Include="SQLSchemas\CandleRoutes.h" />
     <ClInclude Include="SQLSchemas\DatabaseManager.h" />
     <ClInclude Include="SQLSchemas\SQLSchema.h">

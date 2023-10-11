@@ -16,6 +16,8 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 
 	todayDate = EndDateTime(t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
 
+	dbm->resetCandleTables();
+
 	// Create RTB request for SPX underlying **This will not be accessible until buffer is processed
 	// YW.showRealTimeDataOutput();
 	EC->reqRealTimeBars

@@ -33,6 +33,8 @@ namespace OptionDB {
 	}
 
 	void DatabaseManager::candleInsertionLoop() {
+		std::queue<std::pair<CandleTables::CandleForDB, TimeFrame>> buffer;
+
 		while (!stopInsertion) {
 			std::unique_lock<std::mutex> lock(queueMtx);
 			// wait for data or exit signal
@@ -42,8 +44,27 @@ namespace OptionDB {
 
 			if (stopInsertion) break;
 
-			CandleTables::post(conn_, candleQueue.front().first, candleQueue.front().second);
+			// Copy data into db candle structure for insertion
+			CandleTables::CandleForDB c(
+				candleQueue.front().first->reqId(),
+				candleQueue.front().first->date(),
+				candleQueue.front().first->time(),
+				candleQueue.front().first->open(),
+				candleQueue.front().first->high(),
+				candleQueue.front().first->low(),
+				candleQueue.front().first->close(),
+				candleQueue.front().first->volume()
+			);
+
+			buffer.push({ c, candleQueue.front().second });
 			candleQueue.pop();
+
+			lock.unlock();
+
+			while (!buffer.empty()) {
+				CandleTables::post(conn_, buffer.front().first, buffer.front().second);
+				buffer.pop();
+			}
 		}
 	}
 }
