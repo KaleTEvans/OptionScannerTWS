@@ -71,7 +71,7 @@ namespace Alerts {
 	class EnumString {
 	public:
 		static std::string option_type(OptionType val);
-		static std::string realtive_to_money(RelativeToMoney val);
+		static std::string relative_to_money(RelativeToMoney val);
 		static std::string time_of_day(TimeOfDay val);
 		static std::string vol_st_dev(VolumeStDev val);
 		static std::string vol_threshold(VolumeThreshold val);

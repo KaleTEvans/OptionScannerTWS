@@ -13,9 +13,12 @@
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <unordered_map>
 
 #include "nanodbc/nanodbc.h"
 #include "../Logger.h"
+
+using std::string;
 
 namespace OptionDB {
 

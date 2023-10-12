@@ -170,7 +170,7 @@ namespace Alerts {
 			res = "Call";
 			break;
 		case Alerts::OptionType::Put:
-			res = "PUT";
+			res = "Put";
 			break;
 		default:
 			break;
@@ -178,7 +178,7 @@ namespace Alerts {
 		return res;
 	}
 
-	std::string EnumString::realtive_to_money(RelativeToMoney val) {
+	std::string EnumString::relative_to_money(RelativeToMoney val) {
 		std::string res;
 		switch (val)
 		{

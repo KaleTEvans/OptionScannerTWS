@@ -13,8 +13,9 @@
 #include "Candle.h"
 #include "tWrapper.h"
 #include "Logger.h"
-//#include "SQLSchema.h"
-//#include "CandleRoutes.h"
+#include "SQLSchema.h"
+#include "CandleRoutes.h"
+#include "AlertRoutes.h"
 #include "App.h"
 #include "OptionScanner.h"
 #include "ContractData.h"
@@ -28,7 +29,7 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = false;
+constexpr bool runTests = true;
 
 // Main launcher for imformal tests
 void informalTests();
@@ -51,7 +52,9 @@ int main(void) {
     Logger::Initialize();
     
     if (runTests) {
-        informalTests();
+        //informalTests();
+        nanodbc::connection conn = OptionDB::connectToDB();
+        OptionDB::AlertTables::setTagTable(conn);
     }
 
     else {

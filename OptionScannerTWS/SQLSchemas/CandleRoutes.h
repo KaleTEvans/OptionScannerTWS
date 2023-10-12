@@ -89,7 +89,7 @@ namespace OptionDB {
 			return candles;
 		}
 
-		inline void post(std::shared_ptr<nanodbc::connection> conn, CandleForDB candle, TimeFrame tf) {
+		inline void post(std::shared_ptr<nanodbc::connection> conn, CandleForDB& candle, TimeFrame tf) {
 			try {
 				string tfstring = time_frame(tf);
 
