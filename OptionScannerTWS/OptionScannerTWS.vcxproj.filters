@@ -107,5 +107,8 @@
     <ClInclude Include="SQLSchemas\AlertRoutes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SQLSchemas\AlertTagDBInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

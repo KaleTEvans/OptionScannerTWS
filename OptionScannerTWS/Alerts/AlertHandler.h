@@ -42,7 +42,7 @@ namespace Alerts {
 		std::chrono::steady_clock::time_point initTime;
 		long unixTime;
 
-		Alert(int reqId, int strike, double currentPrice, TimeFrame tf);
+		Alert(int reqId, int strike, double currentPrice, long unixTIme, TimeFrame tf);
 	};
 
 	class AlertHandler {

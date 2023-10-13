@@ -2,13 +2,13 @@
 
 namespace Alerts {
 
-	Alert::Alert(int reqId, int strike, double currentPrice, TimeFrame tf) :
-		reqId(reqId), strike(strike), currentPrice(currentPrice), tf(tf) {
+	Alert::Alert(int reqId, int strike, double currentPrice, long unixTIme, TimeFrame tf) :
+		reqId(reqId), strike(strike), currentPrice(currentPrice), unixTime(unixTIme), tf(tf) {
 
 		initTime = std::chrono::steady_clock::now();
 
 		time_t tempTime = std::chrono::duration_cast<std::chrono::seconds>(initTime.time_since_epoch()).count();
-		unixTime = static_cast<long>(tempTime);
+		//unixTime = static_cast<long>(tempTime);
 	}
 
 	//===================================================
@@ -47,7 +47,7 @@ namespace Alerts {
 			strike = candle->reqId() - 1;
 		}
 
-		Alert alert(candle->reqId(), strike, candle->close(), tf);
+		Alert alert(candle->reqId(), strike, candle->close(), candle->time(), tf);
 
 		//==================================================================
 		// Alert code determining how close to the money the option is
@@ -153,22 +153,21 @@ namespace Alerts {
 						EnumString::option_type(tags.optType), a.strike, EnumString::time_frame(tags.timeFrame), EnumString::realtive_to_money(tags.rtm),
 						EnumString::vol_threshold(tags.volThreshold), winStats.second);*/
 
-						// Now update the alert win rate if in the map
+					// Now update the alert win rate if in the map
 					alertTagStats->updateStats(tags, winStats.first, winStats.second);
 
 					alertUpdateQueue.pop();
-
-					// Log alert tag values every 30 mintues
-					std::chrono::minutes elapsedLogTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - refTime);
-					if (elapsedLogTime >= std::chrono::minutes(30)) {
-						alertTagStats->logAllTagStats();
-						refTime = std::chrono::steady_clock::now();
-					}
 				}
+
+				// Log alert tag values every 30 mintues
+				std::chrono::minutes elapsedLogTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - refTime);
+				if (elapsedLogTime >= std::chrono::minutes(30)) {
+					alertTagStats->logAllTagStats();
+					refTime = std::chrono::steady_clock::now();
+				}
+
+				std::this_thread::sleep_for(std::chrono::seconds(1));
 			}
-
-
-			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 

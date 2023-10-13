@@ -26,10 +26,7 @@ namespace OptionDB {
 	}
 
 	void DatabaseManager::resetCandleTables() {
-		CandleTables::setTable(*conn_, TimeFrame::FiveSecs);
-		CandleTables::setTable(*conn_, TimeFrame::ThirtySecs);
-		CandleTables::setTable(*conn_, TimeFrame::OneMin);
-		CandleTables::setTable(*conn_, TimeFrame::FiveMin);
+		CandleTables::setTable(*conn_);
 	}
 
 	void DatabaseManager::candleInsertionLoop() {

@@ -29,26 +29,26 @@ namespace OptionDB {
 		};
 
 
-		inline void setTable(nanodbc::connection conn, TimeFrame tf) {
+		inline void setTable(nanodbc::connection conn) {
 			try {
-				string tfstring = time_frame(tf);
+				nanodbc::execute(conn, "DROP TABLE IF EXISTS Candles");
 
-				nanodbc::execute(conn, "DROP TABLE IF EXISTS " + tfstring);
-
-				string sql = "CREATE TABLE " + tfstring + " ("
-					"id INT IDENTITY(1, 1) PRIMARY KEY,"
-					"reqId INT NOT NULL,"
-					"date VARCHAR(10),"
-					"time INT NOT NULL,"
-					"[open] DECIMAL(16, 3) NOT NULL,"
-					"[close] DECIMAL(16, 3) NOT NULL,"
-					"high DECIMAL(16, 3) NOT NULL,"
-					"low DECIMAL(16, 3) NOT NULL,"
-					"volume BIGINT);";
+				string sql = "CREATE TABLE Candles ("
+					"ID INT IDENTITY(1, 1),"
+					"ReqID INT NOT NULL,"
+					"Date VARCHAR(10),"
+					"Time INT NOT NULL,"
+					"[Open] DECIMAL(16, 3) NOT NULL,"
+					"[Close] DECIMAL(16, 3) NOT NULL,"
+					"High DECIMAL(16, 3) NOT NULL,"
+					"Low DECIMAL(16, 3) NOT NULL,"
+					"Volume BIGINT,"
+					"TimeFrame VARCHAR(20),"
+					"CONSTRAINT PK_Candles_ID_TimeFrame PRIMARY KEY (ID, TimeFrame));";
 
 				nanodbc::execute(conn, sql);
 
-				OPTIONSCANNER_DEBUG("Table {} initialized", tfstring);
+				OPTIONSCANNER_DEBUG("Candles Table initialized");
 			}
 			catch (const std::exception& e) {
 				OPTIONSCANNER_ERROR("Error: {}", e.what());
@@ -62,21 +62,23 @@ namespace OptionDB {
 			nanodbc::statement stmt(conn);
 
 			if (reqId == 0 && date == "" && time == 0) {
-				stmt.prepare("SELECT * FROM " + tfstring);
+				stmt.prepare("SELECT * FROM Candles WHERE TimeFrame = ?");
+				stmt.bind(0, tfstring.c_str());
 			}
 
 			try {
 				nanodbc::result res = stmt.execute();
 
 				while (res.next()) {
-					TickerId reqId = res.get<TickerId>("reqId");
-					IBString date = res.get<nanodbc::string>("date");
-					long time = res.get<long>("time");
-					double open = res.get<double>("open");
-					double high = res.get<double>("high");
-					double low = res.get<double>("low");
-					double close = res.get<double>("close");
-					long volume = res.get<long>("volume");
+					TickerId reqId = res.get<TickerId>("ReqID");
+					IBString date = res.get<nanodbc::string>("Date");
+					long time = res.get<long>("Time");
+					double open = res.get<double>("Open");
+					double high = res.get<double>("High");
+					double low = res.get<double>("Low");
+					double close = res.get<double>("Close");
+					long volume = res.get<long>("Volume");
+					string timeFrame = res.get<nanodbc::string>("TimeFrame");
 
 					Candle c(reqId, time, open, high, low, close, volume);
 					candles.push_back(c);
@@ -91,11 +93,9 @@ namespace OptionDB {
 
 		inline void post(std::shared_ptr<nanodbc::connection> conn, CandleForDB& candle, TimeFrame tf) {
 			try {
-				string tfstring = time_frame(tf);
-
 				nanodbc::statement stmt(*conn);
-				stmt.prepare("INSERT INTO " + tfstring + " (reqId, date, time, [open], [close], high, low, volume)"
-					"VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+				stmt.prepare("INSERT INTO Candles (ReqID, Date, Time, [Open], [Close], High, Low, Volume, TimeFrame)"
+					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 				int reqId = candle.reqId_;
 				string date = candle.date_.substr(0, 8); // Just get the date, no need for time
@@ -105,6 +105,7 @@ namespace OptionDB {
 				double high = candle.high_;
 				double low = candle.low_;
 				long volume = candle.volume_;
+				string timeframe = time_frame(tf);
 				
 				stmt.bind(0, &reqId);
 				stmt.bind(1, date.c_str());
@@ -114,6 +115,7 @@ namespace OptionDB {
 				stmt.bind(5, &high);
 				stmt.bind(6, &low);
 				stmt.bind(7, &volume);
+				stmt.bind(8, timeframe.c_str());
 
 				stmt.execute();
 			}
@@ -126,13 +128,14 @@ namespace OptionDB {
 			try {
 				string tfstring = time_frame(tf);
 				nanodbc::statement stmt(conn);
-				stmt.prepare("DELETE FROM " + tfstring + " WHERE date = ? ");
+				stmt.prepare("DELETE FROM Candles WHERE Date = ? AND TimeFrame = ?");
 
 				stmt.bind(0, date.c_str());
+				stmt.bind(0, tfstring.c_str());
 				stmt.execute();
 			}
 			catch (const std::exception& e) {
-				OPTIONSCANNER_ERROR("Errur: {}", e.what());
+				OPTIONSCANNER_ERROR("Error: {}", e.what());
 			}
 		}
 
@@ -140,9 +143,10 @@ namespace OptionDB {
 			try {
 				string tfstring = time_frame(tf);
 				nanodbc::statement stmt(conn);
-				stmt.prepare("DELETE FROM " + tfstring + " WHERE time = ? ");
+				stmt.prepare("DELETE FROM Candles WHERE Time = ? AND TimeFrame = ?");
 
 				stmt.bind(0, &time);
+				stmt.bind(1, tfstring.c_str());
 				stmt.execute();
 			}
 			catch (const std::exception& e) {

@@ -29,7 +29,7 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = true;
+constexpr bool runTests = false;
 
 // Main launcher for imformal tests
 void informalTests();
