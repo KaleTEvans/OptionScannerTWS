@@ -59,6 +59,30 @@ namespace OptionDB {
 				return tagID;
 			}
 
+			// Convert alert tag sequence into bitmap to compress tag combination
+			uint64_t convertToBitmask(const std::vector<int>& tagID) {
+				uint64_t bitmask = 0;
+
+				for (int tagIndex : tagID) {
+					if (tagIndex >= 64 || tagIndex < 0) {
+						throw std::runtime_error("Invalid tag index. Must be between 0 and 63.");
+					}
+					bitmask |= (1ULL << tagIndex);
+				}
+
+				return bitmask;
+			}
+
+			std::vector<int> bitmaskToTags(uint64_t mask) {
+				std::vector<int> tags;
+				for (int i = 0; i < 64; ++i) {
+					if (mask & (1ull << i)) {
+						tags.push_back(i);
+					}
+				}
+				return tags;
+			}
+
 			void initialize() {
 				tagDBInterface.insert({ {Alerts::EnumString::option_type(Alerts::OptionType::Call), "OptionType"}, 1 });
 				tagDBInterface.insert({ {Alerts::EnumString::option_type(Alerts::OptionType::Put), "OptionType"}, 2 });

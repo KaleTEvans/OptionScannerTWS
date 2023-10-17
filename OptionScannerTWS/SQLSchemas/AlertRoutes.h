@@ -18,6 +18,10 @@ namespace OptionDB {
 	
 	namespace AlertTables {
 
+		//================================================
+		// TABLE SETUP
+		//================================================
+
 		inline void initializeTagTable(nanodbc::connection conn) {
 			AlertTagDBInterface dbi;
 			std::unordered_map<std::pair<string, string>, int, PairHash> ti = dbi.tagInterface();
@@ -26,8 +30,8 @@ namespace OptionDB {
 				nanodbc::statement stmt(conn);
 
 				for (auto i : ti) {
-					stmt.prepare("INSERT INTO AlertTags (TagID, TagName, TagType, WeightedWins, UnweightedWins, AverageWin, Total)"
-						"VALUES (?, ?, ?, ?, ?, ?, ?)");
+					stmt.prepare("INSERT INTO AlertTags (TagID, TagName, TagType)"
+						"VALUES (?, ?, ?)");
 
 					int TagId = i.second;
 					string TagName = i.first.first;
@@ -40,10 +44,6 @@ namespace OptionDB {
 					stmt.bind(0, &TagId);
 					stmt.bind(1, TagName.c_str());
 					stmt.bind(2, TagType.c_str());
-					stmt.bind(3, &WeightedWins);
-					stmt.bind(4, &UnweightedWins);
-					stmt.bind(5, &AverageWin);
-					stmt.bind(6, &Total);
 
 					stmt.execute();
 
@@ -62,11 +62,7 @@ namespace OptionDB {
 				string sql = "CREATE TABLE AlertTags ("
 					"TagID INT PRIMARY KEY,"
 					"TagName VARCHAR(20) NOT NULL,"
-					"TagType VARCHAR(30) NOT NULL,"
-					"WeightedWins DECIMAL(30, 3) NOT NULL,"
-					"UnweightedWins DECIMAL(25, 0) NOT NULL,"
-					"AverageWin DECIMAL(5, 2) NOT NULL,"
-					"Total DECIMAL(20, 3) NOT NULL);";
+					"TagType VARCHAR(30) NOT NULL);";
 
 				nanodbc::execute(conn, sql);
 
@@ -79,29 +75,41 @@ namespace OptionDB {
 			}
 		}
 
-		inline void setTagCombinationTable(nanodbc::connection conn) {
+		inline void setAlertTable(nanodbc::connection conn) {
 			try {
-				nanodbc::execute(conn, "DROP TABLE IF EXISTS TagCombinationResults");
+				nanodbc::execute(conn, "DROP TABLE IF EXISTS Alerts");
 
-				string sql = "CREATE TABLE TagCombinationResults ("
-					"id INT IDENTITY(1,1) PRIMARY KEY,"
+				string sql = "CREATE TABLE Alerts ("
+					"AlertID INT IDENTITY(1,1) PRIMARY KEY,"
+					"ReqID INT NOT NULL,"
+					"TFString VARCHAR(20) NOT NULL,"
 					"AlertTime INT NOT NULL,"
-					"OptionType INT NOT NULL,"
-					"TimeFrame INT NOT NULL,"
-					"RelativeToMoney INT NOT NULL,"
-					"TimeOfDay INT NOT NULL,"
-					"VolumeStDev INT NOT NULL,"
-					"VolumeThreshold INT NOT NULL,"
-					"UnderlyingPriceDelta INT NOT NULL,"
-					"OptionPriceDelta INT NOT NULL,"
-					"UnderlyingDailyHL INT NOT NULL,"
-					"UnderlyingOptionHL INT NOT NULL,"
-					"LocalOptionHL INT NOT NULL,"
-					"LocalOptionHL INT NOT NULL,"
-					"WeightedWins DECIMAL(30, 3) NOT NULL,"
-					"UnweightedWins DECIMAL(25, 0) NOT NULL,"
-					"AverageWin DECIMAL(5, 2) NOT NULL,"
-					"Total DECIMAL(20, 3) NOT NULL);";
+					"Win DECIMAL(1,1) NOT NULL,"
+					"PercentWon DECIMAL(5,2) NOT NULL,"
+					"CombinationBitmap BIGINT NOT NULL,"
+
+					"FOREIGN KEY (ReqID, TFString, AlertTime) REFERENCES Candles(ReqID, Time, TimeFrame));";
+
+				nanodbc::execute(conn, sql);
+
+				OPTIONSCANNER_DEBUG("Alert Table Initialized");
+			}
+			catch (const std::exception& e) {
+				OPTIONSCANNER_ERROR("Error: {}", e.what());
+			}
+		}
+
+		inline void setTagMappingTable(nanodbc::connection conn) {
+			try {
+				nanodbc::execute(conn, "DROP TABLE IF EXISTS AlertTagMapping");
+
+				string sql = "CREATE TABLE AlertTagMapping ("
+					"MapID INT IDENTITY(1,1) PRIMARY KEY,"
+					"AlertID INT NOT NULL,"
+					"TagID INT NOT NULL,"
+
+					"FOREIGN KEY (AlertID) REFERENCES Alerts (AlertID),"
+					"FOREIGN KEY (TagID) REFERENCES AlertTags (TagID));";
 
 				nanodbc::execute(conn, sql);
 
@@ -112,37 +120,21 @@ namespace OptionDB {
 			}
 		}
 
-		inline void setAlertTable(nanodbc::connection conn) {
-			try {
-				nanodbc::execute(conn, "DROP TABLE IF EXISTS Alerts");
+		inline void setAlertCombinationTable(nanodbc::connection conn) {
+			nanodbc::execute(conn, "DROP TABLE IF EXISTS TagCombinations");
 
-				string sql = "CREATE TABLE Alerts ("
-					"id INT IDENTITY(1,1) PRIMARY KEY,"
-					"reqId INT NOT NULL,"
-					"AlertTime INT NOT NULL,"
-					"OptionType INT NOT NULL,"
-					"TimeFrame INT NOT NULL,"
-					"RelativeToMoney INT NOT NULL,"
-					"TimeOfDay INT NOT NULL,"
-					"VolumeStDev INT NOT NULL,"
-					"VolumeThreshold INT NOT NULL,"
-					"UnderlyingPriceDelta INT NOT NULL,"
-					"OptionPriceDelta INT NOT NULL,"
-					"UnderlyingDailyHL INT NOT NULL,"
-					"UnderlyingOptionHL INT NOT NULL,"
-					"LocalOptionHL INT NOT NULL,"
-					"LocalOptionHL INT NOT NULL,"
-					"Win INT NOT NULL,"
-					"PercentWon DECIMAL(5,2) NOT NULL);";
-
-				nanodbc::execute(conn, sql);
-
-				OPTIONSCANNER_DEBUG("Alert Table Initialized");
-			}
-			catch (const std::exception& e) {
-				OPTIONSCANNER_ERROR("Error: {}", e.what());
-			}
+			string sql = "CREATE TABLE TagCombinations ("
+				"CombinationID INT IDENTITY(1, 1) PRIMARY KEY,"
+				"CombinationBitmap BIGINT NOT NULL UNIQUE,"
+				"TotalAlerts INT NOT NULL,"
+				"WeightedWins DECIMAL(10,1) NOT NULL,"
+				"WinRate DECIMAL (3,2) NOT NULL,"
+				"AverageWin DECIMAL (3,2) NOT NULL);";
 		}
+
+		//==========================================================
+		// TABLE INSERTION
+		//==========================================================
 
 		//inline void postAlert(nanodbc::connection conn, )
 	}

@@ -44,7 +44,7 @@ namespace OptionDB {
 					"Low DECIMAL(16, 3) NOT NULL,"
 					"Volume BIGINT,"
 					"TimeFrame VARCHAR(20),"
-					"CONSTRAINT PK_Candles_ID_TimeFrame PRIMARY KEY (ID, TimeFrame));";
+					"CONSTRAINT Alert_Candle UNIQUE (ReqId, Time, TimeFrame));";
 
 				nanodbc::execute(conn, sql);
 
