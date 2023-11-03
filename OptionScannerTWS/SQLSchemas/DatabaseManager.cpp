@@ -25,8 +25,15 @@ namespace OptionDB {
 		cv.notify_one();
 	}
 
-	void DatabaseManager::resetCandleTables() {
+	void DatabaseManager::setCandleTables() {
 		CandleTables::setTable(*conn_);
+	}
+
+	void DatabaseManager::setAlertTables() {
+		AlertTables::setTagTable(*conn_);
+		AlertTables::setAlertTable(*conn_);
+		AlertTables::setTagMappingTable(*conn_);
+		AlertTables::setAlertCombinationTable(*conn_);
 	}
 
 	void DatabaseManager::candleInsertionLoop() {
@@ -59,7 +66,7 @@ namespace OptionDB {
 			lock.unlock();
 
 			while (!buffer.empty()) {
-				CandleTables::post(conn_, buffer.front().first, buffer.front().second);
+				CandleTables::post(*conn_, buffer.front().first, buffer.front().second);
 				buffer.pop();
 			}
 		}

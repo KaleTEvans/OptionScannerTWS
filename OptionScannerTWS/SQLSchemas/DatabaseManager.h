@@ -4,6 +4,7 @@
 
 #include "SQLSchema.h"
 #include "CandleRoutes.h"
+#include "AlertRoutes.h"
 
 #include <memory>
 #include <queue>
@@ -19,7 +20,8 @@ namespace OptionDB {
 
 		void addToInsertionQueue(std::shared_ptr<Candle> candle, TimeFrame tf);
 
-		void resetCandleTables();
+		void setCandleTables();
+		void setAlertTables();
 
 	private:
 		void candleInsertionLoop();

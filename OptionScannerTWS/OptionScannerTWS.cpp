@@ -1,7 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-//#define TEST_CONFIG
-
 #ifndef TEST_CONFIG
 
 #include <iostream>
@@ -29,7 +27,7 @@ using std::endl;
 //=======================================================================
 
 // Turn on tests or main program here
-constexpr bool runTests = false;
+constexpr bool runTests = true;
 
 // Main launcher for imformal tests
 void informalTests();
@@ -37,6 +35,7 @@ void informalTests();
 void basicHistoricalDataRequest(std::unique_ptr<App>& test);
 void testMktDataRequest(std::unique_ptr<App>& test);
 void testRealTimeBars(std::unique_ptr<App>& test);
+void runAlertDBTests();
 //void candleFunctionality(std::unique_ptr<TestConnections>& test);
 //void testStreamingAlerts(std::unique_ptr<TestConnections>& test);
 //void testLowAndHighAccuracy(std::unique_ptr<TestConnections>& test);
@@ -52,9 +51,7 @@ int main(void) {
     Logger::Initialize();
     
     if (runTests) {
-        //informalTests();
-        nanodbc::connection conn = OptionDB::connectToDB();
-        OptionDB::AlertTables::setTagTable(conn);
+        informalTests();
     }
 
     else {
@@ -100,11 +97,15 @@ void informalTests() {
     constexpr bool showWelcome = true;
 
     // Test functionality of a basic historical data request
-    constexpr bool showBasicRequest = true;
+    constexpr bool showBasicRequest = false;
     // Test different outputs of a market data request
     constexpr bool showMktDataRequest = false;
     // Test functionality of 5 second real time bars for 30 seconds
     constexpr bool showRealTimeBarsTest = false;
+
+    // DB Tests
+    constexpr bool testAlertTables = true;
+
     // Test ability for ContractData to create functional candles in different time frames
     // constexpr bool showCandleFunctionality = false;
     // Test ability to receive alerts from ContractData as callbacks
@@ -125,6 +126,7 @@ void informalTests() {
     if (showBasicRequest) basicHistoricalDataRequest(test);
     if (showMktDataRequest) testMktDataRequest(test);
     if (showRealTimeBarsTest) testRealTimeBars(test);
+    if (testAlertTables) runAlertDBTests();
     //if (showCandleFunctionality) candleFunctionality(test);
     //if (showAlertFunctionality) testStreamingAlerts(test);
     //if (showDailyLowHighAccuracy) testLowAndHighAccuracy(test);
@@ -238,6 +240,11 @@ void testRealTimeBars(std::unique_ptr<App>& test) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         timer -= 1;
     }
+}
+
+void runAlertDBTests() {
+    OptionDB::DatabaseManager dbm;
+    dbm.setAlertTables();
 }
 
 ////======================================================================================

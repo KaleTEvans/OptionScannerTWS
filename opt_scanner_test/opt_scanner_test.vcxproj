@@ -51,6 +51,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="..\OptionScannerTWS\SQLSchemas\CandleRoutes.h" />
+    <ClInclude Include="..\OptionScannerTWS\SQLSchemas\DatabaseManager.h" />
     <ClInclude Include="..\OptionScannerTWS\SQLSchemas\SQLSchema.h" />
     <ClInclude Include="DatabaseTests\sample_db_obj.h" />
     <ClInclude Include="MockClasses\MockClient.h" />

@@ -5,7 +5,7 @@
 #include "SQLSchema.h"
 #include "../Candle.h"
 #include "../Enums.h"
-#include "../Logger.h"
+//#include "../Logger.h"
 
 using std::string;
 
@@ -48,7 +48,8 @@ namespace OptionDB {
 
 				nanodbc::execute(conn, sql);
 
-				OPTIONSCANNER_DEBUG("Candles Table initialized");
+				//OPTIONSCANNER_DEBUG("Candles Table initialized");
+				std::cout << "Candles Table Initialized" << std::endl;
 			}
 			catch (const std::exception& e) {
 				OPTIONSCANNER_ERROR("Error: {}", e.what());
@@ -91,9 +92,9 @@ namespace OptionDB {
 			return candles;
 		}
 
-		inline void post(std::shared_ptr<nanodbc::connection> conn, CandleForDB& candle, TimeFrame tf) {
+		inline void post(nanodbc::connection conn, CandleForDB& candle, TimeFrame tf) {
 			try {
-				nanodbc::statement stmt(*conn);
+				nanodbc::statement stmt(conn);
 				stmt.prepare("INSERT INTO Candles (ReqID, Date, Time, [Open], [Close], High, Low, Volume, TimeFrame)"
 					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
