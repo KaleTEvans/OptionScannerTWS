@@ -35,7 +35,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 	contractChain_ = std::make_shared<std::unordered_map<int, std::shared_ptr<ContractData>>>();
 
 	// Initialize the alert handler with a pointer to the contract map
-	alertHandler = std::make_unique<Alerts::AlertHandler>(contractChain_);
+	//alertHandler = std::make_unique<Alerts::AlertHandler>(contractChain_);
 
 	// Start the checkMessages thread
 	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
@@ -86,12 +86,17 @@ void OptionScanner::streamOptionData() {
 				contractChain_->at(req)->updateData(std::move(candle));
 			}
 			else {
-				std::shared_ptr<ContractData> cd = std::make_shared<ContractData>(req, std::move(candle));
+				std::shared_ptr<ContractData> cd;
 
-				// Add SQL connection to contractData
-				cd->setupDatabaseManager(dbm);
+				if (req == 1234) {
+					cd = std::make_shared<ContractData>(req, dbm);
+				}
+				else {
+					cd = std::make_shared<ContractData>(req);
+				}
 
 				registerAlertCallback(cd);
+				cd->updateData(std::move(candle));
 				contractChain_->insert({ req, cd });
 			}
 		}
@@ -206,13 +211,22 @@ void OptionScanner::updateStrikes(double price) {
 
 void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
 	std::lock_guard<std::mutex> lock(optScanMutex_);
-	cd->registerAlert([this, cd](TimeFrame tf, std::shared_ptr<Candle> candle) {
+	cd->registerAlert([this, cd](std::shared_ptr<CandleTags> ct) {
 
-		// Make sure contract is in scope
-		if (contractsInScope.find(candle->reqId()) != contractsInScope.end()) {
-
-			alertHandler->inputAlert(tf, cd, contractChain_->at(1234), candle);
+		// Add underlying specific tags
+		try {
+			double underlyingPrice = contractChain_->at(1234)->currentPrice();
+			Alerts::PriceDelta pd = contractChain_->at(1234)->priceDelta(ct->getTimeFrame());
+			Alerts::DailyHighsAndLows dhl = contractChain_->at(1234)->dailyHLComparison();
+			Alerts::LocalHighsAndLows lhl = contractChain_->at(1234)->localHLComparison();
+			Alerts::RelativeToMoney rtm = distFromPrice(cd->optType(), cd->strikePrice(), underlyingPrice);
+			ct->addUnderlyingTags(rtm, pd, dhl, lhl);
 		}
+		catch (const std::exception& e) {
+			OPTIONSCANNER_ERROR("Issue with callback: {}" ,e.what());
+		}
+		// Send to dbm
+		dbm->addToInsertionQueue(ct);
 	});
 }
 

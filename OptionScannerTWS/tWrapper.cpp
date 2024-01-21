@@ -156,6 +156,10 @@ std::vector<std::unique_ptr<Candle>> CandleBuffer::processBuffer() {
     std::lock_guard<std::mutex> lock(bufferMutex);
     std::vector<std::unique_ptr<Candle>> processedData;
 
+    // Ensure that the underlying is inserted first
+    processedData.push_back(std::move(bufferMap.at(1234)));
+    bufferMap.erase(1234);
+
     for (auto& c : bufferMap) processedData.push_back(std::move(c.second));
     bufferMap.clear();
 
