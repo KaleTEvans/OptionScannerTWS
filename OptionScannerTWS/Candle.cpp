@@ -111,6 +111,8 @@ CandleTags::CandleTags(std::shared_ptr<Candle> c, std::vector<int> tags) : candl
     underlyingLHL_ = Alerts::EnumString::str_to_local_hl(u_lhl);
 }
 
+void CandleTags::setSqlId(int val) { sqlId = val; }
+
 void CandleTags::addUnderlyingTags(Alerts::RelativeToMoney rtm, Alerts::PriceDelta pd, Alerts::DailyHighsAndLows DHL, Alerts::LocalHighsAndLows LHL) {
     rtm_ = rtm;
     underlyingPriceDelta_ = pd;
@@ -119,6 +121,7 @@ void CandleTags::addUnderlyingTags(Alerts::RelativeToMoney rtm, Alerts::PriceDel
 }
 
 // Accessors
+int CandleTags::getSqlId() const { return sqlId; }
 TimeFrame CandleTags::getTimeFrame() const { return tf_; }
 Alerts::OptionType CandleTags::getOptType() const { return optType_; }
 Alerts::TimeOfDay CandleTags::getTOD() const { return tod_; }

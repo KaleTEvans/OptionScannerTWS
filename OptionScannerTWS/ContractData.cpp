@@ -73,7 +73,7 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 	dailyLow_ = min(dailyLow_, fiveSec->low());
 
 	// Wait for the first 30 minutes before updating comparisons
-	if (fiveMinCandles_.size() > 360) updateComparisons();
+	if (fiveSecCandles_.size() >= 360) updateComparisons();
 
 	std::shared_ptr<CandleTags> fiveSecTags = std::make_shared<CandleTags>(fiveSec, TimeFrame::FiveSecs, optType_, tod_,
 		VPT_.volStDev5Sec, VPT_.volThresh5Sec, VPT_.priceDelta5Sec, DHL_, LHL_);
@@ -431,7 +431,7 @@ Alerts::PriceDelta VolAndPriceTags::updatePriceDelta(double priceStDev) {
 	if (priceStDev >= 1 && priceStDev <= 2) return Alerts::PriceDelta::Under2;
 	if (priceStDev > 2) return Alerts::PriceDelta::Over2;
 
-	OPTIONSCANNER_ERROR("Invalid Price Delta");
+	OPTIONSCANNER_ERROR("Invalid Price Delta: {}", priceStDev);
 }
 
 Alerts::VolumeStDev VolAndPriceTags::updateVolStDev(double volStDev) {

@@ -74,12 +74,14 @@ public:
     // Constructor if receiving db data
     CandleTags(std::shared_ptr<Candle> c, std::vector<int> tags);
 
+    void setSqlId(int val);
     // Mutator to add underlying tags
     void addUnderlyingTags(Alerts::RelativeToMoney rtm, Alerts::PriceDelta pd, Alerts::DailyHighsAndLows DHL, Alerts::LocalHighsAndLows LHL);
 
     // Make the candle a public member 
     Candle candle;
 
+    int getSqlId() const;
     TimeFrame getTimeFrame() const;
     Alerts::OptionType getOptType() const;
     Alerts::TimeOfDay getTOD() const;
@@ -95,6 +97,7 @@ public:
 
 private:
     std::vector<int> tags_{};
+    int sqlId{ 0 };
 
     TimeFrame tf_{ TimeFrame::FiveSecs };
     Alerts::OptionType optType_{ Alerts::OptionType::Call };

@@ -10,6 +10,14 @@
 #include <queue>
 #include <unordered_set>
 
+// Comparator for OptionCandle min heap 
+struct candleTimeComparator {
+	int operator() (const std::shared_ptr<CandleTags> ct1, const std::shared_ptr<CandleTags> ct2) {
+		return ct1->candle.time() > ct2->candle.time();
+	}
+};
+
+
 namespace OptionDB {
 
 	class DatabaseManager {
@@ -47,7 +55,7 @@ namespace OptionDB {
 
 		// Processing containers
 		std::queue<std::pair<UnderlyingTable::CandleForDB, TimeFrame>> underlyingQueue;
-		std::queue<std::shared_ptr<CandleTags>> candleProcessingQueue;
+		std::priority_queue<std::shared_ptr<CandleTags>, std::vector<std::shared_ptr<CandleTags>>, candleTimeComparator> candlePriorityQueue;
 
 		// Keeps track of each time increment
 		std::unordered_set<long> timeSet;
