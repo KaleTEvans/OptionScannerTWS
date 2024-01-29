@@ -6,12 +6,14 @@
 #include "../Candle.h"
 #include "../Enums.h"
 #include "../Logger.h"
+#include "PerformanceResults.h"
 
 using std::string;
 
 namespace OptionDB {
 
 	inline void resetCandleTables(nanodbc::connection conn) {
+		nanodbc::execute(conn, "DROP TABLE IF EXISTS CandlePerformance");
 		nanodbc::execute(conn, "DROP TABLE IF EXISTS OptionCandles");
 		nanodbc::execute(conn, "DROP TABLE IF EXISTS UnderlyingCandles");
 		nanodbc::execute(conn, "DROP TABLE IF EXISTS UnixValues");
@@ -209,7 +211,7 @@ namespace OptionDB {
 				nanodbc::execute(conn, "DROP TABLE IF EXISTS OptionCandles");
 
 				string sql = "CREATE TABLE OptionCandles ("
-					"ID INT IDENTITY(1, 1),"
+					"CandleID INT IDENTITY(1, 1) PRIMARY KEY,"
 					"ReqID INT NOT NULL,"
 					"Date VARCHAR(20),"
 					"Time INT NOT NULL,"
@@ -265,7 +267,7 @@ namespace OptionDB {
 				stmt.prepare("INSERT INTO OptionCandles (ReqID, Date, Time, [Open], [Close], High, Low, Volume, TimeFrame,"
 					"OptionType, TimeOfDay, RelativeToMoney, VolumeStDev, VolumeThreshold, OptPriceDelta, DailyHighLow, LocalHighLow,"
 					"UnderlyingPriceDelta, UnderlyingDailyHighLow, UnderlyingLocalHighLow)"
-					" OUTPUT INSERTED.ID INTO tempId"
+					" OUTPUT INSERTED.CandleID INTO tempId"
 					" VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 				size_t elements = candle.size();
@@ -407,6 +409,68 @@ namespace OptionDB {
 			nanodbc::result res = stmt.execute();
 			res.next();
 			return res.get<int>(0);
+		}
+	}
+
+	namespace CandlePerformance {
+
+		inline void setTable(nanodbc::connection conn) {
+			try {
+				nanodbc::execute(conn, "DROP TABLE IF EXISTS CandlePerformance");
+
+				string sql = "CREATE TABLE CandlePerformance ("
+					"PerformanceID INT IDENTITY(1, 1) PRIMARY KEY,"
+					"CandleID INT NOT NULL,"
+					"PercentWin DECIMAL(5,2) NOT NULL,"
+					"WinLoss DECIMAL(3,2) NOT NULL,"
+					"TimeToWin INT NOT NULL,"
+
+					"FOREIGN KEY (CandleID) REFERENCES OptionCandles(CandleID));";
+
+				nanodbc::execute(conn, sql);
+
+				OPTIONSCANNER_DEBUG("CandlePerformance Table initialized");
+
+			}
+			catch (const std::exception& e) {
+				OPTIONSCANNER_ERROR("Error: {}", e.what());
+			}
+
+		}
+
+		inline void post(nanodbc::connection conn, std::vector<std::shared_ptr<Alerts::PerformanceResults>> alerts) {
+			try {
+				nanodbc::statement stmt(conn);
+
+				stmt.prepare("INSERT INTO CandlePerformance (CandleID, PercentWin, WinLoss, TimeToWin)"
+					"VALUES (?, ?, ?, ?)");
+
+				size_t elements = alerts.size();
+
+				std::vector<int> candleId;
+				std::vector<double> percentWin;
+				std::vector<double> winLoss;
+				std::vector<long> timeToWin;
+
+				for (size_t i = 0; i < alerts.size(); i++) {
+					candleId.push_back(alerts[i]->ct->getSqlId());
+					percentWin.push_back(alerts[i]->winLossPct);
+					winLoss.push_back(alerts[i]->winLoss);
+					timeToWin.push_back(alerts[i]->timeToWin);
+				}
+
+				stmt.bind(0, candleId.data(), elements);
+				stmt.bind(1, percentWin.data(), elements);
+				stmt.bind(2, winLoss.data(), elements);
+				stmt.bind(3, timeToWin.data(), elements);
+
+				nanodbc::transact(stmt, elements);
+
+				OPTIONSCANNER_DEBUG("CandlePerformance Batch Insertion Successful");
+			}
+			catch (const std::exception& e) {
+				OPTIONSCANNER_ERROR("Error in CandlePerformance Insertion: {}", e.what());
+			}
 		}
 	}
 }

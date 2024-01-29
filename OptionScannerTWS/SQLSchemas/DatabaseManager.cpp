@@ -22,8 +22,10 @@ namespace OptionDB {
 	bool DatabaseManager::processingComplete() const { return processingComplete_; }
 
 	void DatabaseManager::addToInsertionQueue(std::shared_ptr<CandleTags> ct) {
+		std::unique_lock<std::mutex> lock(queueMtx);
 		candlePriorityQueue.push(ct);
-		OPTIONSCANNER_DEBUG("Inserted to queue, current size: {}", candlePriorityQueue.size());
+		lock.unlock();
+		OPTIONSCANNER_DEBUG("Inserted to candle queue, current size: {}", candlePriorityQueue.size());
 	}
 
 	void DatabaseManager::addToInsertionQueue(std::shared_ptr<Candle> c, TimeFrame tf) {
@@ -43,6 +45,11 @@ namespace OptionDB {
 		underlyingQueue.push({ candle, tf });
 	}
 
+	void DatabaseManager::addToInsertionQueue(std::shared_ptr<Alerts::PerformanceResults> pfr) {
+		performanceQueue.push(pfr);
+		OPTIONSCANNER_DEBUG("Inserted to performance queue, current size: {}", performanceQueue.size());
+	}
+
 	void DatabaseManager::resetCandleTables() {
 		OptionDB::resetCandleTables(*conn_);
 		setCandleTables();
@@ -55,6 +62,7 @@ namespace OptionDB {
 		UnixTable::setTable(*conn_);
 		UnderlyingTable::setTable(*conn_);
 		OptionTable::setTable(*conn_);
+		CandlePerformance::setTable(*conn_);
 	}
 
 	void DatabaseManager::setAlertTables() {
@@ -69,11 +77,12 @@ namespace OptionDB {
 
 		while (true) {
 
-			while (!underlyingQueue.empty() || !candlePriorityQueue.empty()) {
+			while (!underlyingQueue.empty() || !candlePriorityQueue.empty() || !performanceQueue.empty()) {
 				static long prevUnixTime = -1;
 				static bool unixTimeUpdated = false;
 
 				std::vector<std::shared_ptr<CandleTags>> optionBatch;
+				std::vector<std::shared_ptr<Alerts::PerformanceResults>> performanceBatch;
 
 				if (!underlyingQueue.empty()) {
 					std::unique_lock<std::mutex> lock(queueMtx);
@@ -87,23 +96,36 @@ namespace OptionDB {
 				}
 
 				if (!candlePriorityQueue.empty() && unixTimeUpdated) {
+					std::unique_lock<std::mutex> lock(queueMtx);
 					while (!candlePriorityQueue.empty() && candlePriorityQueue.top()->candle.time() <= prevUnixTime) {
 						std::shared_ptr<CandleTags> ct = candlePriorityQueue.top();
 						optionBatch.push_back(ct);
 						candlePriorityQueue.pop();
 					}
+					lock.unlock();
 
 					unixTimeUpdated = false;
 				}
 
 				if (optionBatch.size() > 0) OptionDB::OptionTable::post(*conn_, optionBatch);
 				optionBatch.clear();
+
+				if (!performanceQueue.empty()) {
+					while (!performanceQueue.empty()) {
+						std::shared_ptr<Alerts::PerformanceResults> pf = performanceQueue.front();
+						performanceBatch.push_back(pf);
+						performanceQueue.pop();
+					}
+				}
+
+				if (performanceBatch.size() > 0) OptionDB::CandlePerformance::post(*conn_, performanceBatch);
+				performanceBatch.clear();
 			}
 
 			// Re-check stop-insertion after processing
 			if (stopInsertion) {
 				std::unique_lock<std::mutex> relock(queueMtx);
-				if (underlyingQueue.empty() && candlePriorityQueue.empty()) break;
+				if (underlyingQueue.empty() && candlePriorityQueue.empty() && performanceQueue.empty()) break;
 			}
 		}
 	}

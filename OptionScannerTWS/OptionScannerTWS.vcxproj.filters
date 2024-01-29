@@ -57,6 +57,9 @@
     <ClCompile Include="SQLSchemas\DatabaseManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Alerts\PerformanceResults.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tWrapper.h">
@@ -108,6 +111,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SQLSchemas\AlertTagDBInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Alerts\PerformanceResults.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

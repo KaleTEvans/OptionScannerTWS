@@ -34,6 +34,8 @@ ContractData::ContractData(TickerId reqId) :
 		optType_ = Alerts::OptionType::Put;
 		strikePrice_ = reqId;
 	}
+
+	VPT_.addReqId(reqId);
 }
 
 ContractData::ContractData(TickerId reqId, std::shared_ptr<OptionDB::DatabaseManager> dbm) : dbm_(dbm),
@@ -79,7 +81,8 @@ void ContractData::updateData(std::unique_ptr<Candle> c) {
 		VPT_.volStDev5Sec, VPT_.volThresh5Sec, VPT_.priceDelta5Sec, DHL_, LHL_);
 
 	///////////////////////// 5 Second Alert Options ///////////////////////////////
-	if (!isUnderlying_) {
+	// Only try and capture 5 second candles with large volume to avoid adding too much noise to the db
+	if (!isUnderlying_ && fiveSecTags->candle.volume() > 100) {
 		if (alert_) alert_(fiveSecTags);
 	}
 
@@ -274,13 +277,16 @@ void ContractData::updateContainers(std::shared_ptr<Candle> c, TimeFrame tf) {
 		sdPrice5Sec_.addValue(c->high() - c->low());
 		sdVol5Sec_.addValue(c->volume());
 
-		priceStDev = sdPrice5Sec_.numStDev(c->high() - c->low());
-		volStDev = sdVol5Sec_.numStDev(c->volume());
-		volume = c->volume();
+		// Only update stdev tags after 30 minutes of data
+		if (fiveMinCandles_.size() >= 360) {
+			priceStDev = sdPrice5Sec_.numStDev(c->high() - c->low());
+			volStDev = sdVol5Sec_.numStDev(c->volume());
+			volume = c->volume();
 
-		VPT_.priceDelta5Sec = VPT_.updatePriceDelta(priceStDev);
-		VPT_.volThresh5Sec = VPT_.updateVolThreshold(volume);
-		VPT_.volStDev5Sec = VPT_.updateVolStDev(volStDev);
+			VPT_.priceDelta5Sec = VPT_.updatePriceDelta(priceStDev);
+			VPT_.volThresh5Sec = VPT_.updateVolThreshold(volume);
+			VPT_.volStDev5Sec = VPT_.updateVolStDev(volStDev);
+		}
 
 		break;
 	case TimeFrame::ThirtySecs:
@@ -288,13 +294,15 @@ void ContractData::updateContainers(std::shared_ptr<Candle> c, TimeFrame tf) {
 		sdPrice30Sec_.addValue(c->high() - c->low());
 		sdVol30Sec_.addValue(c->volume());
 
-		priceStDev = sdPrice30Sec_.numStDev(c->high() - c->low());
-		volStDev = sdVol30Sec_.numStDev(c->volume());
-		volume = c->volume();
+		if (thirtySecCandles_.size() >= 60) {
+			priceStDev = sdPrice30Sec_.numStDev(c->high() - c->low());
+			volStDev = sdVol30Sec_.numStDev(c->volume());
+			volume = c->volume();
 
-		VPT_.priceDelta30Sec = VPT_.updatePriceDelta(priceStDev);
-		VPT_.volThresh30Sec = VPT_.updateVolThreshold(volume);
-		VPT_.volStDev30Sec = VPT_.updateVolStDev(volStDev);
+			VPT_.priceDelta30Sec = VPT_.updatePriceDelta(priceStDev);
+			VPT_.volThresh30Sec = VPT_.updateVolThreshold(volume);
+			VPT_.volStDev30Sec = VPT_.updateVolStDev(volStDev);
+		}
 
 		break;
 	case TimeFrame::OneMin:
@@ -302,13 +310,15 @@ void ContractData::updateContainers(std::shared_ptr<Candle> c, TimeFrame tf) {
 		sdPrice1Min_.addValue(c->high() - c->low());
 		sdVol1Min_.addValue(c->volume());
 
-		priceStDev = sdPrice1Min_.numStDev(c->high() - c->low());
-		volStDev = sdVol1Min_.numStDev(c->volume());
-		volume = c->volume();
+		if (oneMinCandles_.size() >= 30) {
+			priceStDev = sdPrice1Min_.numStDev(c->high() - c->low());
+			volStDev = sdVol1Min_.numStDev(c->volume());
+			volume = c->volume();
 
-		VPT_.priceDelta1Min = VPT_.updatePriceDelta(priceStDev);
-		VPT_.volThresh1Min = VPT_.updateVolThreshold(volume);
-		VPT_.volStDev1Min = VPT_.updateVolStDev(volStDev);
+			VPT_.priceDelta1Min = VPT_.updatePriceDelta(priceStDev);
+			VPT_.volThresh1Min = VPT_.updateVolThreshold(volume);
+			VPT_.volStDev1Min = VPT_.updateVolStDev(volStDev);
+		}
 
 		break;
 	case TimeFrame::FiveMin:
@@ -316,13 +326,15 @@ void ContractData::updateContainers(std::shared_ptr<Candle> c, TimeFrame tf) {
 		sdPrice5Min_.addValue(c->high() - c->low());
 		sdVol5Min_.addValue(c->volume());
 
-		priceStDev = sdPrice5Min_.numStDev(c->high() - c->low());
-		volStDev = sdVol5Min_.numStDev(c->volume());
-		volume = c->volume();
+		if (fiveMinCandles_.size() > 6) {
+			priceStDev = sdPrice5Min_.numStDev(c->high() - c->low());
+			volStDev = sdVol5Min_.numStDev(c->volume());
+			volume = c->volume();
 
-		VPT_.priceDelta5Min = VPT_.updatePriceDelta(priceStDev);
-		VPT_.volThresh5Min = VPT_.updateVolThreshold(volume);
-		VPT_.volStDev5Min = VPT_.updateVolStDev(volStDev);
+			VPT_.priceDelta5Min = VPT_.updatePriceDelta(priceStDev);
+			VPT_.volThresh5Min = VPT_.updateVolThreshold(volume);
+			VPT_.volStDev5Min = VPT_.updateVolStDev(volStDev);
+		}
 
 		break;
 	}
@@ -426,12 +438,14 @@ void ContractData::updateTimeOfDay(long unixTime) {
 	}
 }
 
+void VolAndPriceTags::addReqId(int req) { reqId = req; }
+
 Alerts::PriceDelta VolAndPriceTags::updatePriceDelta(double priceStDev) {
 	if (priceStDev < 1) return Alerts::PriceDelta::Under1;
 	if (priceStDev >= 1 && priceStDev <= 2) return Alerts::PriceDelta::Under2;
 	if (priceStDev > 2) return Alerts::PriceDelta::Over2;
 
-	OPTIONSCANNER_ERROR("Invalid Price Delta: {}", priceStDev);
+	OPTIONSCANNER_ERROR("Invalid Price Delta: {} for ReqID: {}", priceStDev, reqId);
 }
 
 Alerts::VolumeStDev VolAndPriceTags::updateVolStDev(double volStDev) {

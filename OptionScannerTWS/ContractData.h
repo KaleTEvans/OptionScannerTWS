@@ -28,6 +28,7 @@ std::shared_ptr<Candle> createNewBars(int id, int increment, const vector<std::s
 
 // Contains vol and price tags for each timeframe that will be updated with new candles
 struct VolAndPriceTags {
+
 	Alerts::VolumeStDev volStDev5Sec{ Alerts::VolumeStDev::LowVol };
 	Alerts::VolumeThreshold volThresh5Sec{ Alerts::VolumeThreshold::LowVol };
 	Alerts::PriceDelta priceDelta5Sec{ Alerts::PriceDelta::Under1 };
@@ -43,6 +44,9 @@ struct VolAndPriceTags {
 	Alerts::VolumeStDev volStDev5Min{ Alerts::VolumeStDev::LowVol };
 	Alerts::VolumeThreshold volThresh5Min{ Alerts::VolumeThreshold::LowVol };
 	Alerts::PriceDelta priceDelta5Min{ Alerts::PriceDelta::Under1 };
+
+	int reqId;
+	void addReqId(int req);
 
 	Alerts::VolumeStDev updateVolStDev(double volStDev);
 	Alerts::VolumeThreshold updateVolThreshold(long volume);

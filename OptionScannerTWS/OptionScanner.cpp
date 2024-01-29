@@ -35,7 +35,7 @@ OptionScanner::OptionScanner(const char* host, IBString ticker) : App(host), tic
 	contractChain_ = std::make_shared<std::unordered_map<int, std::shared_ptr<ContractData>>>();
 
 	// Initialize the alert handler with a pointer to the contract map
-	//alertHandler = std::make_unique<Alerts::AlertHandler>(contractChain_);
+	alertHandler = std::make_unique<Alerts::AlertHandler>(contractChain_, dbm);
 
 	// Start the checkMessages thread
 	messageThread_ = std::thread(&OptionScanner::checkClientMessages, this);
@@ -210,9 +210,8 @@ void OptionScanner::updateStrikes(double price) {
 //===================================================
 
 void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
-	std::lock_guard<std::mutex> lock(optScanMutex_);
 	cd->registerAlert([this, cd](std::shared_ptr<CandleTags> ct) {
-
+		std::lock_guard<std::mutex> lock(optScanMutex_);
 		// Add underlying specific tags
 		try {
 			double underlyingPrice = contractChain_->at(1234)->currentPrice();
@@ -225,8 +224,10 @@ void OptionScanner::registerAlertCallback(std::shared_ptr<ContractData> cd) {
 		catch (const std::exception& e) {
 			OPTIONSCANNER_ERROR("Issue with callback: {}" ,e.what());
 		}
-		// Send to dbm
-		dbm->addToInsertionQueue(ct);
+		// Send to dbm queue if price is significant
+		if (cd->currentPrice() > 0.05) dbm->addToInsertionQueue(ct);
+		// Send to Alerthandler queue
+		alertHandler->inputAlert(ct);
 	});
 }
 

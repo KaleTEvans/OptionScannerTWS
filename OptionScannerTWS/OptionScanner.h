@@ -12,7 +12,7 @@
 
 #include "App.h"
 #include "ContractData.h"
-//#include "AlertHandler.h"
+#include "AlertHandler.h"
 #include "DatabaseManager.h"
 
 #include <unordered_map>
@@ -75,7 +75,7 @@ private:
 	std::unordered_set<int> contractsInScope; // If a contract isn't in the main scope of 18, it won't create an alert
 	vector<int> addedContracts; // Keep track of all currently requested contracts
 
-	//std::unique_ptr<Alerts::AlertHandler> alertHandler;
+	std::unique_ptr<Alerts::AlertHandler> alertHandler;
 
 	std::mutex optScanMutex_;
 	std::condition_variable optScanCV_;
