@@ -361,15 +361,11 @@ void ContractData::updateComparisons() {
 
 	// Check values against the underlying price, will use 0.1% difference
 	if (isWithinXPercent(lastPrice, dailyHigh_, percentDiff)) DHL_ = Alerts::DailyHighsAndLows::NDH;
-	else DHL_ = Alerts::DailyHighsAndLows::Inside;
-
-	if (isWithinXPercent(lastPrice, dailyLow_, percentDiff)) DHL_ = Alerts::DailyHighsAndLows::NDL;
+	else if (isWithinXPercent(lastPrice, dailyLow_, percentDiff)) DHL_ = Alerts::DailyHighsAndLows::NDL;
 	else DHL_ = Alerts::DailyHighsAndLows::Inside;
 
 	if (isWithinXPercent(lastPrice, localHigh_, percentDiff) || lastPrice > localHigh_) LHL_ = Alerts::LocalHighsAndLows::NLH;
-	else LHL_ = Alerts::LocalHighsAndLows::Inside;
-
-	if (isWithinXPercent(lastPrice, localLow_, percentDiff) || lastPrice < localLow_) LHL_ = Alerts::LocalHighsAndLows::NLL;
+	else if (isWithinXPercent(lastPrice, localLow_, percentDiff) || lastPrice < localLow_) LHL_ = Alerts::LocalHighsAndLows::NLL;
 	else LHL_ = Alerts::LocalHighsAndLows::Inside;
 }
 

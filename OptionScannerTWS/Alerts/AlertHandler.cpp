@@ -40,7 +40,7 @@ namespace Alerts {
 				std::chrono::steady_clock::time_point currentTime = std::chrono::steady_clock::now();
 				std::chrono::minutes elsapsedTime = std::chrono::duration_cast<std::chrono::minutes>(currentTime - prevAlertTIme);
 
-				if (elsapsedTime >= std::chrono::minutes(10)) {
+				if (elsapsedTime >= std::chrono::minutes(30)) {
 					std::unique_lock<std::mutex> lock(alertMtx_);
 
 					std::shared_ptr<PerformanceResults> a = alertUpdateQueue.front();
@@ -107,7 +107,14 @@ namespace Alerts {
 			a->winLossPct = percentChangeLow;
 		}
 		else  if (percentChangeHigh > 0 && percentChangeHigh < 60.0) {
-			a->winLoss = 0.5;
+			// If percent gain is over 0, but win is negligible, like 0.05-0.10 this needs to be accounted for
+			if ((maxPrice - startPrice) > 0.10) {
+				a->winLoss = 0.5;
+			}
+			else {
+				a->winLoss = 0;
+			}
+
 			a->winLossPct = percentChangeHigh;
 			a->timeToWin = timeElapsed - startTime;
 		}
